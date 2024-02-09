@@ -1,0 +1,300 @@
+# Gaussian process
+
+common:
+  image_dpi: 150
+  image_dir: figure
+  output_dir: output
+  radius_equat_planet: 6.3781370e+6
+  ellipticity_planet: 3.35281066e-3 
+  #Time unit: only day, hour, min., sec.
+  timeunit: day
+
+
+sample:
+  filename_input: /home/ytakahashi/worki/egg_atmosphericdensity/HK_data/measurement/2017_0715_EGG_GPS.dat
+  kind_input: GPS # GPS or Tacode
+  time_start: 118.3385 #115.8325 #115.0 #100.0 #9650000.0
+  time_end:   118.4003 #115.87 #117.0 #118.5 #9700000.0
+  samplediv: 2
+# --Image file (GPS data)
+  flag_image: False
+  filename_image: figure_sample.png
+# --Tecplot (GPS data)
+  flag_tecplot: True
+  filename_tecplot: tecplot_gps.dat
+  header_tecplot: 'variables=Time[day],Longitude[deg],Latitude[deg],Altitude[km],X[m],Y[m],Z[m]'
+
+
+
+#指数加重移動平均によって平均と標準偏差を取得して外れ値を評価
+outlier:
+  # フラグ
+  flag_outlier: False
+  # 平滑区間
+  ewm_span: 30.0
+  # 標準偏差から threshold 倍以上外れているデータを外れ値としてプロットする
+  ewm_std_threshold: 1.5
+  # 可視化ファイルを出力するかどうか
+  fileimage_output: True
+  # 出力ファイル
+  filename_image: figure_outlier.png
+
+
+
+# Optimizatioin by Gaussian process
+optimization:
+
+  flag_image: False
+  filename_image_bef: figure_bef.png
+  filename_image_aft: figure_aft.png
+  filename_image_acq: figure_acq.png
+  filename_image_opt: figure_opt.png
+  image_opt_ylower: 100
+  image_opt_yupper: 400
+
+# Optimizatioi parameters
+  kind_x: time_day
+  kind_y:
+    - longitude
+    - latitude
+    - altitude
+
+# 写像(Mapping)
+  flag_map: False
+  kind_function_map:  # Only "sine" or "none" are supported
+    - cosine
+    - none
+    - none
+# カーネル関数 and hyperparameters
+  kind_kernel: 
+    - rbf_white #rbf_white #stdperiodic
+    - rbf_white
+    - rbf_white
+  dim_kernel: 
+    - 1
+    - 1
+    - 1 
+  variance_kernel: 
+    - 1.e0
+    - 1.e0
+    - 1.e0
+  lengthscale_kernel:
+    - 1.0e2 #0.01
+    - 1.0e2 #0.01
+    - 1.0e2 #0.01
+  flag_constrain:
+    - False #True
+    - False # True
+    - False #True
+  kind_constrain:
+    - sum.rbf.lengthscale
+    - sum.rbf.lengthscale
+    - sum.rbf.lengthscale
+  const_bound_upper:
+    - 1.0 #1.0
+    - 1.0
+    - 1.0
+  const_bound_lower:   
+    - 0.01 #0.01
+    - 0.01 #0.01
+    - 0.01 #0.01
+
+# optimazer
+  num_optiter: 1000
+# 回帰関数
+  num_div_optfunction: 1000 #100000
+  x_margin_optfunction: 0.0 #0.1 #1.0
+
+# Output data by GPy.models
+  flag_output: False
+  filename_output: output.dat
+
+# --Tecplot
+  flag_tecplot: True
+  filename_tecplot: tecplot_opt.dat
+  header_tecplot: 'variables=Time[day],Mean[km],STD[km],Mean-1Sig[km],Mean+1Sig[km]'
+
+
+
+# Code related: reconst_trajectory.py, post_tacode.py
+trajectory:
+  # Output data of trajectory
+  flag_fileoutput: True
+  filename_output: trajectory.dat
+
+  flag_filevelocity: True
+  filename_velocity: output_velocity.dat
+
+  # Tecplot data of trajectory
+  flag_tecplot: True
+  filename_tecplot: tecplot_reconst.dat
+
+  # Duration
+  #time_start: 114.8135
+  #time_end:   114.8804
+  # Target time 
+  #target_time: 114.8344
+
+
+# Postprocess of TA code results
+# Code related: post_tacode.py
+tacode:
+  # TAcode case directory
+  work_dir: work_tacode
+  case_dir: case
+  
+  # Template path for Tacode work directory
+  template_path: /home/ytakahashi/worki/egg_atmosphericdensity/egg_trajectory_template
+  
+  # Executing script
+  cmd_tacode: ./run_tacode_pps.sh
+  
+  # Control file
+  filename_control: orbit.ctl
+  
+  # Result file name computed by Tacode
+  filename_trajectory: trajectory.dat
+  
+  # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
+  convert_timeunit_tapost: sec2day
+
+  # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
+  # 時刻オフセット値はここで決定する
+  time_start: 118.3480
+  time_end:   118.3931
+  target_time: 118.3480
+
+  # Result trajectory of Tacode 
+  result_dir: result_tacode
+  flag_tecplot: True
+  header_tecplot: variables=Time[day],Longitude[deg],Latitude[deg],Altitude[km],Vel_long[m/s],Vel_lat[m/s],Vel_alt[m/s],Vel_mag[m/s],Density[kg/m3],Temperature[K],Kn,Time[sec]
+  filename_tecplot: tecplot_taresult.dat
+
+
+# Postprocess of TA code results
+# Code related: post_tacode.py
+gridsearch:
+  # Velocity correlation
+  flag_gridsearch: True
+
+  # Preprocess
+  # Velocity (initial)
+  target_velocity:
+    - 7470.0
+    - 7480.0
+    - 7490.0
+    - 7500.0
+    - 7510.0
+  target_velocity_bias:
+    -  0.0 # Longitude direction, m/s
+    -  0.0 # Latitude direction, m/s
+    -  0.0 #-7.0 # Altitude direction, m/s
+  filename_correlation: velocity_correlation.txt
+  # Atmospheric density
+  target_density_factor:
+    - 1.00
+  filename_density_factor_correlation: density_correlation.txt
+
+  # Postprocess
+  # TAcode case directory
+  tapost_case_dir: work_gridsearch/case
+  # Result file name computed by Tacode
+  filename_input_tapost: trajectory.dat
+  # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
+  convert_timeunit_tapost: sec2day
+  # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
+  # 時刻オフセット値はtrajectory:target_timeで与えた値
+  flag_offset_time_tapost: True
+  # Output directory after data process
+  tapost_dir: result_gridsearch
+  # Tacode結果の比較用可視化ファイル
+  flag_tecplot: True
+  header_tecplot: variables=Time[day],Longitude[deg],Latitude[deg],Altitude[km],Vel_long[m/s],Vel_lat[m/s],Vel_alt[m/s],Vel_mag[m/s],Density[kg/m3],Temperature[K],Kn,Time[sec]
+  filename_tecplot: tecplot_tapost.dat
+
+  # Error evaluation between reconstructed trajectory by GPR and computed result by Tacode
+  flag_error_eval: True
+  
+  # Duration
+  time_start: 118.3480
+  time_end:   118.3931
+  target_time: 118.3480
+
+  # Error evaluation outputs
+  flag_ee: True
+  header_ee: variables=Velocity[m/s],Vel_long[m/s],Vel_lat[m/s],Vel_alt[m/s],Density_fact[-],LengthError[m]
+  filename_ee: log_ee_tapost.dat
+
+
+
+Bayes_optimization:
+  # Images
+  flag_image: False
+  filename_image_acq: figure_acq.png
+
+  # optimazer
+  num_optiter: 500
+  num_div_optfunction: 100
+
+  # パラメーター境界
+  # GPR結果から構築した速度データに基づいてパラメーター教会を決めるときは"flag_readvelocityfile"をTrueにする。
+  # このとき読み込んだ値に[velocity_bounds][gap_upper,gap_lower]を足した・ひいた値をboundsに設定する。
+  # 読み込まない場合は[bound_min],[bound_max]で決まる
+  # さらにflag_readgridsearchがTrueのときはgrid search結果を使う。
+  flag_readvelocityfile: False
+  flag_readgridsearch: True
+  velocity_bounds:
+    - kind: longitude
+      bound_min:  7400.0
+      bound_max:  7500.0
+      gap_lower: 50
+      gap_upper: 50
+    - kind: latitude
+      bound_min: -100
+      bound_max:  100
+      gap_lower: 50
+      gap_upper: 50
+    - kind: altitude
+      bound_min: -10
+      bound_max:  10
+      gap_lower: 10
+      gap_upper: 10
+
+  # Results (Tecplot data, 初期データとしても使える)
+  filename_output: output_bopt.dat
+  header_output: 'variables=Vel_long[m/s],Vel_lat[m/s],Vel_alt[m/s],Error,Epoch'
+
+  # Initial data
+  flag_init: True
+  filename_init: initdata_bopt.dat
+
+
+# Code related: reconst_refdata.py
+validation_ref:
+  # Reference data
+  kind_input: Tacode # GPS or Tacode
+  filename_input: ./trajectory.dat
+
+  # Duration
+  time_day_start: 0.000 #115.0 #100.0 #9650000.0
+  time_day_end:   0.033 #117.0 #118.5 #9700000.0
+
+  # データを間引く数
+  thinout: 100
+
+  # Adding Noise
+  flag_noise: False
+  # 
+  std_noise: 
+    - 5.0 # Longitude, Degree
+    - 1.0 # Latitude, Degree
+    - 0.2 # Altitude, km
+
+  # Output
+  filename_output: trajectory_ref.dat
+
+  # Tecplot
+  flag_tecplot: True
+  filename_tecplot: tecplot_trajectory_ref.dat
+
+

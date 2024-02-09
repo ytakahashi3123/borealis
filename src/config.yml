@@ -1,0 +1,107 @@
+# Configuration file for Borealis code
+
+reference:
+
+  directory_path_specify: default # default or manual
+  template_path: ../../testcase_template/case_day118.339/output
+  filename_input: trajectory.dat
+
+  timeunit: day
+
+  var_x: time_day
+  var_y:
+    - longitude
+    - latitude
+    - altitude
+    
+  time_start: 118.3385 #115.8325 #115.0 #100.0 #9650000.0
+  time_end:   118.4003 #115.87 #117.0 #118.5 #9700000.0
+
+  #samplediv: 2
+  # Image file (GPS data)
+  #flag_image: False
+  #filename_image: figure_sample.png
+  # Tecplot (GPS data)
+  #flag_tecplot: True
+  #filename_tecplot: tecplot_gps.dat
+  #header_tecplot: 'variables=Time[day],Longitude[deg],Latitude[deg],Altitude[km],X[m],Y[m],Z[m]'
+
+
+tacode:
+
+  # tacode case directory
+  work_dir: work_tacode
+  case_dir: case
+  
+  # Template path for Tacode work directory
+  #template_path: /opt/gpr/gpr_orbit_ver0.20/egg_trajectory_template
+
+  directory_path_specify: default # default or manual
+  manual_path: ../../testcase_template/work_tacode
+
+  # Executing script
+  cmd_tacode: ./run_tacode.sh
+  
+  # Control file
+  filename_control: config.yml
+  
+  # Result file name computed by Tacode
+  filename_trajectory: trajectory.dat
+  
+  # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
+  convert_timeunit_tapost: sec2day
+
+  # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
+  # 時刻オフセット値はここで決定する
+  time_start: 118.3480
+  time_end:   118.3931
+  target_time: 118.3480
+
+  # Result trajectory of Tacode 
+  result_dir: result_tacode
+  flag_tecplot: True
+  header_tecplot: variables=Time[day],Longitude[deg],Latitude[deg],Altitude[km],Vel_long[m/s],Vel_lat[m/s],Vel_alt[m/s],Vel_mag[m/s],Density[kg/m3],Temperature[K],Kn,Time[sec]
+  filename_tecplot: tecplot_taresult.dat
+
+
+Bayes_optimization:
+  # Images
+  flag_image: False
+  filename_image_acq: figure_acq.png
+
+  # optimazer
+  num_optiter: 500
+  num_div_optfunction: 100
+
+  # パラメーター境界
+  # GPR結果から構築した速度データに基づいてパラメーター教会を決めるときは"flag_readvelocityfile"をTrueにする。
+  # このとき読み込んだ値に[velocity_bounds][gap_upper,gap_lower]を足した・ひいた値をboundsに設定する。
+  # 読み込まない場合は[bound_min],[bound_max]で決まる
+  # さらにflag_readgridsearchがTrueのときはgrid search結果を使う。
+  flag_readvelocityfile: False
+  flag_readgridsearch: False
+  velocity_bounds:
+    - kind: longitude
+      bound_min:  7400.0
+      bound_max:  7500.0
+      gap_lower: 50
+      gap_upper: 50
+    - kind: latitude
+      bound_min: -100
+      bound_max:  100
+      gap_lower: 50
+      gap_upper: 50
+    - kind: altitude
+      bound_min: -10
+      bound_max:  10
+      gap_lower: 10
+      gap_upper: 10
+
+  # Results (Tecplot data, 初期データとしても使える)
+  filename_output: output_bopt.dat
+  header_output: 'variables=Vel_long[m/s],Vel_lat[m/s],Vel_alt[m/s],Error,Epoch'
+
+  # Initial data
+  flag_init: True
+  filename_init: initdata_bopt.dat
+
