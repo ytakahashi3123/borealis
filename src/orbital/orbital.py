@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
+import os as os
 from general.general import general
 
 class orbital(general):

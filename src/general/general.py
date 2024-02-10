@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-# Author: Y.Takahashi, Hokkaido University
-# Date: 2021/03/21
-
-import matplotlib
+#import matplotlib
 #matplotlib.use('Agg')
 #import matplotlib.pyplot as plt
 import numpy as np

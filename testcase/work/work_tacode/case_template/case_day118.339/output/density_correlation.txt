@@ -1,0 +1,4 @@
+# Lonitude (rad), Latitude (rad), Altitude (m) 
+-126.76427528637089, 47.59216768160328, 211092.5432920908   # Initial coordinate 
+# Density factor 
+1.0     # Atmospheric density factor |1

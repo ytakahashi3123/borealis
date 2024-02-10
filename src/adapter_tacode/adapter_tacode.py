@@ -21,7 +21,7 @@ class adapter_tacode(orbital):
     self.case_dir      = config['tacode']['case_dir']
     #self.template_path = config['tacode']['template_path']
 
-    path_specify = config['tacode']['template_path_specify']
+    path_specify = config['tacode']['directory_path_specify']
     default_path = '/../../testcase_template' 
     manual_path  = config['tacode']['manual_path']
     self.template_path = self.get_directory_path(path_specify, default_path, manual_path)
@@ -56,7 +56,7 @@ class adapter_tacode(orbital):
   def reference_data_setting(self, config):
 
     # File directory and name setting
-    path_specify = config['reference']['template_path_specify']
+    path_specify = config['reference']['directory_path_specify']
     default_path = '../../testcase_template/case_day118.339/output' 
     manual_path  = config['reference']['template_path']
     reference_path = self.get_directory_path(path_specify, default_path, manual_path)
@@ -69,7 +69,7 @@ class adapter_tacode(orbital):
     trajectory_mean = []
     trajectory_std  = []
     for i in range(0,len(var_y)):
-      filename_tmp = orbital.split_file(reference_path+'/'+filename,'_'+var_y[i],'.') 
+      filename_tmp = super().split_file(reference_path+'/'+filename,'_'+var_y[i],'.') 
       print('Reading ',var_y[i],' data...',':', filename_tmp)
       data_input   = np.loadtxt(filename_tmp,comments=('#'),delimiter=None,skiprows=1)
       time     = data_input[:,0]
