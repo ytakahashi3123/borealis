@@ -36,15 +36,11 @@ if __name__ == '__main__':
   # Define boundaries
   bounds = adapter_tacode.boundary_setting(config)
 
-  print(bounds)
-
-  exit()
-
   # Class optimization
   optimization = optimization()
 
   # Run Bayesian optimization
-  optimization.bayesian_optimization(config, objective_function, bounds)
+  optimization.bayesian_optimization(config, adapter_tacode.f_tacode, bounds)
 
 # 予測・グラフ化
 #bopt.model.model #ベイズ最適化で使っているガウス過程のモデル(GPyのオブジェクト）

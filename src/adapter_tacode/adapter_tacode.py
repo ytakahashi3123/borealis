@@ -39,6 +39,9 @@ class adapter_tacode(orbital):
     self.root_dir   = os.getcwd()
     self.cmd_home = os.path.dirname(os.path.realpath(__file__)) + '/..'
 
+
+    # Target variables
+    var_target = config['Bayes_optimization']['target_variable']
     # Tacodeコントロールファイルにおける置換関連
     #self.txt_coord_indentified = '# Initial coordinate' 
     #self.ele_coord_indentified = [0,1,2]
@@ -57,8 +60,8 @@ class adapter_tacode(orbital):
 
     # File directory and name setting
     path_specify = config['reference']['directory_path_specify']
-    default_path = '../../testcase_template/case_day118.339/output' 
-    manual_path  = config['reference']['template_path']
+    default_path = '/../../testcase_template/case_day118.339/output' 
+    manual_path  = config['reference']['manual_path']
     reference_path = self.get_directory_path(path_specify, default_path, manual_path)
     filename  = config['reference']['filename_input']
 
@@ -84,12 +87,13 @@ class adapter_tacode(orbital):
     longitude_opt = trajectory_mean[0]
     latitude_opt  = trajectory_mean[1]
     altitude_opt  = trajectory_mean[2]
+
     geodetic_coord_opt  = [longitude_opt,latitude_opt,altitude_opt]
 
     # For optimization
-    self.unit_covert_timeunit = orbital.set_timeunit( config['reference']['timeunit'] )
+    self.unit_covert_timeunit = self.set_timeunit( config['reference']['timeunit'] )
     self.time_sec_opt  = time_opt
-    self.time_day_opt  = time_opt/unit_covert_timeunit
+    self.time_day_opt  = time_opt/self.unit_covert_timeunit
     self.longitude_opt = geodetic_coord_opt[0]
     self.latitude_opt  = geodetic_coord_opt[1]
     self.altitude_opt  = geodetic_coord_opt[2]
@@ -346,13 +350,11 @@ class adapter_tacode(orbital):
     #txt_replaced = [str(n) for n in x_tmp]
     #print('--Initial velocity: ',x_tmp)
     #self.rewrite_control(filename_ctl,self.txt_veloc_indentified,self.ele_veloc_indentified,txt_replaced)
-    var_montecarlo = config['tacode']['target_variable']
-    for n in range(0, len(var_montecarlo)):
-      var_name_ctl   = var_montecarlo[n][0]
-      var_root_ctl   = var_montecarlo[n][1]
-      #var_dispersion = var_montecarlo[n][2]
-
-      var_default = config[var_root_ctl][var_name_ctl]
+    print(x)
+    exit()
+    for n in range(0, len( self.var_target )):
+      var_name_ctl   = self.var_target[n][0]
+      var_root_ctl   = self.var_target[n][1]
 
       txt_indentified = var_name_ctl
       ele_indentified = len(var_default)
@@ -363,7 +365,7 @@ class adapter_tacode(orbital):
       print('Variable:',var_name_ctl,'in',var_root_ctl, ',Parameters:',txt_replaced)
       self.rewrite_control(filename_ctl, txt_indentified, ele_indentified, txt_replaced)
 
-
+    exit()
     # Tacodeの実行
     print('--Start Tacode')
     self.run_tacode()

@@ -98,6 +98,7 @@ class orbital(general):
 
   def set_timeunit( self, timeunit_system ):
   
+    print(timeunit_system )
     if ( timeunit_system == 'day'):
       unit_covert_timeunit = self.unit_covert_day2sec
     elif ( timeunit_system == 'hour'):

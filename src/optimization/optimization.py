@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 
-#import GPyOpt as GPyOpt
+import GPyOpt as GPyOpt
 from orbital.orbital import orbital
-from adapter_tacode.adapter_tacode import adapter_tacode
+#from adapter_tacode.adapter_tacode import adapter_tacode
 
 
 class optimization(orbital):
 
   def __init__(self):
 
-    print("Constructing class: bayesian_opt")
+    print("Constructing class: optimization")
 
     return
 
 
-  def bayesian_optimization(self,config, objective_function, bounds):
+  def bayesian_optimization(self, config, objective_function, bounds):
 
     # X , Y : 初期データ
     # initial_design_numdata : 設定する初期データの数。上記 X , Yを指定した場合は設定不要。 
     # normalize_Y : 目的関数(ガウス過程)を標準化する場合はTrue。(今回は予測を真値と比較しやすくするためFalse)
-    bopt = GPyOpt.methods.BayesianOptimization(f=adapter_tacode.f_tacode,
+    bopt = GPyOpt.methods.BayesianOptimization(f=objective_function,
                                               domain=bounds,
                                               #X=init_X,
                                               #Y=init_Y,

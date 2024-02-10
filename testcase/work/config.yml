@@ -2,18 +2,18 @@
 
 reference:
 
-  directory_path_specify: default # default or manual
-  template_path: ../../testcase_template/case_day118.339/output
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/case_day118.339/output
   filename_input: trajectory.dat
-
-  timeunit: day
 
   var_x: time_day
   var_y:
     - longitude
     - latitude
     - altitude
-    
+
+  timeunit: day
+
   time_start: 118.3385 #115.8325 #115.0 #100.0 #9650000.0
   time_end:   118.4003 #115.87 #117.0 #118.5 #9700000.0
 
@@ -36,7 +36,7 @@ tacode:
   # Template path for Tacode work directory
   #template_path: /opt/gpr/gpr_orbit_ver0.20/egg_trajectory_template
 
-  directory_path_specify: default # default or manual
+  directory_path_specify: manual # default or manual
   manual_path: ../../testcase_template/work_tacode
 
   # Executing script
@@ -96,6 +96,17 @@ Bayes_optimization:
       bound_max:  10
       gap_lower: 10
       gap_upper: 10
+
+  # Target variables to be changed in the Monte Carlo routine
+  target_variable:
+    - 
+      - density_factor # Variable name
+      - initial_settings # Variable's root name 
+      - bound_min: 0.5
+      - bound_max: 1.5
+#    - 
+#      - velocity # Variable name
+#      - initial_settings # Variable's root name 
 
   # Results (Tecplot data, 初期データとしても使える)
   filename_output: output_bopt.dat
