@@ -46,7 +46,7 @@ tacode:
   filename_control: config.yml
   
   # Result file name computed by Tacode
-  filename_trajectory: trajectory.dat
+  filename_trajectory: output_result/tecplot.dat
   
   # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
   convert_timeunit_tapost: sec2day
@@ -73,40 +73,24 @@ Bayes_optimization:
   num_optiter: 500
   num_div_optfunction: 100
 
-  # パラメーター境界
-  # GPR結果から構築した速度データに基づいてパラメーター教会を決めるときは"flag_readvelocityfile"をTrueにする。
-  # このとき読み込んだ値に[velocity_bounds][gap_upper,gap_lower]を足した・ひいた値をboundsに設定する。
-  # 読み込まない場合は[bound_min],[bound_max]で決まる
-  # さらにflag_readgridsearchがTrueのときはgrid search結果を使う。
-  flag_readvelocityfile: False
-  flag_readgridsearch: False
-  velocity_bounds:
-    - kind: longitude
-      bound_min:  7400.0
-      bound_max:  7500.0
-      gap_lower: 50
-      gap_upper: 50
-    - kind: latitude
-      bound_min: -100
-      bound_max:  100
-      gap_lower: 50
-      gap_upper: 50
-    - kind: altitude
-      bound_min: -10
-      bound_max:  10
-      gap_lower: 10
-      gap_upper: 10
-
-  # Target variables to be changed in the Monte Carlo routine
-  target_variable:
-    - 
-      - density_factor # Variable name
-      - initial_settings # Variable's root name 
-      - bound_min: 0.5
-      - bound_max: 1.5
-#    - 
-#      - velocity # Variable name
-#      - initial_settings # Variable's root name 
+  # Parameter boundaries
+  boundary:
+    - name: 'initial_settings.velocity'
+      component:
+        - type: longitude
+          bound_min: 7400
+          bound_max: 7500
+        - type: latitude
+          bound_min: -100
+          bound_max: 100
+        - type: altitude
+          bound_min: -10
+          bound_max: 10
+    - name: 'initial_settings.density_factor'
+      component:
+        - type: density_factor
+          bound_min: 0.5
+          bound_max: 1.5
 
   # Results (Tecplot data, 初期データとしても使える)
   filename_output: output_bopt.dat

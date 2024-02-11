@@ -39,14 +39,8 @@ class adapter_tacode(orbital):
     self.root_dir   = os.getcwd()
     self.cmd_home = os.path.dirname(os.path.realpath(__file__)) + '/..'
 
-
-    # Target variables
-    var_target = config['Bayes_optimization']['target_variable']
-    # Tacodeコントロールファイルにおける置換関連
-    #self.txt_coord_indentified = '# Initial coordinate' 
-    #self.ele_coord_indentified = [0,1,2]
-    #self.txt_veloc_indentified = '# Initial velocity' 
-    #self.ele_veloc_indentified = [0,1,2]
+    # Target parameter
+    self.parameter_target = config['Bayes_optimization']['boundary']
 
     # Counter
     self.iter = 1
@@ -127,86 +121,19 @@ class adapter_tacode(orbital):
 
   def boundary_setting(self, config):
 
-    # 速度ファイルを読み込んで定義域を決定する場合：
-    flag_readvelocityfile = config['Bayes_optimization']['flag_readvelocityfile']
-    flag_readgridsearch   = config['Bayes_optimization']['flag_readgridsearch']
-    if ( flag_readvelocityfile and flag_readgridsearch ):
-      print('Both the flags for reading velocity file and grid search is true.')
-      print('--Bayes_optimization:flag_readvelocityfile',':',flag_readvelocityfile)
-      print('--Bayes_optimization:flag_readgridsearch  ',':',flag_readgridsearch)
-      print('The configuration is not allowed. Please config file.')
-      print('Program stopped.')
-      exit()
-
-    velocity_init = config['Bayes_optimization']['velocity_bounds']
-    
-    if( flag_readvelocityfile ):
-
-      filename_tmp = output_dir+'/'+config['trajectory']['filename_velocity']
-      if (not os.path.exists(filename_tmp)):
-        print('File of velocity data by GPR does not exist',':',filename_tmp)
-        print('Make this file. Program stopped.')
-        exit()
-
-      print('Reading velocity (GPR) data...',':', filename_tmp)
-      data_input   = np.loadtxt(filename_tmp,comments=('#'),delimiter=None,skiprows=1)
-      velocity_lon = data_input[:,1]
-      velocity_lat = data_input[:,2]
-      velocity_alt = data_input[:,3]
-      mag_velocity = data_input[:,4]
-      velocity_geo = [velocity_lon,velocity_lat,velocity_alt,mag_velocity]
-      
-      i_target = orbital.getNearestIndex(time_opt, config['tacode']['target_time']*unit_covert_timeunit)
-      print( 'Velocities at start time',' :', velocity_lon[i_target],velocity_lat[i_target],velocity_alt[i_target])
-
-      bound_lon_min = velocity_lon[i_target] - velocity_init[0]['gap_lower']
-      bound_lon_max = velocity_lon[i_target] + velocity_init[0]['gap_upper']
-      bound_lat_min = velocity_lat[i_target] - velocity_init[1]['gap_lower']
-      bound_lat_max = velocity_lat[i_target] + velocity_init[1]['gap_upper']
-      bound_alt_min = velocity_alt[i_target] - velocity_init[2]['gap_lower']
-      bound_alt_max = velocity_alt[i_target] + velocity_init[2]['gap_upper']
-
-
-    elif( flag_readgridsearch ):
-      filename_tmp = config['gridsearch']['tapost_dir']+'/'+config['gridsearch']['filename_ee']
-      if (not os.path.exists(filename_tmp)):
-        print('File of velocity data by grid search does not exist',':',filename_tmp)
-        print('Make this file. Program stopped.')
-        exit()
-      print('Reading velocity (grid serach) data...',':', filename_tmp)
-      data_input   = np.loadtxt(filename_tmp,comments=('#'),delimiter=',',skiprows=3)
-      mag_velocity = data_input[:,0]
-      velocity_lon = data_input[:,1]
-      velocity_lat = data_input[:,2]
-      velocity_alt = data_input[:,3]
-      #densityf     = data_input[:,4]
-      error_grid   = data_input[:,5]
-      #velocity_geo = [velocity_lon,velocity_lat,velocity_alt,mag_velocity]
-
-      i_target = np.argmin(error_grid)
-      print( 'Velocities at start time',' :', velocity_lon[i_target],velocity_lat[i_target],velocity_alt[i_target])
-      bound_lon_min = velocity_lon[i_target] - velocity_init[0]['gap_lower']
-      bound_lon_max = velocity_lon[i_target] + velocity_init[0]['gap_upper']
-      bound_lat_min = velocity_lat[i_target] - velocity_init[1]['gap_lower']
-      bound_lat_max = velocity_lat[i_target] + velocity_init[1]['gap_upper']
-      bound_alt_min = velocity_alt[i_target] - velocity_init[2]['gap_lower']
-      bound_alt_max = velocity_alt[i_target] + velocity_init[2]['gap_upper']
-
-    else:
-      bound_lon_min = velocity_init[0]['bound_min']
-      bound_lon_max = velocity_init[0]['bound_max']
-      bound_lat_min = velocity_init[1]['bound_min']
-      bound_lat_max = velocity_init[1]['bound_max']
-      bound_alt_min = velocity_init[2]['bound_min']
-      bound_alt_max = velocity_init[2]['bound_max']
-
-    print( 'Boundary in longitude velocity (min--max)',' :', bound_lon_min,'--',bound_lon_max)
-    print( 'Boundary in latitude velocity  (min--max)',' :', bound_lat_min,'--',bound_lat_max)
-    print( 'Boundary in altitude velocity  (min--max)',' :', bound_alt_min,'--',bound_alt_max)
-
-    bounds = [ {'name': 'longitude', 'type': 'continuous', 'domain': (bound_lon_min, bound_lon_max)},
-               {'name': 'latitude' , 'type': 'continuous', 'domain': (bound_lat_min, bound_lat_max)},
-               {'name': 'altitude' , 'type': 'continuous', 'domain': (bound_alt_min, bound_alt_max)}]
+    boundary = config['Bayes_optimization']['boundary']
+    bounds = []
+    for n in range(0, len(boundary) ):
+      boundary_name = boundary[n]['name']
+#      boundary_name = boundary[n]['name'].rsplit('.', 1)
+#      print(boundary_name[0])
+      parameter_component = boundary[n]['component']
+      for m in range(0,  len(parameter_component)):
+        bound_type = parameter_component[m]['type']
+        bound_min  = parameter_component[m]['bound_min']
+        bound_max  = parameter_component[m]['bound_max']
+        bounds.append( {'name': bound_type, 'type': 'continuous', 'domain': (bound_min, bound_max) } )
+        print( 'Boundary in',bound_type,'component of',boundary_name,'(min--max):', bound_min,'--',bound_max)
 
     return bounds
 
@@ -215,6 +142,7 @@ class adapter_tacode(orbital):
     # 
     # txt_indentifiedの文字列を含む行を抽出し、その(ele_indentified)列目要素を置換する。
     # 何度もファイル開閉をするのは問題かもしれない
+    print(filename,txt_indentified,ele_indentified,txt_replaced)
 
     for m in range(0,ele_indentified):
       # Reading control file
@@ -258,18 +186,18 @@ class adapter_tacode(orbital):
 #    subprocess.call('pwd')
 
     # Get relative path
-    current_path  = os.getcwd()
-    relative_path = os.path.relpath(self.cmd_home, current_path)
+    #current_path  = os.getcwd()
+    #relative_path = os.path.relpath(self.cmd_home, current_path)
 
     # Run Tacode
-    try:
-      # 相対パスにあるプログラムを実行
-      subprocess.run([self.cmd_tacode, relative_path], check=True)
-    except subprocess.CalledProcessError as e:
-      print("Error:", e)
-      exit()
+    #try:
+    #  # 相対パスにあるプログラムを実行
+    #  subprocess.run([self.cmd_tacode, relative_path], check=True)
+    #except subprocess.CalledProcessError as e:
+    #  print("Error:", e)
+    #  exit()
 
-#    subprocess.call( self.cmd_tacode )
+    subprocess.call( self.cmd_tacode )
 
     os.chdir( self.root_dir )
 
@@ -341,31 +269,25 @@ class adapter_tacode(orbital):
     # コントロールファイルの書き換え 
     print('--Modification: control file')
     filename_ctl = self.work_dir_case+'/'+self.filename_control_tacode
-    # --Initial Coordinate
-    #txt_replaced = [str(self.target_longitude_opt), str(self.target_latitude_opt), str(self.target_altitude_opt*orbital.unit_covert_km2m)]
-    #self.rewrite_control(filename_ctl,self.txt_coord_indentified,self.ele_coord_indentified,txt_replaced)
-    # --Initial Velocity
-    #u_lon, u_lat,u_alt  = x[:,0],x[:,1],x[:,2]
-    #x_tmp        = [u_lon[0].tolist(),u_lat[0].tolist(),u_alt[0].tolist()]
-    #txt_replaced = [str(n) for n in x_tmp]
-    #print('--Initial velocity: ',x_tmp)
-    #self.rewrite_control(filename_ctl,self.txt_veloc_indentified,self.ele_veloc_indentified,txt_replaced)
-    print(x)
-    exit()
-    for n in range(0, len( self.var_target )):
-      var_name_ctl   = self.var_target[n][0]
-      var_root_ctl   = self.var_target[n][1]
+
+    count = 0
+    parameter_target = self.parameter_target
+    for n in range(0, len(parameter_target ) ):
+      parameter_name = parameter_target[n]['name'].rsplit('.', 1)
+      parameter_component = parameter_target[n]['component']
+
+      var_root_ctl = parameter_name[0]
+      var_name_ctl = parameter_name[1]
 
       txt_indentified = var_name_ctl
-      ele_indentified = len(var_default)
+      ele_indentified = len(parameter_component)
       txt_replaced = []
-      for m in range(0,ele_indentified):
-        txt_replaced.append( str( x[0,n] ) )
-
+      for m in range(0, len(parameter_component) ):
+        txt_replaced.append( str( x[0,count] ) )
+        count = count + 1
       print('Variable:',var_name_ctl,'in',var_root_ctl, ',Parameters:',txt_replaced)
-      self.rewrite_control(filename_ctl, txt_indentified, ele_indentified, txt_replaced)
+      self.rewrite_control_file(filename_ctl, txt_indentified, ele_indentified, txt_replaced)
 
-    exit()
     # Tacodeの実行
     print('--Start Tacode')
     self.run_tacode()

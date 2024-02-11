@@ -24,6 +24,7 @@ satellite:
   drag_coefficient: 1.0
 
   # Drag coefficient (aerodynamic model: fileinput)
+  directory_path_specify: default # default or manual
   directory_aerodynamic: ../../database/aerodynamic
   filename_aerodynamic: aerodynamic.txt
 
@@ -75,6 +76,7 @@ atmosphere:
   temperature: 300.0
 
   # Atmosphere model: file input
+  directory_path_specify: default # default or manual
   directory_atmosphere: ../../database/atmosphere
   filename_atmosphere: atmospheremodel.txt
 

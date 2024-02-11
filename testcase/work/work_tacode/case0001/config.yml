@@ -24,6 +24,7 @@ satellite:
   drag_coefficient: 1.0
 
   # Drag coefficient (aerodynamic model: fileinput)
+  directory_path_specify: default # default or manual
   directory_aerodynamic: ../../database/aerodynamic
   filename_aerodynamic: aerodynamic.txt
 
@@ -36,11 +37,11 @@ initial_settings:
     -  51.47
     -  201.58
   velocity:
-    -  7577.57998256923
-    - -262.224438463479
-    -  3.45812245578943
+    - 7490.327137278003
+    - 62.12081897821699
+    - 0.5715117173497255
   density_factor:
-    - 1.0
+    - 0.880874702451791
 
 
 planet:
@@ -75,6 +76,7 @@ atmosphere:
   temperature: 300.0
 
   # Atmosphere model: file input
+  directory_path_specify: default # default or manual
   directory_atmosphere: ../../database/atmosphere
   filename_atmosphere: atmospheremodel.txt
 

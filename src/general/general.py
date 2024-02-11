@@ -66,18 +66,9 @@ class general:
 
 
   def split_file(self, filename,addfile,splitchar):
-    """
-    特定の文字の前に'_***'を加える.
-    特定文字列が２つ以上ある場合は未対応
-    """
-  #  import re
-  #  splitchar_tmp   ='['+splitchar+']'
-  #  filename_split  = re.split(splitchar_tmp, filename)
-  #  filename_result = filename_split[0]+addfile+splitchar+filename_split[1]
     splitchar_tmp   = splitchar
     filename_split  = filename.rsplit(splitchar_tmp, 1)
     filename_result = filename_split[0]+addfile+splitchar+filename_split[1]
-
     return filename_result
 
     
