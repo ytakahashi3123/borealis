@@ -3,6 +3,7 @@
 import numpy as np
 import os as os
 import shutil as shutil
+import subprocess as subprocess
 from orbital.orbital import orbital
 
 
@@ -19,7 +20,6 @@ class adapter_tacode(orbital):
 
     self.work_dir      = config['tacode']['work_dir']
     self.case_dir      = config['tacode']['case_dir']
-    #self.template_path = config['tacode']['template_path']
 
     path_specify = config['tacode']['directory_path_specify']
     default_path = '/../../testcase_template' 
@@ -44,8 +44,15 @@ class adapter_tacode(orbital):
 
     # Counter
     self.iter = 1
-  
-    #self.process_list = []
+
+    # Variables of trajectory file computed by Tacode
+    self.result_var = ['Time[s]','Long[deg.]','Lati[deg.]','Alti[km]','Upl[m/s]','Vpl[m/s]','Wpl[m/s]','VelplAbs[m/s]','Dens[kg/m3]','Temp[K]','Kn']
+
+    # Result file: Make directory
+    super().make_directory_rm(config['tacode']['result_dir'])
+
+    # Control file 
+    self.config = config
 
     return
 
@@ -102,31 +109,17 @@ class adapter_tacode(orbital):
     print('Time at start position:       ',self.target_time_opt, 'day')
     print('Initial Geodetic coordinate, :',self.target_longitude_opt,'deg.,',self.target_latitude_opt,'deg.,',self.target_altitude_opt,'km')
 
-    # Used in Tacode trajectory (:trajectory.dat) for comparison with GPR result
-    self.time_start      = config['tacode']['time_start']
-    self.time_end        = config['tacode']['time_end']
-    self.target_time_set = config['tacode']['target_time']
-
-    # Result file
-    self.result_dir       = config['tacode']['result_dir']
-    self.flag_tecplot     = config['tacode']['flag_tecplot']
-    self.header_tecplot   = config['tacode']['header_tecplot']
-    self.filename_tecplot = config['tacode']['filename_tecplot']
-
-    # Make directory
-    super().make_directory(self.result_dir)
-
     return
 
 
   def boundary_setting(self, config):
 
+    # Setting parameter's boundaries
+
     boundary = config['Bayes_optimization']['boundary']
     bounds = []
     for n in range(0, len(boundary) ):
       boundary_name = boundary[n]['name']
-#      boundary_name = boundary[n]['name'].rsplit('.', 1)
-#      print(boundary_name[0])
       parameter_component = boundary[n]['component']
       for m in range(0,  len(parameter_component)):
         bound_type = parameter_component[m]['type']
@@ -139,10 +132,9 @@ class adapter_tacode(orbital):
 
 
   def rewrite_control_file(self,filename,txt_indentified,ele_indentified,txt_replaced):
-    # 
+    
     # txt_indentifiedの文字列を含む行を抽出し、その(ele_indentified)列目要素を置換する。
     # 何度もファイル開閉をするのは問題かもしれない
-    print(filename,txt_indentified,ele_indentified,txt_replaced)
 
     for m in range(0,ele_indentified):
       # Reading control file
@@ -178,25 +170,12 @@ class adapter_tacode(orbital):
 
 
   def run_tacode(self):
-    import subprocess
     # Tacodeの実行
     
     # 計算ディレクトリに移動、実行、元ディレクトリに戻る
     os.chdir( self.work_dir_case )
-#    subprocess.call('pwd')
-
-    # Get relative path
-    #current_path  = os.getcwd()
-    #relative_path = os.path.relpath(self.cmd_home, current_path)
 
     # Run Tacode
-    #try:
-    #  # 相対パスにあるプログラムを実行
-    #  subprocess.run([self.cmd_tacode, relative_path], check=True)
-    #except subprocess.CalledProcessError as e:
-    #  print("Error:", e)
-    #  exit()
-
     subprocess.call( self.cmd_tacode )
 
     os.chdir( self.root_dir )
@@ -204,25 +183,23 @@ class adapter_tacode(orbital):
     return
 
 
-  def evaluate_error(self):
-    # Tacodeによるトラジェクトリ結果とGPR結果の誤差を評価する
 
-    # Trajectoryデータの読み込み
-    filename_tmp = self.work_dir_case+'/'+self.filename_trajectory_tacode
-    print('--Reading trajectory file (tacode)... :',filename_tmp)
-    time_sec, longitude, latitude, altitude, velocity,  density, temperature, kn = super().read_inputdata_tacode(filename_tmp)
-    velocity_long = velocity[0]
-    velocity_lat  = velocity[1]
-    velocity_alt  = velocity[2]
-    velocity_mag  = velocity[3]
+  def evaluate_error(self, trajectory_dict):
 
-    # 開始時刻をGPRデータと合わせる
-    time_day        = time_sec/orbital.unit_covert_day2sec
-    time_day_offset = time_day+self.target_time_set
-    time_sec_offset = time_sec+self.target_time_set*orbital.unit_covert_day2sec
+    # Tacodeによるトラジェクトリ結果とReferenceの誤差を評価する
 
-    i_start = super().getNearestIndex(time_day_offset, self.time_start)
-    i_end   = super().getNearestIndex(time_day_offset, self.time_end)
+    longitude       = trajectory_dict['Long[deg.]']
+    latitude        = trajectory_dict['Lati[deg.]']
+    altitude        = trajectory_dict['Alti[km]']
+    time_sec_offset = trajectory_dict['Time[s]']
+    time_day_offset = trajectory_dict['Time[day]']
+
+    time_start      = self.config['tacode']['time_start']
+    time_end        = self.config['tacode']['time_end']
+    target_time_set = self.config['tacode']['target_time']
+
+    _, i_start = super().closest_value_index(time_day_offset, time_start)
+    _, i_end   = super().closest_value_index(time_day_offset, time_end)
 
     # 誤差評価の計算
     error_tmp = 0.0
@@ -242,21 +219,115 @@ class adapter_tacode(orbital):
 #        error_tmp = error_tmp/float(count_tmp)
     error_tmp = np.sqrt( error_tmp/float(count_tmp) )
 
-    if( self.flag_tecplot ):
-      number_padded     = '{0:04d}'.format(self.iter)
-      filename_tmp      = super().split_file(self.result_dir+'/'+self.filename_tecplot,'_case'+number_padded,'.')
-      header_tmp        = self.header_tecplot
-      print_message_tmp = '--Writing tecplot file... '
-      delimiter_tmp     = '\t'
-      comments_tmp      = ''
-      output_tmp        = np.c_[time_day_offset, longitude, latitude, altitude, velocity_long, velocity_lat, velocity_alt, velocity_mag, density, temperature, kn, time_sec_offset]
-      super().write_tecplotdata( filename_tmp, print_message_tmp, header_tmp, delimiter_tmp, comments_tmp, output_tmp )
-
     return error_tmp
 
 
-  def f_tacode(self,x):
-    # Tacodeのコントロールファイルを適切に修正して、tacodeを実行する。
+  def read_trajectory_data(self):
+    
+    # Trajectoryデータの読み込み
+    filename = self.work_dir_case+'/'+self.filename_trajectory_tacode
+
+    print("--Reading computed trajectory results by Tacode...:",filename)
+
+    # Set header
+    with open(filename) as f:
+      lines = f.readlines()
+    # リストとして取得
+    lines_strip = [line.strip() for line in lines]
+    # ”Variables ="を削除した上で、カンマとスペースを削除
+    variables_line = lines_strip[1].replace('Variables =', '')
+    variables_line = variables_line.replace(',', ' ').replace('"', ' ')
+    # 空白文字で分割して単語のリストを取得
+    words = variables_line.split()
+
+    # set variables
+    result_var   = self.result_var
+    result_index = []
+    for i in range( 0,len(result_var) ):
+      for n in range( 0,len(words) ):
+        if result_var[i] == words[n] :
+          result_index.append(n)
+          #print( result_var[i], words[n], i, n)
+          break
+
+    # Read data
+    data_input = np.loadtxt(filename,comments=('#'),delimiter=None,skiprows=3)
+
+    # Store data as dictionary
+    trajectory_dict = {}
+    for n in range( 0,len(result_var) ):
+      trajectory_dict[ result_var[n] ] = data_input[:,result_index[n]]
+
+    time_sec      = trajectory_dict['Time[s]']
+    longitude     = trajectory_dict['Long[deg.]']
+    latitude      = trajectory_dict['Lati[deg.]']
+    altitude      = trajectory_dict['Alti[km]']
+    velocity_long = trajectory_dict['Upl[m/s]']
+    velocity_lat  = trajectory_dict['Vpl[m/s]']
+    velocity_alt  = trajectory_dict['Wpl[m/s]']
+    velocity_mag  = trajectory_dict['VelplAbs[m/s]']
+    density       = trajectory_dict['Dens[kg/m3]']
+    temperature   = trajectory_dict['Temp[K]']
+    kn            = trajectory_dict['Kn']
+
+    # 開始時刻をGPRデータと合わせる
+    time_start      = self.config['tacode']['time_start']
+    time_end        = self.config['tacode']['time_end']
+    target_time_set = self.config['tacode']['target_time']
+
+    time_day        = time_sec/orbital.unit_covert_day2sec
+    time_day_offset = time_day+target_time_set
+    time_sec_offset = time_sec+target_time_set*orbital.unit_covert_day2sec
+
+    # Update time variables offset
+    trajectory_dict['Time[s]']   = time_sec_offset
+    trajectory_dict['Time[day]'] = time_day_offset
+
+    return trajectory_dict
+
+
+  def write_trajectory_data(self, trajectory_dict):
+
+    longitude     = trajectory_dict['Long[deg.]']
+    latitude      = trajectory_dict['Lati[deg.]']
+    altitude      = trajectory_dict['Alti[km]']
+    velocity_long = trajectory_dict['Upl[m/s]']
+    velocity_lat  = trajectory_dict['Vpl[m/s]']
+    velocity_alt  = trajectory_dict['Wpl[m/s]']
+    velocity_mag  = trajectory_dict['VelplAbs[m/s]']
+    density       = trajectory_dict['Dens[kg/m3]']
+    temperature   = trajectory_dict['Temp[K]']
+    kn            = trajectory_dict['Kn']
+
+    time_sec_offset = trajectory_dict['Time[s]']
+    time_day_offset = trajectory_dict['Time[day]']
+
+    if( self.config['tacode']['flag_tecplot'] ):
+      result_dir        = self.config['tacode']['result_dir']
+      filename_tecplot  = self.config['tacode']['filename_tecplot']
+      number_padded     = '{0:04d}'.format(self.iter)
+      filename_tmp      = super().insert_suffix(result_dir+'/'+filename_tecplot,'_case'+number_padded,'.')
+      print('--Writing tecplot file...:',filename_tmp)
+
+      result_var_tmp = self.result_var
+      header_tmp = "Variables="
+      for n in range(0,len(result_var_tmp)):
+        header_tmp = header_tmp + result_var_tmp[n] + ','
+      header_tmp = header_tmp.rstrip(",") 
+      # Addition
+      header_tmp = header_tmp + ',Time[day]'
+      
+      delimiter_tmp     = '\t'
+      comments_tmp      = ''
+      output_tmp        = np.c_[time_sec_offset, longitude, latitude, altitude, velocity_long, velocity_lat, velocity_alt, velocity_mag, density, temperature, kn, time_day_offset]
+      np.savetxt(filename_tmp, output_tmp, header=header_tmp, delimiter=delimiter_tmp, comments=comments_tmp )
+
+    return
+
+
+  def objective_function(self, x):
+
+    # コントロールファイルを適切に修正して、tacodeを実行する。
 
     print('Iteration: ', self.iter)
 
@@ -269,7 +340,6 @@ class adapter_tacode(orbital):
     # コントロールファイルの書き換え 
     print('--Modification: control file')
     filename_ctl = self.work_dir_case+'/'+self.filename_control_tacode
-
     count = 0
     parameter_target = self.parameter_target
     for n in range(0, len(parameter_target ) ):
@@ -288,15 +358,21 @@ class adapter_tacode(orbital):
       print('Variable:',var_name_ctl,'in',var_root_ctl, ',Parameters:',txt_replaced)
       self.rewrite_control_file(filename_ctl, txt_indentified, ele_indentified, txt_replaced)
 
-    # Tacodeの実行
+    # Run Tacode
     print('--Start Tacode')
     self.run_tacode()
     print('--End Tacode')
 
-    # Trajectoryファイルの読み込みと誤差評価
-    print('--Evaluating error between Tacode and GPR results')
-    error = self.evaluate_error()
-    print('--Done, Error between Tacode and GPR: ',error)
+    # Read trajectory for evaluating error
+    trajectory_dict = self.read_trajectory_data()
+
+    # Write trajectory data
+    self.write_trajectory_data(trajectory_dict)
+
+    # Evaluate error
+    print('--Evaluating error between computed result and reference data')
+    error = self.evaluate_error(trajectory_dict)
+    print('--Done, Error: ',error)
 
     # カウンタの更新
     self.iter += 1

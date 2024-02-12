@@ -14,8 +14,8 @@ reference:
 
   timeunit: day
 
-  time_start: 118.3385 #115.8325 #115.0 #100.0 #9650000.0
-  time_end:   118.4003 #115.87 #117.0 #118.5 #9700000.0
+  #time_start: 118.3385 #115.8325 #115.0 #100.0 #9650000.0
+  #time_end:   118.4003 #115.87 #117.0 #118.5 #9700000.0
 
   #samplediv: 2
   # Image file (GPS data)
@@ -53,14 +53,14 @@ tacode:
 
   # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
   # 時刻オフセット値はここで決定する
-  time_start: 118.3480
-  time_end:   118.3931
-  target_time: 118.3480
+  time_start: 118.3385
+  time_end:   118.4003
+  target_time: 118.3385
 
   # Result trajectory of Tacode 
   result_dir: result_tacode
   flag_tecplot: True
-  header_tecplot: variables=Time[day],Longitude[deg],Latitude[deg],Altitude[km],Vel_long[m/s],Vel_lat[m/s],Vel_alt[m/s],Vel_mag[m/s],Density[kg/m3],Temperature[K],Kn,Time[sec]
+  #case_digt: 4
   filename_tecplot: tecplot_taresult.dat
 
 

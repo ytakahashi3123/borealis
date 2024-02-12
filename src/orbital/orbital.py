@@ -15,7 +15,7 @@ class orbital(general):
   unit_covert_day2sec = duration_sec2min*duration_min2hour*duration_hour2day #86164.09053083288
   unit_covert_sec2day = 1.0/unit_covert_day2sec
 
-  file_control_default = "config.yml"
+  file_control_default = "borealis.yml"
   
   
   def __init__(self):
@@ -68,33 +68,6 @@ class orbital(general):
 
     return time_sec, longitude, latitude, altitude
   
-  
-  def read_inputdata_tacode( self, filename ):
-    
-    print("Reading tacode result...",":", filename)
-  
-    data_input = np.loadtxt(filename,comments=('#'),delimiter=None,skiprows=2)
-    count      = data_input[:, 0]
-    len_array  = len(count)
-
-    time_sec   = data_input[:, 1]
-
-    longitude = data_input[:,2] # Degree
-    latitude  = data_input[:,3] # Degree 
-    altitude  = data_input[:,4] # km
-
-    velocity_long = data_input[:,5]
-    velocity_lat  = data_input[:,6]
-    velocity_alt  = data_input[:,7]
-    velocity_mag  = data_input[:,8]
-    velocity      = [velocity_long,velocity_lat,velocity_alt,velocity_mag]
-
-    density       = data_input[:,9]
-    temperature   = data_input[:,10]
-    kn            = data_input[:,11]
-
-    return time_sec, longitude, latitude, altitude, velocity, density, temperature, kn
-
 
   def set_timeunit( self, timeunit_system ):
   

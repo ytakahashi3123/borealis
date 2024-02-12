@@ -98,14 +98,14 @@ class general:
       return closest_value, closest_index
 
 
-  def getNearestValue(self, list, num):
-      # リスト要素と対象値の差分を計算し最小値のインデックスを取得
-      idx = np.abs(np.asarray(list) - num).argmin()
-      return list[idx]
+  #def getNearestValue(self, list, num):
+  #    # リスト要素と対象値の差分を計算し最小値のインデックスを取得
+  #    idx = np.abs(np.asarray(list) - num).argmin()
+  #    return list[idx]
   
   
-  def getNearestIndex(self, list, num):
-      # リスト要素と対象値の差分を計算し最小値のインデックスを取得し返す
-      idx = np.abs(np.asarray(list) - num).argmin()
-      return idx
+  #def getNearestIndex(self, list, num):
+  #    # リスト要素と対象値の差分を計算し最小値のインデックスを取得し返す
+  #    idx = np.abs(np.asarray(list) - num).argmin()
+  #    return idx
   
