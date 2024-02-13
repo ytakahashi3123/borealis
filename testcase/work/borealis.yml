@@ -17,6 +17,9 @@ reference:
 
 tacode:
 
+  # Code system: python3 (tacode ver2.0) or Fortran (tacoed ver1.0)
+  code_system: python3
+
   # tacode case directory
   work_dir: work_tacode
   case_dir: case
@@ -38,9 +41,12 @@ tacode:
 
   # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
   # 時刻オフセット値はここで決定する
-  time_start: 118.3385
-  time_end:   118.4003
-  target_time: 118.3385
+ # time_start: 118.3385
+ # time_end:   118.4003
+ # target_time: 118.3385
+  time_start: 118.3480
+  time_end:   118.3931
+  target_time: 118.3480
 
   # Result trajectory of Tacode 
   result_dir: result_tacode
@@ -60,18 +66,29 @@ Bayes_optimization:
 
   # Parameter boundaries
   boundary:
-    - name: 'initial_settings.velocity'
+    - name: 'initial_settings.coordinate:' #'# Initial coordinate' 
       component:
         - type: longitude
-          bound_min: 7400
-          bound_max: 7500
+          bound_min: -126.76427528637089
+          bound_max: -126.76427528637089
         - type: latitude
-          bound_min: -100
-          bound_max: 100
+          bound_min: 47.59216768160328
+          bound_max: 47.59216768160328
         - type: altitude
-          bound_min: -10
-          bound_max: 10
-    - name: 'initial_settings.density_factor'
+          bound_min: 211.0925432920908
+          bound_max: 211.0925432920908
+    - name: 'initial_settings.velocity:' #'# Initial velocity' 
+      component:
+        - type: longitude
+          bound_min: 6800
+          bound_max: 6850
+        - type: latitude
+          bound_min: 3070
+          bound_max: 3090
+        - type: altitude
+          bound_min: 2.0
+          bound_max: 2.2
+    - name: 'initial_settings.density_factor:' # '# Factor for atmospheric density'
       component:
         - type: density_factor
           bound_min: 0.5

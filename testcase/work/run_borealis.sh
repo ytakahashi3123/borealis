@@ -3,4 +3,4 @@
 LD=../../src/borealis.py
 LOG=log_borealis
 
-python3 $LD > $LOG
+python3.9 $LD > $LOG

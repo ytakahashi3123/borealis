@@ -1,0 +1,22 @@
+Calling class: orbital
+Reading control file...: borealis.yml
+Constructing class: adapter_tacode
+Reading  longitude  data... : ../../testcase_template/case_day118.339/output/trajectory_longitude.dat
+Reading  latitude  data... : ../../testcase_template/case_day118.339/output/trajectory_latitude.dat
+Reading  altitude  data... : ../../testcase_template/case_day118.339/output/trajectory_altitude.dat
+day
+Time at start position:        118.3384885006062 day
+Initial Geodetic coordinate, : -174.36580441227173 deg., 11.314579319806237 deg., 202.02820302091408 km
+Constructing class: optimization
+Boundary in longitude component of initial_settings.velocity (min--max): 7400 -- 7500
+Boundary in latitude component of initial_settings.velocity (min--max): -100 -- 100
+Boundary in altitude component of initial_settings.velocity (min--max): -10 -- 10
+Boundary in density_factor component of initial_settings.density_factor (min--max): 0.5 -- 1.5
+Iteration:  1
+--Case directory:  work_tacode/case0001
+--Modification: control file
+Variable: velocity in initial_settings ,Parameters: ['7477.403758652446', '11.652724647637982', '-9.225851972740815']
+Elapsed time of rewrite_control_file: [33m0.0012269020080566406[0m s
+Variable: density_factor in initial_settings ,Parameters: ['0.6063876306912492']
+Elapsed time of rewrite_control_file: [33m0.00030994415283203125[0m s
+--Start Tacode

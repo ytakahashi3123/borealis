@@ -16,6 +16,25 @@ class optimization(orbital):
     return
 
 
+  def boundary_setting(self, config):
+
+    # Setting parameter's boundaries
+
+    boundary = config['Bayes_optimization']['boundary']
+    bounds = []
+    for n in range(0, len(boundary) ):
+      boundary_name = boundary[n]['name']
+      parameter_component = boundary[n]['component']
+      for m in range(0,  len(parameter_component)):
+        bound_type = parameter_component[m]['type']
+        bound_min  = parameter_component[m]['bound_min']
+        bound_max  = parameter_component[m]['bound_max']
+        bounds.append( {'name': bound_type, 'type': 'continuous', 'domain': (bound_min, bound_max) } )
+        print( 'Boundary in',bound_type,'component of',boundary_name,'(min--max):', bound_min,'--',bound_max)
+
+    return bounds
+
+
   def bayesian_optimization(self, config, objective_function, parameter_boundary):
 
     # X , Y : 初期データ

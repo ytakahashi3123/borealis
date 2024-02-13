@@ -13,34 +13,37 @@ from adapter_tacode.adapter_tacode import adapter_tacode
 from optimization.optimization import optimization
 
 
-if __name__ == '__main__':
+def main():
 
   # Class orbital
-  orbital = orbital()
+  orbit = orbital()
 
-  #設定ファイルの読み込み
-  file_control_default = orbital.file_control_default
-  arg          = orbital.argument(file_control_default)
+  # Read control file
+  file_control_default = orbit.file_control_default
+  arg          = orbit.argument(file_control_default)
   file_control = arg.file
-  config       = orbital.read_config_yaml(file_control)
+  config       = orbit.read_config_yaml(file_control)
 
   # Class adapter_tacode
-  adapter_tacode = adapter_tacode()
+  adapter = adapter_tacode()
 
   # Initialize for trajectory analysis
-  adapter_tacode.initial_settings(config)
+  adapter.initial_settings(config)
 
   # Reference data for objective function
-  adapter_tacode.reference_data_setting(config)
+  adapter.reference_data_setting(config)
 
-  # Define parameter boundaries
-  parameter_boundary = adapter_tacode.boundary_setting(config)
+  # Objective function
+  objective_function = adapter.objective_function
 
   # Class optimization
-  optimization = optimization()
+  optimize = optimization()
+
+  # Define parameter boundaries
+  parameter_boundary = optimize.boundary_setting(config)
 
   # Run Bayesian optimization
-  optimization.run_optimization(config, adapter_tacode.objective_function, parameter_boundary)
+  optimize.run_optimization(config, objective_function, parameter_boundary)
 
 # 予測・グラフ化
 #bopt.model.model #ベイズ最適化で使っているガウス過程のモデル(GPyのオブジェクト）
@@ -66,17 +69,12 @@ if __name__ == '__main__':
 #  bopt.plot_acquisition() 
 #  bopt.plot_convergence()
 
-# Output resu;ts
-#  epoch             = np.linspace(1,len(error_bopt),len(error_bopt)).reshape(-1, 1)
-#  filename_tmp      = output_dir+'/'+config['Bayes_optimization']['filename_output']
-#  header_tmp        = config['Bayes_optimization']['header_output']
-#  print_message_tmp = '--Writing output file... '
-#  delimiter_tmp     = '\t'
-#  comments_tmp      = ''
-#  output_tmp        = np.c_[ velocity_lon_bopt,
-#                             velocity_lat_bopt,
-#                             velocity_alt_bopt,
-#                             error_bopt,
-#                             epoch
-#                            ]
-#  orbital.write_tecplotdata( filename_tmp, print_message_tmp, header_tmp, delimiter_tmp, comments_tmp, output_tmp )
+  return
+
+
+if __name__ == '__main__':
+
+  main()
+
+  exit()
+

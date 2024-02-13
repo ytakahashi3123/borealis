@@ -240,7 +240,7 @@ class orbital(general):
     def wrapper(*args, **kargs) :
       #text_blue = '\033[94m'
       #text_green = '\033[92m'
-      text_yellow = '\033[33m'
+      text_yellow = '\033[93m'
       text_end = '\033[0m'
       flag_time_measurement = True
       if flag_time_measurement :

@@ -44,9 +44,48 @@ class adapter_tacode(orbital):
 
     # Counter
     self.iter = 1
+    
+    # Check code system
+    if not ( (config['tacode']['code_system'] == 'python3' or config['tacode']['code_system'] == 'fortran') ):
+      print('Error, code system of tacode is not supported. Only Tacode-Python3 or Ttacode-Fortran are avaiable.')
+      print('Please check code system in configuration file of Borealis:',config['tacode']['code_system'])
+      print('Program stopped.')
+      exit()
 
     # Variables of trajectory file computed by Tacode
-    self.result_var = ['Time[s]','Long[deg.]','Lati[deg.]','Alti[km]','Upl[m/s]','Vpl[m/s]','Wpl[m/s]','VelplAbs[m/s]','Dens[kg/m3]','Temp[K]','Kn']
+    #self.result_var = ['Time[s]','Long[deg.]','Lati[deg.]','Alti[km]','Upl[m/s]','Vpl[m/s]','Wpl[m/s]','VelplAbs[m/s]','Dens[kg/m3]','Temp[K]','Kn']
+    #self.result_var_fortran = ['step', 'time[s]','longitude[deg]','latitude[deg]','altitude[km]','vel_long[m/s]','velo_lati[m/s]','velo_alt[m/s]','vel_mag[m/s]','density[kg/m3]','temperature[K]','Kn']
+
+    if config['tacode']['code_system'] == 'python3' :
+      self.str_time_sec  = 'Time[s]'
+      self.str_longitude = 'Long[deg.]'
+      self.str_latitude  = 'Lati[deg.]'
+      self.str_altitude  = 'Alti[km]'
+      self.str_velocity_longitude = 'Upl[m/s]'
+      self.str_velocity_latitude  = 'Vpl[m/s]'
+      self.str_velocity_altitude  = 'Wpl[m/s]'
+      self.str_velocity_magnitude = 'VelplAbs[m/s]'
+      self.str_density = 'Dens[kg/m3]'
+      self.str_temperature = 'Temp[K]'
+      self.str_knudsen     = 'Kn'
+      self.str_time_day    = 'Time[day]'
+    elif config['tacode']['code_system'] == 'fortran' :
+      self.str_time_sec  = 'time[s]'
+      self.str_longitude = 'longitude[deg]'
+      self.str_latitude  = 'latitude[deg]'
+      self.str_altitude  = 'altitude[km]'
+      self.str_velocity_longitude = 'vel_long[m/s]'
+      self.str_velocity_latitude  = 'velo_lati[m/s]'
+      self.str_velocity_altitude  = 'velo_alt[m/s]'
+      self.str_velocity_magnitude = 'vel_mag[m/s]'
+      self.str_density = 'density[kg/m3]'
+      self.str_temperature = 'temperature[K]'
+      self.str_knudsen     = 'Kn'
+      self.str_time_day    = 'Time[day]'
+
+    self.result_var = [ self.str_time_sec, self.str_longitude, self.str_latitude, self.str_altitude, \
+                        self.str_velocity_longitude, self.str_velocity_latitude, self.str_velocity_altitude, self.str_velocity_magnitude, \
+                        self.str_density, self.str_temperature, self.str_knudsen ]
 
     # Result file: Make directory
     super().make_directory_rm(config['tacode']['result_dir'])
@@ -105,32 +144,93 @@ class adapter_tacode(orbital):
     return
 
 
-  def boundary_setting(self, config):
-
-    # Setting parameter's boundaries
-
-    boundary = config['Bayes_optimization']['boundary']
-    bounds = []
-    for n in range(0, len(boundary) ):
-      boundary_name = boundary[n]['name']
-      parameter_component = boundary[n]['component']
-      for m in range(0,  len(parameter_component)):
-        bound_type = parameter_component[m]['type']
-        bound_min  = parameter_component[m]['bound_min']
-        bound_max  = parameter_component[m]['bound_max']
-        bounds.append( {'name': bound_type, 'type': 'continuous', 'domain': (bound_min, bound_max) } )
-        print( 'Boundary in',bound_type,'component of',boundary_name,'(min--max):', bound_min,'--',bound_max)
-
-    return bounds
-
   @orbital.time_measurement_decorated
-  def rewrite_control_file(self,filename,txt_indentified,ele_indentified,txt_replaced):
+  def rewrite_control_file_tacode(self, x):
     
-    # txt_indentifiedの文字列を含む行を抽出し、その(ele_indentified)列目要素を置換する。
     # 何度もファイル開閉をするのは問題かもしれない
 
-    for m in range(0,ele_indentified):
-      # Reading control file
+    print('--Modify control file')
+
+    filename = self.work_dir_case+'/'+self.filename_control_tacode
+
+    count = 0
+    parameter_target = self.parameter_target
+    for n in range(0, len(parameter_target ) ):
+      parameter_name = parameter_target[n]['name'].rsplit('.', 1)
+      parameter_component = parameter_target[n]['component']
+
+      var_root_ctl = parameter_name[0]
+      var_name_ctl = parameter_name[1]
+
+      txt_indentified = var_name_ctl
+      ele_indentified = len(parameter_component)
+      txt_replaced = []
+      for m in range(0, len(parameter_component) ):
+        txt_replaced.append( str( x[0,count] ) )
+        count = count + 1
+      print('--Variable:',var_name_ctl,'in',var_root_ctl, ', Parameters:',txt_replaced)
+
+      # File operation
+      for m in range(0,ele_indentified):
+        # Reading control file
+        with open(filename) as f:
+          lines = f.readlines()
+
+        # リストとして取得 
+        lines_strip = [line.strip() for line in lines]
+
+        # 置換する行を特定する
+        # i_line    = [i for i, line in enumerate(lines_strip) if txt_indentified in line]
+        line_both        = [(i, line) for i, line in enumerate(lines_strip) if txt_indentified in line]
+        i_line, str_line = list(zip(*line_both))
+
+        # 抽出した行をスペース・タブで分割する。そのele_indentified列目を置換し、line_replacedというstr型に戻す。
+        words = lines_strip[i_line[0]+m+1].split()
+        # Replace (words[0]に該当する'-'は置換しない、その次のwords[1]を置換する)
+        words[1] = txt_replaced[m]
+        # インデントを考慮して新しい行を構築
+        line_replaced  = ' '.join(words)
+
+        # 行を置換
+        # lines_newはリストになることに注意。そのため、'',joinでstr型に戻す
+        lines_updated = [item.replace( lines_strip[i_line[0]+m+1], line_replaced ) for item in lines]
+
+        str_lines_new = ''.join(lines_updated)
+
+        # Update the file
+        with open(filename, mode="w") as f:
+          f.write(str_lines_new)
+    
+    return
+
+  @orbital.time_measurement_decorated
+  def rewrite_control_tacode_fortran(self,x):
+    
+    # txt_indentifiedの文字列を含む行を抽出し、その(ele_indentified+1)番目要素を置換する。
+
+    print('--Modify control file')
+
+    filename = self.work_dir_case+'/'+self.filename_control_tacode
+
+    count = 0
+    parameter_target = self.parameter_target
+    for n in range(0, len(parameter_target ) ):
+      parameter_name = parameter_target[n]['name']
+      parameter_component = parameter_target[n]['component']
+
+      #var_root_ctl = parameter_name[0]
+      var_name_ctl = parameter_name
+
+      txt_indentified = var_name_ctl
+      ele_indentified = len(parameter_component)
+      txt_replaced = ''
+      for m in range(0, len(parameter_component) ):
+        txt_replaced = txt_replaced + str( x[0,count] ) + ','
+        count = count + 1
+      txt_replaced = txt_replaced.rstrip(",") + ' ' + var_name_ctl
+      print('--Variable:',var_name_ctl,'in',var_root_ctl, ', Parameters:',txt_replaced)
+
+      # File operation
       with open(filename) as f:
         lines = f.readlines()
 
@@ -141,21 +241,17 @@ class adapter_tacode(orbital):
       # i_line    = [i for i, line in enumerate(lines_strip) if txt_indentified in line]
       line_both        = [(i, line) for i, line in enumerate(lines_strip) if txt_indentified in line]
       i_line, str_line = list(zip(*line_both))
-
-      # 抽出した行をスペース・タブで分割する。そのele_indentified列目を置換し、line_replacedというstr型に戻す。
-      words = lines_strip[i_line[0]+m+1].split()
-      # Replace (words[0]に該当する'-'は置換しない、その次のwords[1]を置換する)
-      words[1] = txt_replaced[m]
-      # インデントを考慮して新しい行を構築
+      # 抽出した行をスペース・タブで分割する。そのele_indentified+1番目を置換し、line_replacedというstr型に戻す。
+      words = lines_strip[i_line[0]].split()
+      for n in range(0, ele_indentified ):
+        words[n] = txt_replaced[n]
       line_replaced  = ' '.join(words)
 
-      # 行を置換
       # lines_newはリストになることに注意。そのため、'',joinでstr型に戻す
-      lines_updated = [item.replace( lines_strip[i_line[0]+m+1], line_replaced ) for item in lines]
+      lines_new     = [item.replace( lines_strip[i_line[0]], line_replaced ) for item in lines]
+      str_lines_new = ''.join(lines_new)
 
-      str_lines_new = ''.join(lines_updated)
-
-      # Update the file
+      # 同じファイル名で保存
       with open(filename, mode="w") as f:
         f.write(str_lines_new)
     
@@ -164,14 +260,12 @@ class adapter_tacode(orbital):
 
   @orbital.time_measurement_decorated
   def run_tacode(self):
-    # Tacodeの実行
     
-    # 計算ディレクトリに移動、実行、元ディレクトリに戻る
+    print('--Run Tacode')
+
+    # Move to computing directory, run Tacode, and return to the original directory
     os.chdir( self.work_dir_case )
-
-    # Run Tacode
     subprocess.call( self.cmd_tacode )
-
     os.chdir( self.root_dir )
 
     return
@@ -182,11 +276,13 @@ class adapter_tacode(orbital):
 
     # Tacodeによるトラジェクトリ結果とReferenceの誤差を評価する
 
-    longitude       = trajectory_dict['Long[deg.]']
-    latitude        = trajectory_dict['Lati[deg.]']
-    altitude        = trajectory_dict['Alti[km]']
-    time_sec_offset = trajectory_dict['Time[s]']
-    time_day_offset = trajectory_dict['Time[day]']
+    print('--Evaluating error between computed result and reference data')
+
+    longitude       = trajectory_dict[ self.str_longitude ]
+    latitude        = trajectory_dict[ self.str_latitude ]
+    altitude        = trajectory_dict[ self.str_altitude ]
+    time_sec_offset = trajectory_dict[ self.str_time_sec ]
+    time_day_offset = trajectory_dict[ self.str_time_day ]
 
     time_start      = self.config['tacode']['time_start']
     time_end        = self.config['tacode']['time_end']
@@ -212,6 +308,9 @@ class adapter_tacode(orbital):
 
 #        error_tmp = error_tmp/float(count_tmp)
     error_tmp = np.sqrt( error_tmp/float(count_tmp) )
+
+    # Green color
+    print('--Error:','\033[92m'+str(error_tmp)+'\033[0m', 'in Epoch',str(self.iter) )
 
     return error_tmp
 
@@ -253,30 +352,19 @@ class adapter_tacode(orbital):
     for n in range( 0,len(result_var) ):
       trajectory_dict[ result_var[n] ] = data_input[:,result_index[n]]
 
-    time_sec      = trajectory_dict['Time[s]']
-    #longitude     = trajectory_dict['Long[deg.]']
-    #latitude      = trajectory_dict['Lati[deg.]']
-    #altitude      = trajectory_dict['Alti[km]']
-    #velocity_long = trajectory_dict['Upl[m/s]']
-    #velocity_lat  = trajectory_dict['Vpl[m/s]']
-    #velocity_alt  = trajectory_dict['Wpl[m/s]']
-    #velocity_mag  = trajectory_dict['VelplAbs[m/s]']
-    #density       = trajectory_dict['Dens[kg/m3]']
-    #temperature   = trajectory_dict['Temp[K]']
-    #kn            = trajectory_dict['Kn']
-
     # 開始時刻をGPRデータと合わせる
     time_start      = self.config['tacode']['time_start']
     time_end        = self.config['tacode']['time_end']
     target_time_set = self.config['tacode']['target_time']
 
+    time_sec        = trajectory_dict[ self.str_time_sec ]
     time_day        = time_sec/orbital.unit_covert_day2sec
     time_day_offset = time_day+target_time_set
     time_sec_offset = time_sec+target_time_set*orbital.unit_covert_day2sec
 
     # Update time variables offset
-    trajectory_dict['Time[s]']   = time_sec_offset
-    trajectory_dict['Time[day]'] = time_day_offset
+    trajectory_dict[ self.str_time_sec ] = time_sec_offset
+    trajectory_dict[ self.str_time_day ] = time_day_offset
 
     return trajectory_dict
 
@@ -284,26 +372,26 @@ class adapter_tacode(orbital):
   @orbital.time_measurement_decorated
   def write_trajectory_data(self, trajectory_dict):
 
-    longitude     = trajectory_dict['Long[deg.]']
-    latitude      = trajectory_dict['Lati[deg.]']
-    altitude      = trajectory_dict['Alti[km]']
-    velocity_long = trajectory_dict['Upl[m/s]']
-    velocity_lat  = trajectory_dict['Vpl[m/s]']
-    velocity_alt  = trajectory_dict['Wpl[m/s]']
-    velocity_mag  = trajectory_dict['VelplAbs[m/s]']
-    density       = trajectory_dict['Dens[kg/m3]']
-    temperature   = trajectory_dict['Temp[K]']
-    kn            = trajectory_dict['Kn']
+    longitude     = trajectory_dict[ self.str_longitude ]
+    latitude      = trajectory_dict[ self.str_latitude ]
+    altitude      = trajectory_dict[ self.str_altitude ]
+    velocity_long = trajectory_dict[ self.str_velocity_longitude ]
+    velocity_lat  = trajectory_dict[ self.str_velocity_latitude ]
+    velocity_alt  = trajectory_dict[ self.str_velocity_altitude ]
+    velocity_mag  = trajectory_dict[ self.str_velocity_magnitude ]
+    density       = trajectory_dict[ self.str_density ]
+    temperature   = trajectory_dict[ self.str_temperature ]
+    kn            = trajectory_dict[ self.str_knudsen ]
 
-    time_sec_offset = trajectory_dict['Time[s]']
-    time_day_offset = trajectory_dict['Time[day]']
+    time_sec_offset = trajectory_dict[ self.str_time_sec ]
+    time_day_offset = trajectory_dict[ self.str_time_day ]
 
     if( self.config['tacode']['flag_tecplot'] ):
       result_dir        = self.config['tacode']['result_dir']
       filename_tecplot  = self.config['tacode']['filename_tecplot']
       number_padded     = '{0:04d}'.format(self.iter)
       filename_tmp      = super().insert_suffix(result_dir+'/'+filename_tecplot,'_case'+number_padded,'.')
-      print('--Writing tecplot file...:',filename_tmp)
+      print('--Writing output file...:',filename_tmp)
 
       result_var_tmp = self.result_var
       header_tmp = "Variables="
@@ -311,7 +399,7 @@ class adapter_tacode(orbital):
         header_tmp = header_tmp + result_var_tmp[n] + ','
       header_tmp = header_tmp.rstrip(",") 
       # Addition
-      header_tmp = header_tmp + ',Time[day]'
+      header_tmp = header_tmp + ',' + self.str_time_day
       
       delimiter_tmp     = '\t'
       comments_tmp      = ''
@@ -331,34 +419,17 @@ class adapter_tacode(orbital):
     # Caseディレクトリの作成
     number_padded      = '{0:04d}'.format(self.iter)
     self.work_dir_case = self.work_dir+'/'+self.case_dir+number_padded
-    print('--Case directory: ', self.work_dir_case)
+    print('--Make case directory: ', self.work_dir_case)
     shutil.copytree(self.work_dir_template, self.work_dir_case)
 
     # コントロールファイルの書き換え 
-    print('--Modification: control file')
-    filename_ctl = self.work_dir_case+'/'+self.filename_control_tacode
-    count = 0
-    parameter_target = self.parameter_target
-    for n in range(0, len(parameter_target ) ):
-      parameter_name = parameter_target[n]['name'].rsplit('.', 1)
-      parameter_component = parameter_target[n]['component']
-
-      var_root_ctl = parameter_name[0]
-      var_name_ctl = parameter_name[1]
-
-      txt_indentified = var_name_ctl
-      ele_indentified = len(parameter_component)
-      txt_replaced = []
-      for m in range(0, len(parameter_component) ):
-        txt_replaced.append( str( x[0,count] ) )
-        count = count + 1
-      print('Variable:',var_name_ctl,'in',var_root_ctl, ',Parameters:',txt_replaced)
-      self.rewrite_control_file(filename_ctl, txt_indentified, ele_indentified, txt_replaced)
+    if self.config['tacode']['code_system'] == 'python3' :
+      self.rewrite_control_file_tacode(x)
+    elif self.config['tacode']['code_system'] == 'fortran' :
+      self.rewrite_control_tacode_fortran(x)
 
     # Run Tacode
-    print('--Start Tacode')
     self.run_tacode()
-    print('--End Tacode')
 
     # Read trajectory for evaluating error
     trajectory_dict = self.read_trajectory_data()
@@ -367,9 +438,7 @@ class adapter_tacode(orbital):
     self.write_trajectory_data(trajectory_dict)
 
     # Evaluate error
-    print('--Evaluating error between computed result and reference data')
     error = self.evaluate_error(trajectory_dict)
-    print('--Done, Error: ',error)
 
     # カウンタの更新
     self.iter += 1
