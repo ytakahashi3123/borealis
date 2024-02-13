@@ -84,20 +84,13 @@ class adapter_tacode(orbital):
       trajectory_mean.append(mean)
       trajectory_std.append(std)   
 
-    time_opt      = trajectory_time[0]
-    longitude_opt = trajectory_mean[0]
-    latitude_opt  = trajectory_mean[1]
-    altitude_opt  = trajectory_mean[2]
-
-    geodetic_coord_opt  = [longitude_opt,latitude_opt,altitude_opt]
-
     # For optimization
     self.unit_covert_timeunit = self.set_timeunit( config['reference']['timeunit'] )
-    self.time_sec_opt  = time_opt
-    self.time_day_opt  = time_opt/self.unit_covert_timeunit
-    self.longitude_opt = geodetic_coord_opt[0]
-    self.latitude_opt  = geodetic_coord_opt[1]
-    self.altitude_opt  = geodetic_coord_opt[2]
+    self.time_sec_opt  = trajectory_time[0]
+    self.time_day_opt  = trajectory_time[0]/self.unit_covert_timeunit
+    self.longitude_opt = trajectory_mean[0]
+    self.latitude_opt  = trajectory_mean[1]
+    self.altitude_opt  = trajectory_mean[2]
 
     #self.i_target_opt         = super().getNearestIndex(self.time_sec_opt, config['tacode']['target_time']*self.unit_covert_timeunit)
     _, self.i_target_opt      = super().closest_value_index(self.time_sec_opt, config['tacode']['target_time']*self.unit_covert_timeunit)
@@ -130,7 +123,7 @@ class adapter_tacode(orbital):
 
     return bounds
 
-
+  @orbital.time_measurement_decorated
   def rewrite_control_file(self,filename,txt_indentified,ele_indentified,txt_replaced):
     
     # txt_indentifiedの文字列を含む行を抽出し、その(ele_indentified)列目要素を置換する。
@@ -169,6 +162,7 @@ class adapter_tacode(orbital):
     return
 
 
+  @orbital.time_measurement_decorated
   def run_tacode(self):
     # Tacodeの実行
     
@@ -183,7 +177,7 @@ class adapter_tacode(orbital):
     return
 
 
-
+  @orbital.time_measurement_decorated
   def evaluate_error(self, trajectory_dict):
 
     # Tacodeによるトラジェクトリ結果とReferenceの誤差を評価する
@@ -222,6 +216,7 @@ class adapter_tacode(orbital):
     return error_tmp
 
 
+  @orbital.time_measurement_decorated
   def read_trajectory_data(self):
     
     # Trajectoryデータの読み込み
@@ -259,16 +254,16 @@ class adapter_tacode(orbital):
       trajectory_dict[ result_var[n] ] = data_input[:,result_index[n]]
 
     time_sec      = trajectory_dict['Time[s]']
-    longitude     = trajectory_dict['Long[deg.]']
-    latitude      = trajectory_dict['Lati[deg.]']
-    altitude      = trajectory_dict['Alti[km]']
-    velocity_long = trajectory_dict['Upl[m/s]']
-    velocity_lat  = trajectory_dict['Vpl[m/s]']
-    velocity_alt  = trajectory_dict['Wpl[m/s]']
-    velocity_mag  = trajectory_dict['VelplAbs[m/s]']
-    density       = trajectory_dict['Dens[kg/m3]']
-    temperature   = trajectory_dict['Temp[K]']
-    kn            = trajectory_dict['Kn']
+    #longitude     = trajectory_dict['Long[deg.]']
+    #latitude      = trajectory_dict['Lati[deg.]']
+    #altitude      = trajectory_dict['Alti[km]']
+    #velocity_long = trajectory_dict['Upl[m/s]']
+    #velocity_lat  = trajectory_dict['Vpl[m/s]']
+    #velocity_alt  = trajectory_dict['Wpl[m/s]']
+    #velocity_mag  = trajectory_dict['VelplAbs[m/s]']
+    #density       = trajectory_dict['Dens[kg/m3]']
+    #temperature   = trajectory_dict['Temp[K]']
+    #kn            = trajectory_dict['Kn']
 
     # 開始時刻をGPRデータと合わせる
     time_start      = self.config['tacode']['time_start']
@@ -286,6 +281,7 @@ class adapter_tacode(orbital):
     return trajectory_dict
 
 
+  @orbital.time_measurement_decorated
   def write_trajectory_data(self, trajectory_dict):
 
     longitude     = trajectory_dict['Long[deg.]']
@@ -325,6 +321,7 @@ class adapter_tacode(orbital):
     return
 
 
+  @orbital.time_measurement_decorated
   def objective_function(self, x):
 
     # コントロールファイルを適切に修正して、tacodeを実行する。

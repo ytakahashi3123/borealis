@@ -14,18 +14,6 @@ reference:
 
   timeunit: day
 
-  #time_start: 118.3385 #115.8325 #115.0 #100.0 #9650000.0
-  #time_end:   118.4003 #115.87 #117.0 #118.5 #9700000.0
-
-  #samplediv: 2
-  # Image file (GPS data)
-  #flag_image: False
-  #filename_image: figure_sample.png
-  # Tecplot (GPS data)
-  #flag_tecplot: True
-  #filename_tecplot: tecplot_gps.dat
-  #header_tecplot: 'variables=Time[day],Longitude[deg],Latitude[deg],Altitude[km],X[m],Y[m],Z[m]'
-
 
 tacode:
 
@@ -33,9 +21,6 @@ tacode:
   work_dir: work_tacode
   case_dir: case
   
-  # Template path for Tacode work directory
-  #template_path: /opt/gpr/gpr_orbit_ver0.20/egg_trajectory_template
-
   directory_path_specify: manual # default or manual
   manual_path: ../../testcase_template/work_tacode
 
@@ -61,17 +46,17 @@ tacode:
   result_dir: result_tacode
   flag_tecplot: True
   #case_digt: 4
-  filename_tecplot: tecplot_taresult.dat
+  filename_tecplot: tecplot_trajectory_result.dat
 
 
 Bayes_optimization:
+
   # Images
-  flag_image: False
-  filename_image_acq: figure_acq.png
+  #flag_image: False
+  #filename_image_acq: figure_acq.png
 
   # optimazer
-  num_optiter: 500
-  num_div_optfunction: 100
+  num_optiter: 100
 
   # Parameter boundaries
   boundary:
@@ -92,11 +77,7 @@ Bayes_optimization:
           bound_min: 0.5
           bound_max: 1.5
 
-  # Results (Tecplot data, 初期データとしても使える)
+  # Results data file (Tecplot data format)
+  result_dir: result_bopt
   filename_output: output_bopt.dat
-  header_output: 'variables=Vel_long[m/s],Vel_lat[m/s],Vel_alt[m/s],Error,Epoch'
-
-  # Initial data
-  flag_init: True
-  filename_init: initdata_bopt.dat
 

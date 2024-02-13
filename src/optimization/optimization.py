@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
+import numpy as np
 import GPyOpt as GPyOpt
 from orbital.orbital import orbital
-#from adapter_tacode.adapter_tacode import adapter_tacode
 
 
 class optimization(orbital):
@@ -11,16 +11,18 @@ class optimization(orbital):
 
     print("Constructing class: optimization")
 
+    self.str_error = 'Error'
+
     return
 
 
-  def bayesian_optimization(self, config, objective_function, bounds):
+  def bayesian_optimization(self, config, objective_function, parameter_boundary):
 
     # X , Y : 初期データ
     # initial_design_numdata : 設定する初期データの数。上記 X , Yを指定した場合は設定不要。 
     # normalize_Y : 目的関数(ガウス過程)を標準化する場合はTrue。(今回は予測を真値と比較しやすくするためFalse)
     bopt = GPyOpt.methods.BayesianOptimization(f=objective_function,
-                                              domain=bounds,
+                                              domain=parameter_boundary,
                                               #X=init_X,
                                               #Y=init_Y,
                                               model_type='GP',
@@ -33,48 +35,83 @@ class optimization(orbital):
                                               #acquisition_type='MPI'
                                               )
 
-    # ベイズ最適化_モデル初期化
-    num_optiter = config['Bayes_optimization']['num_optiter'] 
-
     # ベイズ最適化
     #tolerance = 1e-8 
-    bopt.run_optimization(max_iter=num_optiter)
+    bopt.run_optimization(max_iter=config['Bayes_optimization']['num_optiter'] )
 
-    # ベイズ最適化_学習結果・過程
-    # 最適化の軌跡
-    #  print("X.shape" , ":" , bopt.X.shape)
-    #  print("Y.shape" , ":" , bopt.Y.shape)
-    #  print("-" * 50)
-    #  print("X[:]" , ":")
-    #  print(bopt.X[:])
-    #  print("-" * 50)
-    #  print("Y[:]" , ":")
-    #  print(bopt.Y[:])
-    #  print("-" * 50)
+    boundary = config['Bayes_optimization']['boundary']
+    solution_dict = {}
+    count = 0
+    for n in range(0, len(boundary) ):
+      parameter_component = boundary[n]['component']
+      for m in range(0, len(parameter_component)):
+        bound_type = parameter_component[m]['type']
+        solution_dict[bound_type] = bopt.X[:,count]
+        count = count + 1
+    solution_dict[self.str_error] = bopt.Y[:,0]
 
-    velocity_lon_bopt = bopt.X[:,0]
-    velocity_lat_bopt = bopt.X[:,1]
-    velocity_alt_bopt = bopt.X[:,2]
-    error_bopt        = bopt.Y[:]
-
-    var_opt = [velocity_lon_bopt, velocity_lat_bopt, velocity_alt_bopt, error_bopt ]
-
-    # 得られた最適解
-    veloc_boptimized = bopt.x_opt
+    # Optimized solutions
+    value_boptimized = bopt.x_opt
     error_boptimized = bopt.fx_opt
-    index_boptimized = orbital.getNearestIndex(error_bopt, error_boptimized)
+    _, index_boptimized = super().closest_value_index(solution_dict[self.str_error], error_boptimized)
     epoch_boptimized = index_boptimized + 1
     
-    print("Optimized parameters:")
-    print("--Velocities" , ":" , veloc_boptimized)
-    print("--Error:    " , ":" , error_boptimized)
-    print("--Epoch:    " , ":" , epoch_boptimized)
+    print("Optimized solutions:")
+    print("--Solutions :" , value_boptimized)
+    print("--Error     :" , error_boptimized)
+    print("--Epoch     :" , epoch_boptimized)
 
-    return var_opt
+    return solution_dict
 
 
-  def run_optimization(self, objective_function, bounds):
+  def write_optimization_data(self, config, solution_dict):
 
-    var_opt = self.bayesian_optimization(config, objective_function, bounds)
+    boundary = config['Bayes_optimization']['boundary']
+    solution_name_list = []
+    for n in range(0, len(boundary) ):
+      parameter_component = boundary[n]['component']
+      for m in range(0, len(parameter_component)):
+        solution_name_list.append( parameter_component[m]['type'] )
+    solution_name_list.append(self.str_error)
+
+    # Output results
+    result_dir = config['Bayes_optimization']['result_dir']
+    super().make_directory_rm(result_dir)
+    filename_tmp      = result_dir+'/'+config['Bayes_optimization']['filename_output']
+    print('--Writing output file...:',filename_tmp)
+
+    # Open file
+    file_output = open( filename_tmp , 'w')
+    
+    # Header
+    header_tmp = "Variables="
+    for n in range(0,len(solution_name_list)):
+      header_tmp = header_tmp + solution_name_list[n] + ','
+    # Addition
+    header_tmp = header_tmp + 'Epoch' + '\n'
+    file_output.write( header_tmp )
+
+    num_step = len( solution_dict[solution_name_list[0]] )
+    epoch    = np.linspace(1,num_step,num_step)
+
+    text_tmp = ''
+    for n in range(0, num_step):
+      for m in range(0, len(solution_name_list)):
+        text_tmp = text_tmp  + str( solution_dict[solution_name_list[m]][n] ) + ', '
+      text_tmp = text_tmp + str(epoch[n]) + '\n'
+
+    file_output.write( text_tmp )
+    file_output.close()
+
+    return
+
+
+  def run_optimization(self, config, objective_function, parameter_boundary):
+
+    # Bayesian optimization
+    solution_dict = self.bayesian_optimization(config, objective_function, parameter_boundary)
+
+    # Write data
+    self.write_optimization_data(config, solution_dict)
 
     return

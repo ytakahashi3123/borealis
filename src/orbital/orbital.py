@@ -2,6 +2,8 @@
 
 import numpy as np
 import os as os
+import time as time
+from functools import wraps
 from general.general import general
 
 class orbital(general):
@@ -16,7 +18,7 @@ class orbital(general):
   unit_covert_sec2day = 1.0/unit_covert_day2sec
 
   file_control_default = "borealis.yml"
-  
+
   
   def __init__(self):
     print("Calling class: orbital")
@@ -231,3 +233,22 @@ class orbital(general):
 
     return
 
+
+  # Decorator for time measurement
+  def time_measurement_decorated(func):
+    @wraps(func)
+    def wrapper(*args, **kargs) :
+      #text_blue = '\033[94m'
+      #text_green = '\033[92m'
+      text_yellow = '\033[33m'
+      text_end = '\033[0m'
+      flag_time_measurement = True
+      if flag_time_measurement :
+        start_time = time.time()
+        result = func(*args,**kargs)
+        elapsed_time = time.time() - start_time
+        print('Elapsed time of '+str(func.__name__)+str(':'),text_yellow + str(elapsed_time) + text_end,'s')
+      else :
+        result = func(*args,**kargs)
+      return result 
+    return wrapper

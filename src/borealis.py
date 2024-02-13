@@ -40,7 +40,7 @@ if __name__ == '__main__':
   optimization = optimization()
 
   # Run Bayesian optimization
-  optimization.bayesian_optimization(config, adapter_tacode.objective_function, parameter_boundary)
+  optimization.run_optimization(config, adapter_tacode.objective_function, parameter_boundary)
 
 # 予測・グラフ化
 #bopt.model.model #ベイズ最適化で使っているガウス過程のモデル(GPyのオブジェクト）
@@ -67,16 +67,16 @@ if __name__ == '__main__':
 #  bopt.plot_convergence()
 
 # Output resu;ts
-  epoch             = np.linspace(1,len(error_bopt),len(error_bopt)).reshape(-1, 1)
-  filename_tmp      = output_dir+'/'+config['Bayes_optimization']['filename_output']
-  header_tmp        = config['Bayes_optimization']['header_output']
-  print_message_tmp = '--Writing output file... '
-  delimiter_tmp     = '\t'
-  comments_tmp      = ''
-  output_tmp        = np.c_[ velocity_lon_bopt,
-                             velocity_lat_bopt,
-                             velocity_alt_bopt,
-                             error_bopt,
-                             epoch
-                            ]
-  orbital.write_tecplotdata( filename_tmp, print_message_tmp, header_tmp, delimiter_tmp, comments_tmp, output_tmp )
+#  epoch             = np.linspace(1,len(error_bopt),len(error_bopt)).reshape(-1, 1)
+#  filename_tmp      = output_dir+'/'+config['Bayes_optimization']['filename_output']
+#  header_tmp        = config['Bayes_optimization']['header_output']
+#  print_message_tmp = '--Writing output file... '
+#  delimiter_tmp     = '\t'
+#  comments_tmp      = ''
+#  output_tmp        = np.c_[ velocity_lon_bopt,
+#                             velocity_lat_bopt,
+#                             velocity_alt_bopt,
+#                             error_bopt,
+#                             epoch
+#                            ]
+#  orbital.write_tecplotdata( filename_tmp, print_message_tmp, header_tmp, delimiter_tmp, comments_tmp, output_tmp )
