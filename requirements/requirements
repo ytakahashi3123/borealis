@@ -1,0 +1,23 @@
+Requirements to run Borealies
+
+- python (version >= 3.8.10)
+- numpy version (>=1.22.3)
+- yaml (version >= 5.3.1)
+- GPyOpt (version >= 1.2.6)
+
+(versions used in the developer's environment)
+
+
+** The Python standard libraries used in the program **
+os
+shutil
+subproces
+sys
+time
+wraps
+(argparse)
+
+
+** Examples to update libraries **
+python3 -m pip install --upgrade numpy
+python3 -m pip install --upgrade yaml
