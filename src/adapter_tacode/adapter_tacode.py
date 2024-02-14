@@ -18,8 +18,9 @@ class adapter_tacode(orbital):
   
   def initial_settings(self, config):
 
-    self.work_dir      = config['tacode']['work_dir']
-    self.case_dir      = config['tacode']['case_dir']
+    self.work_dir   = config['tacode']['work_dir']
+    self.case_dir   = config['tacode']['case_dir']
+    self.step_digit = config['tacode']['step_digit']
 
     # Make directory
     super().make_directory_rm(self.work_dir)
@@ -53,7 +54,7 @@ class adapter_tacode(orbital):
 
     # Counter
     self.iter = 1
-    
+     
     # Check code system
     if not ( (config['tacode']['code_system'] == 'python3' or config['tacode']['code_system'] == 'fortran') ):
       print('Error, code system of tacode is not supported. Only Tacode-Python3 or Ttacode-Fortran are avaiable.')
@@ -396,7 +397,7 @@ class adapter_tacode(orbital):
     if( self.config['tacode']['flag_tecplot'] ):
       result_dir        = self.config['tacode']['result_dir']
       filename_tecplot  = self.config['tacode']['filename_tecplot']
-      number_padded     = '{0:04d}'.format(self.iter)
+      number_padded     = str(self.iter).zfill(self.step_digit)
       filename_tmp      = super().insert_suffix(result_dir+'/'+filename_tecplot,'_case'+number_padded,'.')
       print('--Writing output file...:',filename_tmp)
 
@@ -424,8 +425,7 @@ class adapter_tacode(orbital):
     print('Iteration: ', self.iter)
 
     # Caseディレクトリの作成
-    number_padded      = '{0:04d}'.format(self.iter)
-    self.work_dir_case = self.work_dir+'/'+self.case_dir+number_padded
+    self.work_dir_case = self.work_dir + '/' + self.case_dir + str(self.iter).zfill(self.step_digit)
     print('--Make case directory: ', self.work_dir_case)
     shutil.copytree(self.work_dir_template, self.work_dir_case)
 

@@ -23,7 +23,8 @@ tacode:
   # tacode case directory
   work_dir: work_tacode
   case_dir: case
-  
+  step_digit: 4
+
   directory_path_specify: manual # default or manual
   manual_path: ../../testcase_template/work_tacode_fortran
 

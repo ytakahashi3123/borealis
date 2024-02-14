@@ -23,6 +23,7 @@ tacode:
   # tacode case directory
   work_dir: work_tacode
   case_dir: case
+  step_digit: 4
   
   directory_path_specify: manual # default or manual
   manual_path: ../../testcase_template/work_tacode
@@ -51,7 +52,6 @@ tacode:
   # Result trajectory of Tacode 
   result_dir: result_tacode
   flag_tecplot: True
-  #case_digt: 4
   filename_tecplot: tecplot_trajectory_result.dat
 
 

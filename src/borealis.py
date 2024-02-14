@@ -39,6 +39,9 @@ def main():
   # Class optimization
   optimize = optimization()
 
+  # Initial setting
+  optimize.initial_setting(config)
+
   # Define parameter boundaries
   parameter_boundary = optimize.boundary_setting(config)
 

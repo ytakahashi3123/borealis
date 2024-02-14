@@ -16,6 +16,14 @@ class optimization(orbital):
     return
 
 
+  def initial_setting(self, config):
+
+    result_dir = config['Bayes_optimization']['result_dir']
+    super().make_directory_rm(result_dir)
+
+    return
+
+
   def boundary_setting(self, config):
 
     # Setting parameter's boundaries
@@ -95,9 +103,7 @@ class optimization(orbital):
     solution_name_list.append(self.str_error)
 
     # Output results
-    result_dir = config['Bayes_optimization']['result_dir']
-    super().make_directory_rm(result_dir)
-    filename_tmp      = result_dir+'/'+config['Bayes_optimization']['filename_output']
+    filename_tmp =  config['Bayes_optimization']['result_dir'] + '/' + config['Bayes_optimization']['filename_output']
     print('--Writing output file...:',filename_tmp)
 
     # Open file
