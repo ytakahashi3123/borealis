@@ -45,30 +45,6 @@ def main():
   # Run Bayesian optimization
   optimize.run_optimization(config, objective_function, parameter_boundary)
 
-# 予測・グラフ化
-#bopt.model.model #ベイズ最適化で使っているガウス過程のモデル(GPyのオブジェクト）
-#bopt.model.model.predict #ガウス過程の回帰の関数
-#bopt.X,myBopt.Y #サンプリングしたxとy
-
-# ガウス過程回帰モデル
-#  gprmodel = bopt.model.model
-
-#予測（第一成分：mean、第二成分：std)
-#  num_div_optfunction = config['Bayes_optimization']['num_div_optfunction'] 
-#  x_lat = np.linspace(bound_lat_min, bound_lat_max, num_div_optfunction).reshape(-1, 1)
-#  x_alt = np.linspace(bound_alt_min, bound_alt_max, num_div_optfunction).reshape(-1, 1)
-#  x_func = np.meshgrid(x_lat,x_alt)
-#  pred_mean, pred_std = gprmodel.predict(x_func)
-#  pred_var = pred_std**2
-
-#  mean = pred_mean[:, 0]
-#  var  = pred_var[:, 0]
-#  std  = pred_std[:, 0]
-
-# Plot
-#  bopt.plot_acquisition() 
-#  bopt.plot_convergence()
-
   return
 
 

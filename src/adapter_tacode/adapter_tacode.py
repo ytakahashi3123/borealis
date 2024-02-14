@@ -21,26 +21,35 @@ class adapter_tacode(orbital):
     self.work_dir      = config['tacode']['work_dir']
     self.case_dir      = config['tacode']['case_dir']
 
+    # Make directory
+    super().make_directory_rm(self.work_dir)
+
+    # Template case 
     path_specify = config['tacode']['directory_path_specify']
     default_path = '/../../testcase_template' 
     manual_path  = config['tacode']['manual_path']
     self.template_path = self.get_directory_path(path_specify, default_path, manual_path)
-
-    # Make directory
-    super().make_directory_rm(self.work_dir)
   
     self.work_dir_template = self.work_dir+'/'+self.case_dir+'_template'
     shutil.copytree(self.template_path, self.work_dir_template)
 
+    # Control file and computed result file
     self.filename_control_tacode    = config['tacode']['filename_control']
     self.filename_trajectory_tacode = config['tacode']['filename_trajectory']
 
+    # Execution file
     self.cmd_tacode = config['tacode']['cmd_tacode']
     self.root_dir   = os.getcwd()
     self.cmd_home = os.path.dirname(os.path.realpath(__file__)) + '/..'
 
-    # Target parameter
+    # Target parameter (corresponding to the parameter boundary)
     self.parameter_target = config['Bayes_optimization']['boundary']
+
+    # Result file: Make directory
+    super().make_directory_rm(config['tacode']['result_dir'])
+
+    # Control file 
+    self.config = config
 
     # Counter
     self.iter = 1
@@ -53,9 +62,6 @@ class adapter_tacode(orbital):
       exit()
 
     # Variables of trajectory file computed by Tacode
-    #self.result_var = ['Time[s]','Long[deg.]','Lati[deg.]','Alti[km]','Upl[m/s]','Vpl[m/s]','Wpl[m/s]','VelplAbs[m/s]','Dens[kg/m3]','Temp[K]','Kn']
-    #self.result_var_fortran = ['step', 'time[s]','longitude[deg]','latitude[deg]','altitude[km]','vel_long[m/s]','velo_lati[m/s]','velo_alt[m/s]','vel_mag[m/s]','density[kg/m3]','temperature[K]','Kn']
-
     if config['tacode']['code_system'] == 'python3' :
       self.str_time_sec  = 'Time[s]'
       self.str_longitude = 'Long[deg.]'
@@ -83,15 +89,20 @@ class adapter_tacode(orbital):
       self.str_knudsen     = 'Kn'
       self.str_time_day    = 'Time[day]'
 
+    #self.result_var = ['Time[s]','Long[deg.]','Lati[deg.]','Alti[km]','Upl[m/s]','Vpl[m/s]','Wpl[m/s]','VelplAbs[m/s]','Dens[kg/m3]','Temp[K]','Kn']
+    #self.result_var_fortran = ['step', 'time[s]','longitude[deg]','latitude[deg]','altitude[km]','vel_long[m/s]','velo_lati[m/s]','velo_alt[m/s]','vel_mag[m/s]','density[kg/m3]','temperature[K]','Kn']
+
     self.result_var = [ self.str_time_sec, self.str_longitude, self.str_latitude, self.str_altitude, \
                         self.str_velocity_longitude, self.str_velocity_latitude, self.str_velocity_altitude, self.str_velocity_magnitude, \
                         self.str_density, self.str_temperature, self.str_knudsen ]
-
-    # Result file: Make directory
-    super().make_directory_rm(config['tacode']['result_dir'])
-
-    # Control file 
-    self.config = config
+ 
+    # For trajectory data reading
+    if config['tacode']['code_system'] == 'python3' :
+      self.headerline_variables = 1
+      self.num_skiprows = 3
+    elif config['tacode']['code_system'] == 'fortran' :
+      self.headerline_variables = 0
+      self.num_skiprows = 2
 
     return
 
@@ -131,7 +142,6 @@ class adapter_tacode(orbital):
     self.latitude_opt  = trajectory_mean[1]
     self.altitude_opt  = trajectory_mean[2]
 
-    #self.i_target_opt         = super().getNearestIndex(self.time_sec_opt, config['tacode']['target_time']*self.unit_covert_timeunit)
     _, self.i_target_opt      = super().closest_value_index(self.time_sec_opt, config['tacode']['target_time']*self.unit_covert_timeunit)
     self.target_time_opt      = self.time_day_opt[self.i_target_opt]
     self.target_longitude_opt = self.longitude_opt[self.i_target_opt]
@@ -180,7 +190,6 @@ class adapter_tacode(orbital):
         lines_strip = [line.strip() for line in lines]
 
         # 置換する行を特定する
-        # i_line    = [i for i, line in enumerate(lines_strip) if txt_indentified in line]
         line_both        = [(i, line) for i, line in enumerate(lines_strip) if txt_indentified in line]
         i_line, str_line = list(zip(*line_both))
 
@@ -218,17 +227,16 @@ class adapter_tacode(orbital):
       parameter_name = parameter_target[n]['name']
       parameter_component = parameter_target[n]['component']
 
-      #var_root_ctl = parameter_name[0]
       var_name_ctl = parameter_name
 
       txt_indentified = var_name_ctl
       ele_indentified = len(parameter_component)
-      txt_replaced = ''
+      txt_replaced = []
       for m in range(0, len(parameter_component) ):
-        txt_replaced = txt_replaced + str( x[0,count] ) + ','
+        txt_replaced.append( str( x[0,count] ) + ',' )
         count = count + 1
-      txt_replaced = txt_replaced.rstrip(",") + ' ' + var_name_ctl
-      print('--Variable:',var_name_ctl,'in',var_root_ctl, ', Parameters:',txt_replaced)
+      txt_replaced[-1] = txt_replaced[-1].rstrip(",")
+      print('--Variable:',var_name_ctl, ', Parameters:',txt_replaced)
 
       # File operation
       with open(filename) as f:
@@ -238,7 +246,6 @@ class adapter_tacode(orbital):
       lines_strip = [line.strip() for line in lines]
 
       # 置換する行を特定する
-      # i_line    = [i for i, line in enumerate(lines_strip) if txt_indentified in line]
       line_both        = [(i, line) for i, line in enumerate(lines_strip) if txt_indentified in line]
       i_line, str_line = list(zip(*line_both))
       # 抽出した行をスペース・タブで分割する。そのele_indentified+1番目を置換し、line_replacedというstr型に戻す。
@@ -329,7 +336,7 @@ class adapter_tacode(orbital):
     # リストとして取得
     lines_strip = [line.strip() for line in lines]
     # ”Variables ="を削除した上で、カンマとスペースを削除
-    variables_line = lines_strip[1].replace('Variables =', '')
+    variables_line = lines_strip[self.headerline_variables].replace('Variables =', '')
     variables_line = variables_line.replace(',', ' ').replace('"', ' ')
     # 空白文字で分割して単語のリストを取得
     words = variables_line.split()
@@ -345,7 +352,7 @@ class adapter_tacode(orbital):
           break
 
     # Read data
-    data_input = np.loadtxt(filename,comments=('#'),delimiter=None,skiprows=3)
+    data_input = np.loadtxt(filename,comments=('#'),delimiter=None,skiprows=self.num_skiprows)
 
     # Store data as dictionary
     trajectory_dict = {}

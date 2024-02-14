@@ -18,23 +18,23 @@ reference:
 tacode:
 
   # Code system: python3 (tacode ver2.0) or Fortran (tacoed ver1.0)
-  code_system: python3
+  code_system: fortran
 
   # tacode case directory
   work_dir: work_tacode
   case_dir: case
   
   directory_path_specify: manual # default or manual
-  manual_path: ../../testcase_template/work_tacode
+  manual_path: ../../testcase_template/work_tacode_fortran
 
   # Executing script
   cmd_tacode: ./run_tacode.sh
   
   # Control file
-  filename_control: config.yml
+  filename_control: orbit.ctl
   
   # Result file name computed by Tacode
-  filename_trajectory: output_result/tecplot.dat
+  filename_trajectory: trajectory.dat
   
   # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
   convert_timeunit_tapost: sec2day
@@ -66,29 +66,29 @@ Bayes_optimization:
 
   # Parameter boundaries
   boundary:
-    - name: 'initial_settings.coordinate:' #'# Initial coordinate' 
+    - name: '# Initial coordinate' 
       component:
-        - type: coord_longitude
+        - type: coord_longitude # Degree
           bound_min: -126.76427528637089
           bound_max: -126.76427528637089
-        - type: coord_latitude
+        - type: coord_latitude  # Degree
           bound_min: 47.59216768160328
           bound_max: 47.59216768160328
-        - type: coord_altitude
-          bound_min: 211.0925432920908
-          bound_max: 211.0925432920908
-    - name: 'initial_settings.velocity:' #'# Initial velocity' 
+        - type: coord_altitude # meter in Tacode-Fotran
+          bound_min: 211092.5432920908
+          bound_max: 211092.5432920908
+    - name: '# Initial velocity' 
       component:
-        - type: velocity_longitude
-          bound_min: 6800
-          bound_max: 6850
-        - type: velocity_latitude
-          bound_min: 3070
-          bound_max: 3090
-        - type: velocity_altitude
-          bound_min: 2.0
-          bound_max: 2.2
-    - name: 'initial_settings.density_factor:' # '# Factor for atmospheric density'
+        - type: longitude
+          bound_min: 6775
+          bound_max: 6875
+        - type: latitude
+          bound_min: 2950
+          bound_max: 3100
+        - type: altitude
+          bound_min: 0
+          bound_max: 5
+    - name: '# Factor for atmospheric density'
       component:
         - type: density_factor
           bound_min: 0.5

@@ -68,24 +68,24 @@ Bayes_optimization:
   boundary:
     - name: 'initial_settings.coordinate:' #'# Initial coordinate' 
       component:
-        - type: longitude
+        - type: coord_longitude
           bound_min: -126.76427528637089
           bound_max: -126.76427528637089
-        - type: latitude
+        - type: coord_latitude
           bound_min: 47.59216768160328
           bound_max: 47.59216768160328
-        - type: altitude
+        - type: coord_altitude
           bound_min: 211.0925432920908
           bound_max: 211.0925432920908
     - name: 'initial_settings.velocity:' #'# Initial velocity' 
       component:
-        - type: longitude
+        - type: velocity_longitude
           bound_min: 6800
           bound_max: 6850
-        - type: latitude
+        - type: velocity_latitude
           bound_min: 3070
           bound_max: 3090
-        - type: altitude
+        - type: velocity_altitude
           bound_min: 2.0
           bound_max: 2.2
     - name: 'initial_settings.density_factor:' # '# Factor for atmospheric density'
