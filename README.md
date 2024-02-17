@@ -22,6 +22,9 @@ Tutorial case: `testcase/work`
 
 Optimization by `Borealis` is controled by the configuration file: `borealis.yml`.
 
+## External code
+
+When an external code, for example, `Tcode`, is used, the pass needs to be specified in `borealis.yml`.
 
 ## Requirements
 
@@ -30,6 +33,7 @@ Optimization by `Borealis` is controled by the configuration file: `borealis.yml
 - numpy (>=1.22.3)
 - yaml (>= 5.3.1)
 - GPyOpt (>= 1.2.6)
+
 
 # Contact:
 

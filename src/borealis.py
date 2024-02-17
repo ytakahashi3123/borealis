@@ -10,6 +10,7 @@
 import numpy as np
 from orbital.orbital import orbital
 from adapter_tacode.adapter_tacode import adapter_tacode
+from adapter_template.adapter_simple_function import adapter_simple_function
 from optimization.optimization import optimization
 
 
@@ -25,7 +26,8 @@ def main():
   config       = orbit.read_config_yaml(file_control)
 
   # Class adapter_tacode
-  adapter = adapter_tacode()
+  #adapter = adapter_tacode()
+  adapter = adapter_simple_function()
 
   # Initialize for trajectory analysis
   adapter.initial_settings(config)

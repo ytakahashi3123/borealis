@@ -1,0 +1,29 @@
+# Configuration file for Borealis code
+
+reference:
+
+
+tacode:
+
+
+Bayes_optimization:
+
+  # Images
+  #flag_image: False
+  #filename_image_acq: figure_acq.png
+
+  # optimazer
+  num_optiter: 100
+
+  # Parameter boundaries
+  boundary:
+    - name: 'simple_function'
+      component:
+        - type: x
+          bound_min: -10
+          bound_max:  10
+
+  # Results data file (Tecplot data format)
+  result_dir: result_bopt
+  filename_output: output_bopt.dat
+
