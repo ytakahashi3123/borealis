@@ -156,7 +156,7 @@ class adapter_tacode(orbital):
 
 
   @orbital.time_measurement_decorated
-  def rewrite_control_file_tacode(self, x):
+  def rewrite_control_file_tacode(self, parameter_opt):
     
     # 何度もファイル開閉をするのは問題かもしれない
 
@@ -177,7 +177,7 @@ class adapter_tacode(orbital):
       ele_indentified = len(parameter_component)
       txt_replaced = []
       for m in range(0, len(parameter_component) ):
-        txt_replaced.append( str( x[0,count] ) )
+        txt_replaced.append( str( parameter_opt[0,count] ) )
         count = count + 1
       print('--Variable:',var_name_ctl,'in',var_root_ctl, ', Parameters:',txt_replaced)
 
@@ -214,7 +214,7 @@ class adapter_tacode(orbital):
     return
 
   @orbital.time_measurement_decorated
-  def rewrite_control_tacode_fortran(self,x):
+  def rewrite_control_tacode_fortran(self,parameter_opt):
     
     # txt_indentifiedの文字列を含む行を抽出し、その(ele_indentified+1)番目要素を置換する。
 
@@ -234,7 +234,7 @@ class adapter_tacode(orbital):
       ele_indentified = len(parameter_component)
       txt_replaced = []
       for m in range(0, len(parameter_component) ):
-        txt_replaced.append( str( x[0,count] ) + ',' )
+        txt_replaced.append( str( parameter_opt[0,count] ) + ',' )
         count = count + 1
       txt_replaced[-1] = txt_replaced[-1].rstrip(",")
       print('--Variable:',var_name_ctl, ', Parameters:',txt_replaced)
@@ -418,7 +418,7 @@ class adapter_tacode(orbital):
 
 
   @orbital.time_measurement_decorated
-  def objective_function(self, x):
+  def objective_function(self, parameter_opt):
 
     # コントロールファイルを適切に修正して、tacodeを実行する。
 
@@ -431,9 +431,9 @@ class adapter_tacode(orbital):
 
     # コントロールファイルの書き換え 
     if self.config['tacode']['code_system'] == 'python3' :
-      self.rewrite_control_file_tacode(x)
+      self.rewrite_control_file_tacode(parameter_opt)
     elif self.config['tacode']['code_system'] == 'fortran' :
-      self.rewrite_control_tacode_fortran(x)
+      self.rewrite_control_tacode_fortran(parameter_opt)
 
     # Run Tacode
     self.run_tacode()

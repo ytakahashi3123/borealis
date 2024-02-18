@@ -1,9 +1,25 @@
 # Configuration file for Borealis code
 
+adapter: 
+  # tacode or simple_function
+  kind_adapter: simple_function  
+
+
 reference:
 
 
-tacode:
+simple_function:
+ 
+  #flag_eval: False
+  #function_eval: '2*np.sin(x) + 4*np.cos(2 * x) + 3*np.cos(2/5 * x)'
+
+  # Function output
+  result_dir: result_function
+  flag_output: True
+  filename_output: output_function.dat
+  function_discrete: 100
+  function_bound_min: -10
+  function_bound_max: 10
 
 
 Bayes_optimization:
@@ -13,7 +29,7 @@ Bayes_optimization:
   #filename_image_acq: figure_acq.png
 
   # optimazer
-  num_optiter: 100
+  num_optiter: 25
 
   # Parameter boundaries
   boundary:

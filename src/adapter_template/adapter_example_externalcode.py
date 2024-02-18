@@ -1,0 +1,296 @@
+#!/usr/bin/env python3
+
+import numpy as np
+import os as os
+import shutil as shutil
+import subprocess as subprocess
+from orbital.orbital import orbital
+
+
+class adapter_example_externalcode(orbital):
+
+  def __init__(self):
+
+    print("Constructing class: adapter_example_externalcode")
+
+    return
+
+  
+  def initial_settings(self, config):
+
+    self.work_dir   = config['example_externalcode']['work_dir']
+    self.case_dir   = config['example_externalcode']['case_dir']
+    self.step_digit = config['example_externalcode']['step_digit']
+
+    # Make directory
+    super().make_directory_rm(self.work_dir)
+
+    # Template case 
+    path_specify = config['example_externalcode']['directory_path_specify']
+    default_path = '/../../example_externalcode/curve' 
+    manual_path  = config['example_externalcode']['manual_path']
+    self.template_path = self.get_directory_path(path_specify, default_path, manual_path)
+  
+    self.work_dir_template = self.work_dir+'/'+self.case_dir+'_template'
+    shutil.copytree(self.template_path, self.work_dir_template)
+
+    # Control file and computed result file
+    self.filename_control_code = config['example_externalcode']['filename_control']
+    self.filename_result_code  = config['example_externalcode']['filename_result']
+
+    # Execution file
+    self.cmd_code = config['example_externalcode']['cmd_externalcode']
+    self.root_dir = os.getcwd()
+    self.cmd_home = os.path.dirname(os.path.realpath(__file__)) + '/..'
+
+    # Target parameter (corresponding to the parameter boundary)
+    self.parameter_target = config['Bayes_optimization']['boundary']
+
+    # Result file: Make directory
+    super().make_directory_rm(config['example_externalcode']['result_dir'])
+
+    # Control file 
+    self.config = config
+
+    # Counter
+    self.iter = 1
+     
+    # Variables of result file
+    self.str_x = 'x'
+    self.str_y = 'y'
+
+    self.result_var = [ self.str_x, self.str_y ]
+ 
+    # For trajectory data reading
+    self.headerline_variables = 1
+    self.num_skiprows = 3
+
+    return
+
+
+  def reference_data_setting(self, config):
+
+    # File directory and name setting
+    path_specify = config['reference']['directory_path_specify']
+    default_path = '/../../example_externalcode/curve_reference'
+    manual_path  = config['reference']['manual_path']
+    reference_path = self.get_directory_path(path_specify, default_path, manual_path)
+    filename  = config['reference']['filename_input']
+
+    # Reading reference data
+    filename_tmp = reference_path+'/'+filename
+    print('Reading reference data...',':', filename_tmp)
+    data_input = np.loadtxt(filename_tmp,comments=('#'),delimiter=None,skiprows=2)
+    self.x_ref = data_input[:,0]
+    self.y_ref = data_input[:,1]
+
+    return
+
+
+  @orbital.time_measurement_decorated
+  def rewrite_control_file_code(self, parameter_opt):
+    
+    # 何度もファイル開閉をするのは問題かもしれない
+
+    print('--Modify control file')
+
+    filename = self.work_dir_case+'/'+self.filename_control_code
+
+    count = 0
+    parameter_target = self.parameter_target
+    for n in range(0, len(parameter_target ) ):
+      parameter_name = parameter_target[n]['name'].rsplit('.', 1)
+      parameter_component = parameter_target[n]['component']
+
+      var_root_ctl = parameter_name[0]
+      var_name_ctl = parameter_name[1]
+
+      txt_indentified = var_name_ctl
+      ele_indentified = len(parameter_component)
+      txt_replaced = []
+      for m in range(0, len(parameter_component) ):
+        txt_replaced.append( str( parameter_opt[0,count] ) )
+        count = count + 1
+      print('--Variable:',var_name_ctl,'in',var_root_ctl, ', Parameters:',txt_replaced)
+
+      # File operation
+      for m in range(0,ele_indentified):
+        # Reading control file
+        with open(filename) as f:
+          lines = f.readlines()
+
+        # リストとして取得 
+        lines_strip = [line.strip() for line in lines]
+
+        # 置換する行を特定する
+        line_both        = [(i, line) for i, line in enumerate(lines_strip) if txt_indentified in line]
+        i_line, str_line = list(zip(*line_both))
+
+        # 抽出した行をスペース・タブで分割する。そのele_indentified列目を置換し、line_replacedというstr型に戻す。
+        words = lines_strip[i_line[0]+m+1].split()
+        # Replace (words[0]に該当する'-'は置換しない、その次のwords[1]を置換する)
+        words[1] = txt_replaced[m]
+        # インデントを考慮して新しい行を構築
+        line_replaced  = ' '.join(words)
+
+        # 行を置換
+        # lines_newはリストになることに注意。そのため、'',joinでstr型に戻す
+        lines_updated = [item.replace( lines_strip[i_line[0]+m+1], line_replaced ) for item in lines]
+
+        str_lines_new = ''.join(lines_updated)
+
+        # Update the file
+        with open(filename, mode="w") as f:
+          f.write(str_lines_new)
+    
+    return
+
+
+  @orbital.time_measurement_decorated
+  def run_code(self):
+    
+    print('--Run external code')
+
+    # Move to computing directory, run Tacode, and return to the original directory
+    os.chdir( self.work_dir_case )
+    subprocess.call( self.cmd_code )
+    os.chdir( self.root_dir )
+
+    return
+
+
+  @orbital.time_measurement_decorated
+  def evaluate_error(self, result_dict):
+
+    # 外部コード結果とReferenceの誤差を評価する
+
+    print('--Evaluating error between computed result and reference data')
+
+    x = result_dict[ self.str_x ]
+    y = result_dict[ self.str_y ]
+
+    x_min = self.config['example_externalcode']['x_min']
+    x_max = self.config['example_externalcode']['x_max']
+
+    _, i_start = super().closest_value_index(x, x_min)
+    _, i_end   = super().closest_value_index(x, x_max)
+
+    # 誤差評価の計算
+    error = 0.0
+    count = 0
+    for n in range(i_start, i_end):
+      count = count+1
+      for m in range(0,len(self.x_ref)):
+        if (self.x_ref[m] >= x[n] ):
+          m_opt = m
+          break
+      grad_fact = ( x[n] - self.x_ref[m_opt-1] )/( self.x_ref[m_opt] - self.x_ref[m_opt-1] )
+      y_ref_cor = ( self.y_ref[m_opt]  - self.y_ref[m_opt-1]  )*grad_fact + self.y_ref[m_opt-1]
+      error = error + ( y[n] - y_ref_cor )**2 
+
+    error = np.sqrt( error/float(count) )
+
+    # Green color
+    print('--Error:','\033[92m'+str(error)+'\033[0m', 'in Epoch',str(self.iter) )
+
+    return error
+
+
+  @orbital.time_measurement_decorated
+  def read_result_data(self):
+    
+    # Resultデータの読み込み
+    filename = self.work_dir_case+'/'+self.filename_result_code
+
+    print("--Reading computed results by code...:",filename)
+
+    # Set header
+    with open(filename) as f:
+      lines = f.readlines()
+    # リストとして取得
+    lines_strip = [line.strip() for line in lines]
+    # ”Variables ="を削除した上で、カンマとスペースを削除
+    variables_line = lines_strip[self.headerline_variables].replace('Variables =', '')
+    variables_line = variables_line.replace(',', ' ').replace('"', ' ')
+    # 空白文字で分割して単語のリストを取得
+    words = variables_line.split()
+
+    # set variables
+    result_var   = self.result_var
+    result_index = []
+    for i in range( 0,len(result_var) ):
+      for n in range( 0,len(words) ):
+        if result_var[i] == words[n] :
+          result_index.append(n)
+          #print( result_var[i], words[n], i, n)
+          break
+
+    # Read data
+    data_input = np.loadtxt(filename,comments=('#'),delimiter=None,skiprows=self.num_skiprows)
+
+    # Store data as dictionary
+    result_dict = {}
+    for n in range( 0,len(result_var) ):
+      result_dict[ result_var[n] ] = data_input[:,result_index[n]]
+
+    return result_dict
+
+
+  @orbital.time_measurement_decorated
+  def write_result_data(self, result_dict):
+
+    x = result_dict[ self.str_x ]
+    y = result_dict[ self.str_y ]
+
+    if( self.config['example_externalcode']['filename_output'] ):
+      result_dir        = self.config['example_externalcode']['result_dir']
+      filename_tecplot  = self.config['example_externalcode']['filename_output']
+      number_padded     = str(self.iter).zfill(self.step_digit)
+      filename_tmp      = super().insert_suffix(result_dir+'/'+filename_tecplot,'_case'+number_padded,'.')
+      print('--Writing output file...:',filename_tmp)
+
+      result_var_tmp = self.result_var
+      header_tmp = "Variables = "
+      for n in range(0,len(result_var_tmp)):
+        header_tmp = header_tmp + result_var_tmp[n] + ','
+      header_tmp = header_tmp.rstrip(",") 
+    
+      delimiter_tmp     = '\t'
+      comments_tmp      = ''
+      output_tmp        = np.c_[x,y]
+      np.savetxt(filename_tmp, output_tmp, header=header_tmp, delimiter=delimiter_tmp, comments=comments_tmp )
+
+    return
+
+
+  @orbital.time_measurement_decorated
+  def objective_function(self, parameter_opt):
+
+    # コントロールファイルを適切に修正して、tacodeを実行する。
+
+    print('Iteration: ', self.iter)
+
+    # Caseディレクトリの作成
+    self.work_dir_case = self.work_dir + '/' + self.case_dir + str(self.iter).zfill(self.step_digit)
+    print('--Make case directory: ', self.work_dir_case)
+    shutil.copytree(self.work_dir_template, self.work_dir_case)
+
+    # コントロールファイルの書き換え 
+    self.rewrite_control_file_code(parameter_opt)
+
+    # Run Tacode
+    self.run_code()
+
+    # Read result for evaluating error
+    result_dict = self.read_result_data()
+
+    # Write result data
+    self.write_result_data(result_dict)
+
+    # Evaluate error
+    error = self.evaluate_error(result_dict)
+
+    # カウンタの更新
+    self.iter += 1
+
+    return error

@@ -1,0 +1,70 @@
+# Configuration file for Borealis code
+
+adapter:
+  # tacode, simple_function, or example_externalcode
+  kind_adapter: example_externalcode
+  
+
+reference:
+
+  directory_path_specify: manual # default or manual
+  manual_path: ../../example_externalcode/curve_reference
+  filename_input: reference.dat
+
+
+example_externalcode:
+
+  # tacode case directory
+  work_dir: work_externalcode
+  case_dir: case
+  step_digit: 4
+  
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/work_curve
+
+  # Executing script
+  cmd_externalcode: ./run_externalcode.sh
+  
+  # Control file
+  filename_control: curve.yml
+  
+  # Result file name computed by the external code
+  filename_result: output.dat
+
+  # Result trajectory of Tacode 
+  result_dir: result_externalode
+  flag_output: True
+  filename_output: tecplot_output.dat
+
+  # Difition range
+  x_min: -10
+  x_max:  10
+
+
+Bayes_optimization:
+
+  # Images
+  #flag_image: False
+  #filename_image_acq: figure_acq.png
+
+  # optimazer
+  num_optiter: 100
+
+  # Parameter boundaries
+  boundary:
+    - name: 'curve.coefficient:' #'# Initial coordinate' 
+      component:
+        - type: a
+          bound_min: -1.0
+          bound_max:  1.0
+        - type: b
+          bound_min: 0.0
+          bound_max: 5.0
+        - type: c
+          bound_min: -10.0
+          bound_max:  10.0
+
+  # Results data file (Tecplot data format)
+  result_dir: result_bopt
+  filename_output: output_bopt.dat
+

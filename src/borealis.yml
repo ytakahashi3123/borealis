@@ -1,5 +1,10 @@
 # Configuration file for Borealis code
 
+adapter: 
+  # tacode or simple_function
+  kind_adapter: tacode
+  
+
 reference:
 
   directory_path_specify: manual # default or manual

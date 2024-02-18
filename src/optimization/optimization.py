@@ -2,6 +2,7 @@
 
 import numpy as np
 import GPyOpt as GPyOpt
+import matplotlib.pyplot as plt
 from orbital.orbital import orbital
 
 
@@ -48,23 +49,23 @@ class optimization(orbital):
     # X , Y : 初期データ
     # initial_design_numdata : 設定する初期データの数。上記 X , Yを指定した場合は設定不要。 
     # normalize_Y : 目的関数(ガウス過程)を標準化する場合はTrue。(今回は予測を真値と比較しやすくするためFalse)
-    bopt = GPyOpt.methods.BayesianOptimization(f=objective_function,
-                                              domain=parameter_boundary,
-                                              #X=init_X,
-                                              #Y=init_Y,
-                                              model_type='GP',
-                                              #model_type='GP_MCMC',
-                                              normalize_Y=False,
-                                              maximize=False,
-                                              verbosity=True,
-                                              #initial_design_numdata=50,
-                                              acquisition_type='EI'
-                                              #acquisition_type='MPI'
-                                              )
+    problem = GPyOpt.methods.BayesianOptimization(f=objective_function,
+                                                  domain=parameter_boundary,
+                                                  #X=init_X,
+                                                  #Y=init_Y,
+                                                  model_type='GP',
+                                                  #model_type='GP_MCMC',
+                                                  normalize_Y=False,
+                                                  maximize=False,
+                                                  verbosity=True,
+                                                  #initial_design_numdata=50,
+                                                  acquisition_type='EI'
+                                                  #acquisition_type='MPI'
+                                                  )
 
     # ベイズ最適化
     #tolerance = 1e-8 
-    bopt.run_optimization(max_iter=config['Bayes_optimization']['num_optiter'] )
+    problem.run_optimization(max_iter=config['Bayes_optimization']['num_optiter'],verbosity=True)
 
     # Store optimized data
     boundary = config['Bayes_optimization']['boundary']
@@ -74,13 +75,13 @@ class optimization(orbital):
       parameter_component = boundary[n]['component']
       for m in range(0, len(parameter_component)):
         bound_type = parameter_component[m]['type']
-        solution_dict[bound_type] = bopt.X[:,count]
+        solution_dict[bound_type] = problem.X[:,count]
         count = count + 1
-    solution_dict[self.str_error] = bopt.Y[:,0]
+    solution_dict[self.str_error] = problem.Y[:,0]
 
     # Optimized solutions
-    value_boptimized = bopt.x_opt
-    error_boptimized = bopt.fx_opt
+    value_boptimized = problem.x_opt
+    error_boptimized = problem.fx_opt
     _, index_boptimized = super().closest_value_index(solution_dict[self.str_error], error_boptimized)
     epoch_boptimized = index_boptimized + 1
     
@@ -89,7 +90,7 @@ class optimization(orbital):
     print("--Error     :" , error_boptimized)
     print("--Epoch     :" , epoch_boptimized)
 
-    return solution_dict
+    return problem, solution_dict
 
 
   def write_optimization_data(self, config, solution_dict):
@@ -132,7 +133,7 @@ class optimization(orbital):
     return
 
 
-  def visualize_optimization(self, config, bopt):
+  def plot_optimization_process(self, config, problem):
 
     # not supported
 
@@ -142,7 +143,7 @@ class optimization(orbital):
   #bopt.X,myBopt.Y #サンプリングしたxとy
 
   # ガウス過程回帰モデル
-  #  gprmodel = bopt.model.model
+  #  gprmodel = problem.model.model
 
   #予測（第一成分：mean、第二成分：std)
   #  num_div_optfunction = config['Bayes_optimization']['num_div_optfunction'] 
@@ -157,16 +158,17 @@ class optimization(orbital):
   #  std  = pred_std[:, 0]
 
   # Plot
-  #  bopt.plot_acquisition() 
+    problem.plot_acquisition(filename = "acquisition.png")
+    #bopt.plot_convergence()
   #  bopt.plot_convergence()
 
     return
 
 
-  def run_optimization(self, config, objective_function, parameter_boundary):
+  def drive_optimization(self, config, objective_function, parameter_boundary):
 
     # Bayesian optimization
-    solution_dict = self.bayesian_optimization(config, objective_function, parameter_boundary)
+    problem, solution_dict = self.bayesian_optimization(config, objective_function, parameter_boundary)
 
     # Write data
     self.write_optimization_data(config, solution_dict)
