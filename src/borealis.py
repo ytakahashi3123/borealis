@@ -9,9 +9,6 @@
 
 import numpy as np
 from orbital.orbital import orbital
-from adapter_tacode.adapter_tacode import adapter_tacode
-from adapter_template.adapter_simple_function import adapter_simple_function
-from adapter_template.adapter_example_externalcode import adapter_example_externalcode
 from optimization.optimization import optimization
 
 
@@ -28,10 +25,13 @@ def main():
 
   # Select adapter
   if config['adapter']['kind_adapter'] == 'tacode':
+    from adapter_tacode.adapter_tacode import adapter_tacode
     adapter = adapter_tacode()
   elif config['adapter']['kind_adapter'] == 'simple_function':
+    from adapter_template.adapter_simple_function import adapter_simple_function
     adapter = adapter_simple_function()
   elif config['adapter']['kind_adapter'] == 'example_externalcode':
+    from adapter_template.adapter_example_externalcode import adapter_example_externalcode
     adapter = adapter_example_externalcode()
   else:
     print('Error, invalid adapter is selected. Check adapter.kind_adapter in',file_control,':', config['adapter']['kind_adapter'])

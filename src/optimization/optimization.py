@@ -158,9 +158,13 @@ class optimization(orbital):
   #  std  = pred_std[:, 0]
 
   # Plot
-    problem.plot_acquisition(filename = "acquisition.png")
-    #bopt.plot_convergence()
-  #  bopt.plot_convergence()
+    if config['Bayes_optimization']['flag_image_acquisition']:
+      filename_tmp = config['Bayes_optimization']['result_dir'] + '/' + config['Bayes_optimization']['filename_image_acquisition']
+      problem.plot_acquisition(filename = filename_tmp)
+
+    if config['Bayes_optimization']['flag_image_convergence']:
+      filename_tmp = config['Bayes_optimization']['result_dir'] + '/' + config['Bayes_optimization']['filename_image_convergence']
+      problem.plot_convergence(filename = filename_tmp)
 
     return
 
@@ -172,5 +176,8 @@ class optimization(orbital):
 
     # Write data
     self.write_optimization_data(config, solution_dict)
+
+    # Plot data
+    self.plot_optimization_process(config, problem)
 
     return

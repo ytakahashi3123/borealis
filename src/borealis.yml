@@ -1,9 +1,57 @@
 # Configuration file for Borealis code
 
 adapter: 
-  # tacode or simple_function
+  # tacode, simple_function, or example_externalcode
   kind_adapter: tacode
   
+
+Bayes_optimization:
+
+  # optimazer
+  num_optiter: 100
+
+  # Parameter boundaries
+  boundary:
+    - name: 'initial_settings.coordinate:' #'# Initial coordinate' 
+      component:
+        - type: coord_longitude
+          bound_min: -126.76427528637089
+          bound_max: -126.76427528637089
+        - type: coord_latitude
+          bound_min: 47.59216768160328
+          bound_max: 47.59216768160328
+        - type: coord_altitude
+          bound_min: 211.0925432920908
+          bound_max: 211.0925432920908
+    - name: 'initial_settings.velocity:' #'# Initial velocity' 
+      component:
+        - type: velocity_longitude
+          bound_min: 6800
+          bound_max: 6850
+        - type: velocity_latitude
+          bound_min: 3070
+          bound_max: 3090
+        - type: velocity_altitude
+          bound_min: 2.0
+          bound_max: 2.2
+    - name: 'initial_settings.density_factor:' # '# Factor for atmospheric density'
+      component:
+        - type: density_factor
+          bound_min: 0.5
+          bound_max: 1.5
+
+  # Results data file (Tecplot data format)
+  result_dir: result_bopt
+  filename_output: output_bopt.dat
+
+  # Acquisition
+  flag_image_acquisition: False
+  filename_image_acquisition: acquisition.png
+
+  # Convergence
+  flag_image_convergence: False
+  filename_image_convergence: convergence.png
+
 
 reference:
 
@@ -61,46 +109,45 @@ tacode:
   filename_tecplot: tecplot_trajectory_result.dat
 
 
-Bayes_optimization:
+simple_function:
+ 
+  #flag_eval: False
+  #function_eval: '2*np.sin(x) + 4*np.cos(2 * x) + 3*np.cos(2/5 * x)'
 
-  # Images
-  #flag_image: False
-  #filename_image_acq: figure_acq.png
+  # Function output
+  result_dir: result_function
+  flag_output: True
+  filename_output: output_function.dat
+  function_discrete: 100
+  function_bound_min: -10
+  function_bound_max: 10
 
-  # optimazer
-  num_optiter: 100
 
-  # Parameter boundaries
-  boundary:
-    - name: 'initial_settings.coordinate:' #'# Initial coordinate' 
-      component:
-        - type: coord_longitude
-          bound_min: -126.76427528637089
-          bound_max: -126.76427528637089
-        - type: coord_latitude
-          bound_min: 47.59216768160328
-          bound_max: 47.59216768160328
-        - type: coord_altitude
-          bound_min: 211.0925432920908
-          bound_max: 211.0925432920908
-    - name: 'initial_settings.velocity:' #'# Initial velocity' 
-      component:
-        - type: velocity_longitude
-          bound_min: 6800
-          bound_max: 6850
-        - type: velocity_latitude
-          bound_min: 3070
-          bound_max: 3090
-        - type: velocity_altitude
-          bound_min: 2.0
-          bound_max: 2.2
-    - name: 'initial_settings.density_factor:' # '# Factor for atmospheric density'
-      component:
-        - type: density_factor
-          bound_min: 0.5
-          bound_max: 1.5
+example_externalcode:
 
-  # Results data file (Tecplot data format)
-  result_dir: result_bopt
-  filename_output: output_bopt.dat
+  # tacode case directory
+  work_dir: work_externalcode
+  case_dir: case
+  step_digit: 4
+  
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/work_curve
+
+  # Executing script
+  cmd_externalcode: ./run_externalcode.sh
+  
+  # Control file
+  filename_control: curve.yml
+  
+  # Result file name computed by the external code
+  filename_result: output.dat
+
+  # Result trajectory of Tacode 
+  result_dir: result_externalode
+  flag_output: True
+  filename_output: tecplot_output.dat
+
+  # Difition range
+  x_min: -10
+  x_max:  10
 

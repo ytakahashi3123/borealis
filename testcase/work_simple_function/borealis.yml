@@ -24,10 +24,6 @@ simple_function:
 
 Bayes_optimization:
 
-  # Images
-  #flag_image: False
-  #filename_image_acq: figure_acq.png
-
   # optimazer
   num_optiter: 25
 
@@ -43,3 +39,10 @@ Bayes_optimization:
   result_dir: result_bopt
   filename_output: output_bopt.dat
 
+  # Acquisition
+  flag_image_acquisition: True
+  filename_image_acquisition: acquisition.png
+
+  # Convergence
+  flag_image_convergence: True
+  filename_image_convergence: convergence.png
