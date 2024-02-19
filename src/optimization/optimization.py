@@ -19,7 +19,7 @@ class optimization(orbital):
 
   def initial_setting(self, config):
 
-    result_dir = config['Bayes_optimization']['result_dir']
+    result_dir = config['Bayesian_optimization']['result_dir']
     super().make_directory_rm(result_dir)
 
     return
@@ -29,7 +29,7 @@ class optimization(orbital):
 
     # Setting parameter's boundaries
 
-    boundary = config['Bayes_optimization']['boundary']
+    boundary = config['Bayesian_optimization']['boundary']
     bounds = []
     for n in range(0, len(boundary) ):
       boundary_name = boundary[n]['name']
@@ -65,10 +65,10 @@ class optimization(orbital):
 
     # ベイズ最適化
     #tolerance = 1e-8 
-    problem.run_optimization(max_iter=config['Bayes_optimization']['num_optiter'],verbosity=True)
+    problem.run_optimization(max_iter=config['Bayesian_optimization']['num_optiter'],verbosity=True)
 
     # Store optimized data
-    boundary = config['Bayes_optimization']['boundary']
+    boundary = config['Bayesian_optimization']['boundary']
     solution_dict = {}
     count = 0
     for n in range(0, len(boundary) ):
@@ -95,7 +95,7 @@ class optimization(orbital):
 
   def write_optimization_data(self, config, solution_dict):
 
-    boundary = config['Bayes_optimization']['boundary']
+    boundary = config['Bayesian_optimization']['boundary']
     solution_name_list = []
     for n in range(0, len(boundary) ):
       parameter_component = boundary[n]['component']
@@ -104,7 +104,7 @@ class optimization(orbital):
     solution_name_list.append(self.str_error)
 
     # Output results
-    filename_tmp =  config['Bayes_optimization']['result_dir'] + '/' + config['Bayes_optimization']['filename_output']
+    filename_tmp =  config['Bayesian_optimization']['result_dir'] + '/' + config['Bayesian_optimization']['filename_output']
     print('--Writing output file...:',filename_tmp)
 
     # Open file
@@ -146,7 +146,7 @@ class optimization(orbital):
   #  gprmodel = problem.model.model
 
   #予測（第一成分：mean、第二成分：std)
-  #  num_div_optfunction = config['Bayes_optimization']['num_div_optfunction'] 
+  #  num_div_optfunction = config['Bayesian_optimization']['num_div_optfunction'] 
   #  x_lat = np.linspace(bound_lat_min, bound_lat_max, num_div_optfunction).reshape(-1, 1)
   #  x_alt = np.linspace(bound_alt_min, bound_alt_max, num_div_optfunction).reshape(-1, 1)
   #  x_func = np.meshgrid(x_lat,x_alt)
@@ -158,12 +158,12 @@ class optimization(orbital):
   #  std  = pred_std[:, 0]
 
   # Plot
-    if config['Bayes_optimization']['flag_image_acquisition']:
-      filename_tmp = config['Bayes_optimization']['result_dir'] + '/' + config['Bayes_optimization']['filename_image_acquisition']
+    if config['Bayesian_optimization']['flag_image_acquisition']:
+      filename_tmp = config['Bayesian_optimization']['result_dir'] + '/' + config['Bayesian_optimization']['filename_image_acquisition']
       problem.plot_acquisition(filename = filename_tmp)
 
-    if config['Bayes_optimization']['flag_image_convergence']:
-      filename_tmp = config['Bayes_optimization']['result_dir'] + '/' + config['Bayes_optimization']['filename_image_convergence']
+    if config['Bayesian_optimization']['flag_image_convergence']:
+      filename_tmp = config['Bayesian_optimization']['result_dir'] + '/' + config['Bayesian_optimization']['filename_image_convergence']
       problem.plot_convergence(filename = filename_tmp)
 
     return

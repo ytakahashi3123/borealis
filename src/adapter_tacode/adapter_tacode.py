@@ -35,16 +35,16 @@ class adapter_tacode(orbital):
     shutil.copytree(self.template_path, self.work_dir_template)
 
     # Control file and computed result file
-    self.filename_control_tacode    = config['tacode']['filename_control']
-    self.filename_trajectory_tacode = config['tacode']['filename_trajectory']
+    self.filename_control_code    = config['tacode']['filename_control']
+    self.filename_result_code = config['tacode']['filename_result']
 
     # Execution file
-    self.cmd_tacode = config['tacode']['cmd_tacode']
-    self.root_dir   = os.getcwd()
+    self.cmd_code = config['tacode']['cmd_code']
+    self.root_dir = os.getcwd()
     self.cmd_home = os.path.dirname(os.path.realpath(__file__)) + '/..'
 
     # Target parameter (corresponding to the parameter boundary)
-    self.parameter_target = config['Bayes_optimization']['boundary']
+    self.parameter_target = config['Bayesian_optimization']['boundary']
 
     # Result file: Make directory
     super().make_directory_rm(config['tacode']['result_dir'])
@@ -156,13 +156,13 @@ class adapter_tacode(orbital):
 
 
   @orbital.time_measurement_decorated
-  def rewrite_control_file_tacode(self, parameter_opt):
+  def rewrite_control_file_code(self, parameter_opt):
     
     # 何度もファイル開閉をするのは問題かもしれない
 
     print('--Modify control file')
 
-    filename = self.work_dir_case+'/'+self.filename_control_tacode
+    filename = self.work_dir_case+'/'+self.filename_control_code
 
     count = 0
     parameter_target = self.parameter_target
@@ -214,13 +214,13 @@ class adapter_tacode(orbital):
     return
 
   @orbital.time_measurement_decorated
-  def rewrite_control_tacode_fortran(self,parameter_opt):
+  def rewrite_control_code_fortran(self,parameter_opt):
     
     # txt_indentifiedの文字列を含む行を抽出し、その(ele_indentified+1)番目要素を置換する。
 
     print('--Modify control file')
 
-    filename = self.work_dir_case+'/'+self.filename_control_tacode
+    filename = self.work_dir_case+'/'+self.filename_control_code
 
     count = 0
     parameter_target = self.parameter_target
@@ -267,30 +267,30 @@ class adapter_tacode(orbital):
 
 
   @orbital.time_measurement_decorated
-  def run_tacode(self):
+  def run_code(self):
     
-    print('--Run Tacode')
+    print('--Run code')
 
     # Move to computing directory, run Tacode, and return to the original directory
     os.chdir( self.work_dir_case )
-    subprocess.call( self.cmd_tacode )
+    subprocess.call( self.cmd_code )
     os.chdir( self.root_dir )
 
     return
 
 
   @orbital.time_measurement_decorated
-  def evaluate_error(self, trajectory_dict):
+  def evaluate_error(self, result_dict):
 
     # Tacodeによるトラジェクトリ結果とReferenceの誤差を評価する
 
     print('--Evaluating error between computed result and reference data')
 
-    longitude       = trajectory_dict[ self.str_longitude ]
-    latitude        = trajectory_dict[ self.str_latitude ]
-    altitude        = trajectory_dict[ self.str_altitude ]
-    time_sec_offset = trajectory_dict[ self.str_time_sec ]
-    time_day_offset = trajectory_dict[ self.str_time_day ]
+    longitude       = result_dict[ self.str_longitude ]
+    latitude        = result_dict[ self.str_latitude ]
+    altitude        = result_dict[ self.str_altitude ]
+    time_sec_offset = result_dict[ self.str_time_sec ]
+    time_day_offset = result_dict[ self.str_time_day ]
 
     time_start      = self.config['tacode']['time_start']
     time_end        = self.config['tacode']['time_end']
@@ -324,12 +324,12 @@ class adapter_tacode(orbital):
 
 
   @orbital.time_measurement_decorated
-  def read_trajectory_data(self):
+  def read_result_data(self):
     
     # Trajectoryデータの読み込み
-    filename = self.work_dir_case+'/'+self.filename_trajectory_tacode
+    filename = self.work_dir_case+'/'+self.filename_result_code
 
-    print("--Reading computed trajectory results by Tacode...:",filename)
+    print("--Reading computed results by Tacode...:",filename)
 
     # Set header
     with open(filename) as f:
@@ -356,49 +356,49 @@ class adapter_tacode(orbital):
     data_input = np.loadtxt(filename,comments=('#'),delimiter=None,skiprows=self.num_skiprows)
 
     # Store data as dictionary
-    trajectory_dict = {}
+    result_dict = {}
     for n in range( 0,len(result_var) ):
-      trajectory_dict[ result_var[n] ] = data_input[:,result_index[n]]
+      result_dict[ result_var[n] ] = data_input[:,result_index[n]]
 
     # 開始時刻をGPRデータと合わせる
     time_start      = self.config['tacode']['time_start']
     time_end        = self.config['tacode']['time_end']
     target_time_set = self.config['tacode']['target_time']
 
-    time_sec        = trajectory_dict[ self.str_time_sec ]
+    time_sec        = result_dict[ self.str_time_sec ]
     time_day        = time_sec/orbital.unit_covert_day2sec
     time_day_offset = time_day+target_time_set
     time_sec_offset = time_sec+target_time_set*orbital.unit_covert_day2sec
 
     # Update time variables offset
-    trajectory_dict[ self.str_time_sec ] = time_sec_offset
-    trajectory_dict[ self.str_time_day ] = time_day_offset
+    result_dict[ self.str_time_sec ] = time_sec_offset
+    result_dict[ self.str_time_day ] = time_day_offset
 
-    return trajectory_dict
+    return result_dict
 
 
   @orbital.time_measurement_decorated
-  def write_trajectory_data(self, trajectory_dict):
+  def write_result_data(self, result_dict):
 
-    longitude     = trajectory_dict[ self.str_longitude ]
-    latitude      = trajectory_dict[ self.str_latitude ]
-    altitude      = trajectory_dict[ self.str_altitude ]
-    velocity_long = trajectory_dict[ self.str_velocity_longitude ]
-    velocity_lat  = trajectory_dict[ self.str_velocity_latitude ]
-    velocity_alt  = trajectory_dict[ self.str_velocity_altitude ]
-    velocity_mag  = trajectory_dict[ self.str_velocity_magnitude ]
-    density       = trajectory_dict[ self.str_density ]
-    temperature   = trajectory_dict[ self.str_temperature ]
-    kn            = trajectory_dict[ self.str_knudsen ]
+    longitude     = result_dict[ self.str_longitude ]
+    latitude      = result_dict[ self.str_latitude ]
+    altitude      = result_dict[ self.str_altitude ]
+    velocity_long = result_dict[ self.str_velocity_longitude ]
+    velocity_lat  = result_dict[ self.str_velocity_latitude ]
+    velocity_alt  = result_dict[ self.str_velocity_altitude ]
+    velocity_mag  = result_dict[ self.str_velocity_magnitude ]
+    density       = result_dict[ self.str_density ]
+    temperature   = result_dict[ self.str_temperature ]
+    kn            = result_dict[ self.str_knudsen ]
 
-    time_sec_offset = trajectory_dict[ self.str_time_sec ]
-    time_day_offset = trajectory_dict[ self.str_time_day ]
+    time_sec_offset = result_dict[ self.str_time_sec ]
+    time_day_offset = result_dict[ self.str_time_day ]
 
-    if( self.config['tacode']['flag_tecplot'] ):
+    if( self.config['tacode']['flag_output'] ):
       result_dir        = self.config['tacode']['result_dir']
-      filename_tecplot  = self.config['tacode']['filename_tecplot']
+      filename_output  = self.config['tacode']['filename_output']
       number_padded     = str(self.iter).zfill(self.step_digit)
-      filename_tmp      = super().insert_suffix(result_dir+'/'+filename_tecplot,'_case'+number_padded,'.')
+      filename_tmp      = super().insert_suffix(result_dir+'/'+filename_output,'_case'+number_padded,'.')
       print('--Writing output file...:',filename_tmp)
 
       result_var_tmp = self.result_var
@@ -431,21 +431,21 @@ class adapter_tacode(orbital):
 
     # コントロールファイルの書き換え 
     if self.config['tacode']['code_system'] == 'python3' :
-      self.rewrite_control_file_tacode(parameter_opt)
+      self.rewrite_control_file_code(parameter_opt)
     elif self.config['tacode']['code_system'] == 'fortran' :
-      self.rewrite_control_tacode_fortran(parameter_opt)
+      self.rewrite_control_code_fortran(parameter_opt)
 
     # Run Tacode
-    self.run_tacode()
+    self.run_code()
 
-    # Read trajectory for evaluating error
-    trajectory_dict = self.read_trajectory_data()
+    # Read result for evaluating error
+    result_dict = self.read_result_data()
 
-    # Write trajectory data
-    self.write_trajectory_data(trajectory_dict)
+    # Write result data
+    self.write_result_data(result_dict)
 
     # Evaluate error
-    error = self.evaluate_error(trajectory_dict)
+    error = self.evaluate_error(result_dict)
 
     # カウンタの更新
     self.iter += 1

@@ -5,7 +5,7 @@ adapter:
   kind_adapter: tacode
   
 
-Bayes_optimization:
+Bayesian_optimization:
 
   # optimazer
   num_optiter: 100
@@ -82,13 +82,13 @@ tacode:
   manual_path: ../../testcase_template/work_tacode
 
   # Executing script
-  cmd_tacode: ./run_tacode.sh
+  cmd_code: ./run_tacode.sh
   
   # Control file
   filename_control: config.yml
   
   # Result file name computed by Tacode
-  filename_trajectory: output_result/tecplot.dat
+  filename_result: output_result/tecplot.dat
   
   # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
   convert_timeunit_tapost: sec2day
@@ -104,9 +104,8 @@ tacode:
 
   # Result trajectory of Tacode 
   result_dir: result_tacode
-  flag_tecplot: True
-  #case_digt: 4
-  filename_tecplot: tecplot_trajectory_result.dat
+  flag_output: True
+  filename_output: output_result.dat
 
 
 simple_function:

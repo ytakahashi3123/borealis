@@ -1,67 +1,11 @@
 # Configuration file for Borealis code
 
 adapter: 
-  # tacode or simple_function
+  # tacode, simple_function, or example_externalcode
   kind_adapter: tacode
   
 
-reference:
-
-  directory_path_specify: manual # default or manual
-  manual_path: ../../testcase_template/case_day118.339/output
-  filename_input: trajectory.dat
-
-  var_x: time_day
-  var_y:
-    - longitude
-    - latitude
-    - altitude
-
-  timeunit: day
-
-
-tacode:
-
-  # Code system: python3 (tacode ver2.0) or Fortran (tacoed ver1.0)
-  code_system: fortran
-
-  # tacode case directory
-  work_dir: work_tacode
-  case_dir: case
-  step_digit: 4
-
-  directory_path_specify: manual # default or manual
-  manual_path: ../../testcase_template/work_tacode_fortran
-
-  # Executing script
-  cmd_tacode: ./run_tacode.sh
-  
-  # Control file
-  filename_control: orbit.ctl
-  
-  # Result file name computed by Tacode
-  filename_trajectory: trajectory.dat
-  
-  # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
-  convert_timeunit_tapost: sec2day
-
-  # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
-  # 時刻オフセット値はここで決定する
- # time_start: 118.3385
- # time_end:   118.4003
- # target_time: 118.3385
-  time_start: 118.3480
-  time_end:   118.3931
-  target_time: 118.3480
-
-  # Result trajectory of Tacode 
-  result_dir: result_tacode
-  flag_tecplot: True
-  #case_digt: 4
-  filename_tecplot: tecplot_trajectory_result.dat
-
-
-Bayes_optimization:
+Bayesian_optimization:
 
   # optimazer
   num_optiter: 100
@@ -107,3 +51,58 @@ Bayes_optimization:
   # Convergence
   flag_image_convergence: False
   filename_image_convergence: convergence.png
+
+
+reference:
+
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/case_day118.339/output
+  filename_input: trajectory.dat
+
+  var_x: time_day
+  var_y:
+    - longitude
+    - latitude
+    - altitude
+
+  timeunit: day
+
+
+tacode:
+
+  # Code system: python3 (tacode ver2.0) or Fortran (tacoed ver1.0)
+  code_system: fortran
+
+  # tacode case directory
+  work_dir: work_tacode
+  case_dir: case
+  step_digit: 4
+
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/work_tacode_fortran
+
+  # Executing script
+  cmd_code: ./run_tacode.sh
+  
+  # Control file
+  filename_control: orbit.ctl
+  
+  # Result file name computed by Tacode
+  filename_result: trajectory.dat
+  
+  # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
+  convert_timeunit_tapost: sec2day
+
+  # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
+  # 時刻オフセット値はここで決定する
+ # time_start: 118.3385
+ # time_end:   118.4003
+ # target_time: 118.3385
+  time_start: 118.3480
+  time_end:   118.3931
+  target_time: 118.3480
+
+  # Result trajectory of Tacode 
+  result_dir: result_tacode
+  flag_output: True
+  filename_output: output_result.dat

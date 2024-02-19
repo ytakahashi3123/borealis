@@ -5,6 +5,42 @@ adapter:
   kind_adapter: example_externalcode
   
 
+Bayesian_optimization:
+
+  # Images
+  #flag_image: False
+  #filename_image_acq: figure_acq.png
+
+  # optimazer
+  num_optiter: 20
+
+  # Parameter boundaries
+  boundary:
+    - name: 'curve.coefficient:' #'# Initial coordinate' 
+      component:
+        - type: a
+          bound_min: -1.0
+          bound_max:  1.0
+        - type: b
+          bound_min: 0.0
+          bound_max: 5.0
+        - type: c
+          bound_min: -10.0
+          bound_max:  10.0
+
+  # Results data file (Tecplot data format)
+  result_dir: result_bopt
+  filename_output: output_bopt.dat
+
+  # Acquisition
+  flag_image_acquisition: True
+  filename_image_acquisition: acquisition.png
+
+  # Convergence
+  flag_image_convergence: True
+  filename_image_convergence: convergence.png
+
+
 reference:
 
   directory_path_specify: manual # default or manual
@@ -39,39 +75,3 @@ example_externalcode:
   # Difition range
   x_min: -10
   x_max:  10
-
-
-Bayes_optimization:
-
-  # Images
-  #flag_image: False
-  #filename_image_acq: figure_acq.png
-
-  # optimazer
-  num_optiter: 20
-
-  # Parameter boundaries
-  boundary:
-    - name: 'curve.coefficient:' #'# Initial coordinate' 
-      component:
-        - type: a
-          bound_min: -1.0
-          bound_max:  1.0
-        - type: b
-          bound_min: 0.0
-          bound_max: 5.0
-        - type: c
-          bound_min: -10.0
-          bound_max:  10.0
-
-  # Results data file (Tecplot data format)
-  result_dir: result_bopt
-  filename_output: output_bopt.dat
-
-  # Acquisition
-  flag_image_acquisition: True
-  filename_image_acquisition: acquisition.png
-
-  # Convergence
-  flag_image_convergence: True
-  filename_image_convergence: convergence.png
