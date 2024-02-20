@@ -33,6 +33,9 @@ def main():
   elif config['adapter']['kind_adapter'] == 'example_externalcode':
     from adapter_template.adapter_example_externalcode import adapter_example_externalcode
     adapter = adapter_example_externalcode()
+  elif config['adapter']['kind_adapter'] == 'user':
+    from adapter_user.adapter_user import adapter_user
+    adapter = adapter_user()
   else:
     print('Error, invalid adapter is selected. Check adapter.kind_adapter in',file_control,':', config['adapter']['kind_adapter'])
     print('Program stopped.')

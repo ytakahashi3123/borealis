@@ -27,7 +27,7 @@ class adapter_tacode(orbital):
 
     # Template case 
     path_specify = config['tacode']['directory_path_specify']
-    default_path = '/../../testcase_template' 
+    default_path = '../../testcase_template' 
     manual_path  = config['tacode']['manual_path']
     self.template_path = self.get_directory_path(path_specify, default_path, manual_path)
   
@@ -112,7 +112,7 @@ class adapter_tacode(orbital):
 
     # File directory and name setting
     path_specify = config['reference']['directory_path_specify']
-    default_path = '/../../testcase_template/case_day118.339/output' 
+    default_path = '../../testcase_template/case_day118.339/output' 
     manual_path  = config['reference']['manual_path']
     reference_path = self.get_directory_path(path_specify, default_path, manual_path)
     filename  = config['reference']['filename_input']

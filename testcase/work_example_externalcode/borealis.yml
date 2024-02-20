@@ -12,7 +12,7 @@ Bayesian_optimization:
   #filename_image_acq: figure_acq.png
 
   # optimazer
-  num_optiter: 20
+  num_optiter: 50
 
   # Parameter boundaries
   boundary:
@@ -75,3 +75,4 @@ example_externalcode:
   # Difition range
   x_min: -10
   x_max:  10
+  x_offset: 0

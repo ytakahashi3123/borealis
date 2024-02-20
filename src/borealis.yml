@@ -146,7 +146,8 @@ example_externalcode:
   flag_output: True
   filename_output: tecplot_output.dat
 
-  # Difition range
+  # Definition range
   x_min: -10
   x_max:  10
+  x_offset: 0
 

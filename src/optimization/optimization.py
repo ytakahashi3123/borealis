@@ -160,11 +160,11 @@ class optimization(orbital):
   # Plot
     if config['Bayesian_optimization']['flag_image_acquisition']:
       filename_tmp = config['Bayesian_optimization']['result_dir'] + '/' + config['Bayesian_optimization']['filename_image_acquisition']
-      problem.plot_acquisition(filename = filename_tmp)
+      problem.plot_acquisition(filename=filename_tmp)
 
     if config['Bayesian_optimization']['flag_image_convergence']:
       filename_tmp = config['Bayesian_optimization']['result_dir'] + '/' + config['Bayesian_optimization']['filename_image_convergence']
-      problem.plot_convergence(filename = filename_tmp)
+      problem.plot_convergence(filename=filename_tmp)
 
     return
 

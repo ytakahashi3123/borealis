@@ -7,39 +7,39 @@ import subprocess as subprocess
 from orbital.orbital import orbital
 
 
-class adapter_example_externalcode(orbital):
+class adapter_user(orbital):
 
   def __init__(self):
 
-    print("Constructing class: adapter_example_externalcode")
+    print("Constructing class: adapter_user")
 
     return
 
   
   def initial_settings(self, config):
 
-    self.work_dir   = config['example_externalcode']['work_dir']
-    self.case_dir   = config['example_externalcode']['case_dir']
-    self.step_digit = config['example_externalcode']['step_digit']
+    self.work_dir   = config['user']['work_dir']
+    self.case_dir   = config['user']['case_dir']
+    self.step_digit = config['user']['step_digit']
 
     # Make directory
     super().make_directory_rm(self.work_dir)
 
     # Template case 
-    path_specify = config['example_externalcode']['directory_path_specify']
-    default_path = '../../example_externalcode/curve' 
-    manual_path  = config['example_externalcode']['manual_path']
+    path_specify = config['user']['directory_path_specify']
+    default_path = '../../user/' 
+    manual_path  = config['user']['manual_path']
     self.template_path = self.get_directory_path(path_specify, default_path, manual_path)
   
     self.work_dir_template = self.work_dir+'/'+self.case_dir+'_template'
     shutil.copytree(self.template_path, self.work_dir_template)
 
     # Control file and computed result file
-    self.filename_control_code = config['example_externalcode']['filename_control']
-    self.filename_result_code  = config['example_externalcode']['filename_result']
+    self.filename_control_code = config['user']['filename_control']
+    self.filename_result_code  = config['user']['filename_result']
 
     # Execution file
-    self.cmd_code = config['example_externalcode']['cmd_externalcode']
+    self.cmd_code = config['user']['cmd_code']
     self.root_dir = os.getcwd()
     self.cmd_home = os.path.dirname(os.path.realpath(__file__)) + '/..'
 
@@ -47,7 +47,7 @@ class adapter_example_externalcode(orbital):
     self.parameter_target = config['Bayesian_optimization']['boundary']
 
     # Result file: Make directory
-    super().make_directory_rm(config['example_externalcode']['result_dir'])
+    super().make_directory_rm(config['user']['result_dir'])
 
     # Control file 
     self.config = config
@@ -61,7 +61,7 @@ class adapter_example_externalcode(orbital):
 
     self.result_var = [ self.str_x, self.str_y ]
  
-    # For trajectory data reading
+    # For result data reading
     self.headerline_variables = 1
     self.num_skiprows = 3
 
@@ -72,7 +72,7 @@ class adapter_example_externalcode(orbital):
 
     # File directory and name setting
     path_specify = config['reference']['directory_path_specify']
-    default_path = '../../example_externalcode/curve_reference'
+    default_path = '../../user_reference'
     manual_path  = config['reference']['manual_path']
     reference_path = self.get_directory_path(path_specify, default_path, manual_path)
     filename  = config['reference']['filename_input']
@@ -149,7 +149,7 @@ class adapter_example_externalcode(orbital):
   @orbital.time_measurement_decorated
   def run_code(self):
     
-    print('--Run external code')
+    print('--Run user code')
 
     # Move to computing directory, run Tacode, and return to the original directory
     os.chdir( self.work_dir_case )
@@ -166,11 +166,10 @@ class adapter_example_externalcode(orbital):
 
     print('--Evaluating error between computed result and reference data')
 
-    x_min    = self.config['example_externalcode']['x_min']
-    x_max    = self.config['example_externalcode']['x_max']
-    x_offset = self.config['example_externalcode']['x_offset']
+    x_min    = self.config['user']['x_min']
+    x_max    = self.config['user']['x_max']
 
-    x_res = result_dict[ self.str_x ] + x_offset
+    x_res = result_dict[ self.str_x ]
     y_res = result_dict[ self.str_y ]
 
     _, i_start = super().closest_value_index(x_res, x_min)
@@ -223,7 +222,6 @@ class adapter_example_externalcode(orbital):
       for n in range( 0,len(words) ):
         if result_var[i] == words[n] :
           result_index.append(n)
-          #print( result_var[i], words[n], i, n)
           break
 
     # Read data
@@ -240,13 +238,12 @@ class adapter_example_externalcode(orbital):
   @orbital.time_measurement_decorated
   def write_result_data(self, result_dict):
 
-    if( self.config['example_externalcode']['filename_output'] ):
-      x_offset = self.config['example_externalcode']['x_offset']
-      x_res = result_dict[ self.str_x ] + x_offset
+    if( self.config['user']['filename_output'] ):
+      x_res = result_dict[ self.str_x ]
       y_res = result_dict[ self.str_y ]
 
-      result_dir        = self.config['example_externalcode']['result_dir']
-      filename_tecplot  = self.config['example_externalcode']['filename_output']
+      result_dir        = self.config['user']['result_dir']
+      filename_tecplot  = self.config['user']['filename_output']
       number_padded     = str(self.iter).zfill(self.step_digit)
       filename_tmp      = super().insert_suffix(result_dir+'/'+filename_tecplot,'_case'+number_padded,'.')
       print('--Writing output file...:',filename_tmp)
