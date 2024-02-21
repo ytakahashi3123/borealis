@@ -226,6 +226,30 @@ class orbital(general):
     return vec_res
 
 
+  def read_header_tecplot(self, filename, headerline, headername, var_list):
+    # Set header
+    with open(filename) as f:
+      lines = f.readlines()
+    # リストとして取得
+    lines_strip = [line.strip() for line in lines]
+    # ”Variables ="を削除した上で、カンマとスペースを削除
+    variables_line = lines_strip[headerline].replace(headername, '')
+    variables_line = variables_line.replace(',', ' ').replace('"', ' ')
+    # 空白文字で分割して単語のリストを取得
+    words = variables_line.split()
+
+    # set variables
+    result_var   = var_list
+    result_index = []
+    for i in range( 0,len(result_var) ):
+      for n in range( 0,len(words) ):
+        if result_var[i] == words[n] :
+          result_index.append(n)
+          break
+
+    return result_index
+
+
   def write_tecplotdata( self, filename, print_message, header, delimiter, comments, output_data ):
     
     print(print_message,':',filename)

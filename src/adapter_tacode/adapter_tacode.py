@@ -236,7 +236,7 @@ class adapter_tacode(orbital):
       for m in range(0, len(parameter_component) ):
         txt_replaced.append( str( parameter_opt[0,count] ) + ',' )
         count = count + 1
-      txt_replaced[-1] = txt_replaced[-1].rstrip(",")
+      txt_replaced[-1] = txt_replaced[-1].rstrip('',')
       print('--Variable:',var_name_ctl, ', Parameters:',txt_replaced)
 
       # File operation
