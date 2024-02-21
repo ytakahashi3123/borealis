@@ -46,21 +46,19 @@ class optimization(orbital):
 
   def bayesian_optimization(self, config, objective_function, parameter_boundary):
 
-    # X , Y : 初期データ
-    # initial_design_numdata : 設定する初期データの数。上記 X , Yを指定した場合は設定不要。 
-    # normalize_Y : 目的関数(ガウス過程)を標準化する場合はTrue。(今回は予測を真値と比較しやすくするためFalse)
-    problem = GPyOpt.methods.BayesianOptimization(f=objective_function,
-                                                  domain=parameter_boundary,
+    # Ref: https://github.com/SheffieldML/GPyOpt/blob/master/GPyOpt/methods/bayesian_optimization.py
+    problem = GPyOpt.methods.BayesianOptimization(f = objective_function,
+                                                  domain = parameter_boundary,
                                                   #X=init_X,
                                                   #Y=init_Y,
-                                                  model_type='GP',
-                                                  #model_type='GP_MCMC',
-                                                  normalize_Y=False,
-                                                  maximize=False,
-                                                  verbosity=True,
-                                                  #initial_design_numdata=50,
-                                                  acquisition_type='EI'
-                                                  #acquisition_type='MPI'
+                                                  model_type                 = config['Bayesian_optimization']['model_type'],
+                                                  normalize_Y                = config['Bayesian_optimization']['normalize_Y'],
+                                                  maximize                   = config['Bayesian_optimization']['maximize'],
+                                                  initial_design_numdata     = config['Bayesian_optimization']['initial_design_numdata'],
+                                                  acquisition_type           = config['Bayesian_optimization']['acquisition_type'],
+                                                  acquisition_weight         = config['Bayesian_optimization']['acquisition_weight'],
+                                                  acquisition_optimizer_type = config['Bayesian_optimization']['acquisition_optimizer_type'],
+                                                  verbosity                  = config['Bayesian_optimization']['verbosity']
                                                   )
 
     # ベイズ最適化

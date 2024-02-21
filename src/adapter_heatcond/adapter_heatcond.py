@@ -211,7 +211,7 @@ class adapter_heatcond(orbital):
           break
       grad_fact = ( x_res[n] - x_ref[m_opt-1] )/( x_ref[m_opt] - x_ref[m_opt-1] )
       y_ref_cor = ( y_ref[m_opt]  - y_ref[m_opt-1]  )*grad_fact + y_ref[m_opt-1]
-      error = error + ( y_res[n] - y_ref_cor )**2 
+      error = error + ( y_res[n] - y_ref_cor )**2
 
     error = np.sqrt( error/float(count) )
 
