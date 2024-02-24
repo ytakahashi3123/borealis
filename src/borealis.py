@@ -9,7 +9,6 @@
 
 import numpy as np
 from orbital.orbital import orbital
-from optimization.optimization import optimization
 
 
 def main():
@@ -54,7 +53,16 @@ def main():
   objective_function = adapter.objective_function
 
   # Class optimization
-  optimize = optimization()
+  if config['optimizer']['kind_optimizer'] == 'Bayesian_optimization':
+    from Bayesian_optimization.Bayesian_optimization import Bayesian_optimization
+    optimize = Bayesian_optimization()
+  elif config['optimizer']['kind_optimizer'] == 'PSO':
+    from pso.pso import pso
+    optimize = pso()
+  else:
+    print('Error, invalid optimizer is selected. Check optimizer.kind_optimizer in',file_control,':', config['optimizer']['kind_optimizer'])
+    print('Program stopped.')
+    exit()
 
   # Initial setting
   optimize.initial_setting(config)

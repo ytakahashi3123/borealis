@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 from orbital.orbital import orbital
 
 
-class optimization(orbital):
+class Bayesian_optimization(orbital):
 
   def __init__(self):
 
-    print("Constructing class: optimization")
+    print("Constructing class: Bayesian_optimization")
 
     self.str_error = 'Error'
 
@@ -29,8 +29,8 @@ class optimization(orbital):
 
     # Setting parameter's boundaries
 
-    boundary = config['Bayesian_optimization']['boundary']
-    bounds = []
+    boundary = config['parameter_optimized']['boundary']
+    parameter_boundary = []
     for n in range(0, len(boundary) ):
       boundary_name = boundary[n]['name']
       parameter_component = boundary[n]['component']
@@ -38,10 +38,10 @@ class optimization(orbital):
         bound_type = parameter_component[m]['type']
         bound_min  = parameter_component[m]['bound_min']
         bound_max  = parameter_component[m]['bound_max']
-        bounds.append( {'name': bound_type, 'type': 'continuous', 'domain': (bound_min, bound_max) } )
+        parameter_boundary.append( {'name': bound_type, 'type': 'continuous', 'domain': (bound_min, bound_max) } )
         print( 'Boundary in',bound_type,'component of',boundary_name,'(min--max):', bound_min,'--',bound_max)
 
-    return bounds
+    return parameter_boundary
 
 
   def bayesian_optimization(self, config, objective_function, parameter_boundary):
@@ -66,7 +66,7 @@ class optimization(orbital):
     problem.run_optimization(max_iter=config['Bayesian_optimization']['num_optiter'],verbosity=True)
 
     # Store optimized data
-    boundary = config['Bayesian_optimization']['boundary']
+    boundary = config['parameter_optimized']['boundary']
     solution_dict = {}
     count = 0
     for n in range(0, len(boundary) ):
@@ -93,7 +93,7 @@ class optimization(orbital):
 
   def write_optimization_data(self, config, solution_dict):
 
-    boundary = config['Bayesian_optimization']['boundary']
+    boundary = config['parameter_optimized']['boundary']
     solution_name_list = []
     for n in range(0, len(boundary) ):
       parameter_component = boundary[n]['component']

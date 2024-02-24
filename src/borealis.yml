@@ -5,21 +5,12 @@ adapter:
   kind_adapter: tacode
   
 
-Bayesian_optimization:
+optimizer: 
+  # Bayesian_optimization or PSO
+  kind_optimizer: PSO
 
-  # Optimizer settings
-  model_type: GP     # GP, GP_MCMC, sparseGP, warperdGP, InputWarpedG, RF
-  normalize_Y: False # 目的関数(ガウス過程)を標準化する場合はTrue(予測を真値と比較しやすくするためFalse)
-  maximize: False
-  acquisition_type: EI # EI, EI_MCMC, MPI, MPI_MCMC, LCB, LCB_MCMC
-  acquisition_weight: 2
-  acquisition_optimizer_type: lbfgs # lbfgs, DIRECT, CMA
-  initial_design_numdata: 5 # 設定する初期データの数、X, Yを指定した場合は設定不要。 
-  initial_design_type: random # random, latin
-  model_update_interval: 1
-  verbosity: True
 
-  num_optiter: 100
+parameter_optimized:
 
   # Parameter boundaries
   boundary:
@@ -51,6 +42,23 @@ Bayesian_optimization:
           bound_min: 0.5
           bound_max: 1.5
 
+
+Bayesian_optimization:
+
+  # Optimizer settings
+  model_type: GP     # GP, GP_MCMC, sparseGP, warperdGP, InputWarpedG, RF
+  normalize_Y: False # 目的関数(ガウス過程)を標準化する場合はTrue(予測を真値と比較しやすくするためFalse)
+  maximize: False
+  acquisition_type: EI # EI, EI_MCMC, MPI, MPI_MCMC, LCB, LCB_MCMC
+  acquisition_weight: 2
+  acquisition_optimizer_type: lbfgs # lbfgs, DIRECT, CMA
+  initial_design_numdata: 5 # 設定する初期データの数、X, Yを指定した場合は設定不要。 
+  initial_design_type: random # random, latin
+  model_update_interval: 1
+  verbosity: True
+
+  num_optiter: 100
+
   # Results data file (Tecplot data format)
   result_dir: result_bopt
   filename_output: output_bopt.dat
@@ -62,6 +70,25 @@ Bayesian_optimization:
   # Convergence
   flag_image_convergence: False
   filename_image_convergence: convergence.png
+
+
+PSO:
+  # particle swarm optimization
+
+  # Number of iterations
+  num_optiter: 100
+
+  # Number of particles
+  num_particle: 20
+
+  # Particle parameter for PSO
+  inertia: 0.5
+  cognitive_coef: 1.0
+  social_coef: 1.0
+
+  # Results data file (Tecplot data format)
+  result_dir: result_PSO
+  filename_output: output_PSO.dat
 
 
 reference:
