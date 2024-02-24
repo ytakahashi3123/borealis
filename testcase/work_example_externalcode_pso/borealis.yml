@@ -1,29 +1,35 @@
 # Configuration file for Borealis code
 
-adapter: 
-  # tacode or simple_function
-  kind_adapter: simple_function  
-
+adapter:
+  # tacode, simple_function, or example_externalcode
+  kind_adapter: example_externalcode
+  
 
 optimizer: 
   # Bayesian_optimization or PSO
+  #kind_optimizer: Bayesian_optimization
   kind_optimizer: PSO
 
 
 parameter_optimized:
-
   # Parameter boundaries
   boundary:
-    - name: 'simple_function'
+    - name: 'curve.coefficient:' #'# Initial coordinate' 
       component:
-        - type: x
-          bound_min: -10
-          bound_max:  10
+        - type: a
+          bound_min: -1.0
+          bound_max:  1.0
+        - type: b
+          bound_min: 0.0
+          bound_max: 5.0
+        - type: c
+          bound_min: -10.0
+          bound_max:  10.0
 
   tolerance: 1.e-5
 
-Bayesian_optimization:
 
+Bayesian_optimization:
   # Optimizer settings
   model_type: GP     # GP, GP_MCMC, sparseGP, warperdGP, InputWarpedG, RF
   normalize_Y: False # 目的関数(ガウス過程)を標準化する場合はTrue(予測を真値と比較しやすくするためFalse)
@@ -36,7 +42,7 @@ Bayesian_optimization:
   model_update_interval: 1
   verbosity: True
 
-  num_optiter: 25
+  num_optiter: 50
 
   # Results data file (Tecplot data format)
   result_dir: result_bopt
@@ -69,18 +75,39 @@ PSO:
   result_dir: result_PSO
   filename_output: output_PSO.dat
 
+
 reference:
 
+  directory_path_specify: manual # default or manual
+  manual_path: ../../example_externalcode/curve_reference
+  filename_input: reference.dat
 
-simple_function:
- 
-  #flag_eval: False
-  #function_eval: '2*np.sin(x) + 4*np.cos(2 * x) + 3*np.cos(2/5 * x)'
 
-  # Function output
-  result_dir: result_function
+example_externalcode:
+
+  # tacode case directory
+  work_dir: work_externalcode
+  case_dir: case
+  step_digit: 4
+  
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/work_curve
+
+  # Executing script
+  cmd_externalcode: ./run_externalcode.sh
+  
+  # Control file
+  filename_control: curve.yml
+  
+  # Result file name computed by the external code
+  filename_result: output.dat
+
+  # Result trajectory of Tacode 
+  result_dir: result_externalode
   flag_output: True
-  filename_output: output_function.dat
-  function_discrete: 100
-  function_bound_min: -10
-  function_bound_max: 10
+  filename_output: tecplot_output.dat
+
+  # Difition range
+  x_min: -10
+  x_max:  10
+  x_offset: 0

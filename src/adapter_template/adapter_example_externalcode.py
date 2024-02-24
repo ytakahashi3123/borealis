@@ -44,7 +44,7 @@ class adapter_example_externalcode(orbital):
     self.cmd_home = os.path.dirname(os.path.realpath(__file__)) + '/..'
 
     # Target parameter (corresponding to the parameter boundary)
-    self.parameter_target = config['Bayesian_optimization']['boundary']
+    self.parameter_target = config['parameter_optimized']['boundary']
 
     # Result file: Make directory
     super().make_directory_rm(config['example_externalcode']['result_dir'])

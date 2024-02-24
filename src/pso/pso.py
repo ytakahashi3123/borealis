@@ -87,7 +87,8 @@ class pso(orbital):
         particle_position[n] += particle_velocity[n]
     
         # パーソナルベストの更新
-        value = objective_function( particle_position[n] )
+        # --下記のreshape追加の理由、Bayesian　Optの引数が(1,dim)の次元になるので、それに合わせている。
+        value = objective_function( particle_position[n].reshape(1, num_dimension) )
         if value < particle_best_value[n]:
           particle_best_position[n] = particle_position[n].copy()
           particle_best_value[n] = value
@@ -101,9 +102,6 @@ class pso(orbital):
 
       # パーティクルの速度の更新
       for n in range(0, num_particle):
-        #inertia = 0.5  # 慣性項
-        #cognitive_coef = 1.0  # 認知係数
-        #social_coef = 1.0 # 社会係数
         rand1 = np.random.rand(num_dimension)
         rand2 = np.random.rand(num_dimension)
         cognitive_velocity = cognitive_coef * rand1 * (particle_best_position[n] - particle_position[n])

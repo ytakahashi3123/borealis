@@ -42,6 +42,7 @@ parameter_optimized:
           bound_min: 0.5
           bound_max: 1.5
 
+  tolerance: 1.e-5
 
 Bayesian_optimization:
 
