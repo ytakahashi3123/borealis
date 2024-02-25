@@ -44,7 +44,7 @@ class adapter_tacode(orbital):
     self.cmd_home = os.path.dirname(os.path.realpath(__file__)) + '/..'
 
     # Target parameter (corresponding to the parameter boundary)
-    self.parameter_target = config['Bayesian_optimization']['boundary']
+    self.parameter_target = config['parameter_optimized']['boundary']
 
     # Result file: Make directory
     super().make_directory_rm(config['tacode']['result_dir'])
@@ -236,7 +236,7 @@ class adapter_tacode(orbital):
       for m in range(0, len(parameter_component) ):
         txt_replaced.append( str( parameter_opt[0,count] ) + ',' )
         count = count + 1
-      txt_replaced[-1] = txt_replaced[-1].rstrip('',')
+      txt_replaced[-1] = txt_replaced[-1].rstrip(',')
       print('--Variable:',var_name_ctl, ', Parameters:',txt_replaced)
 
       # File operation
@@ -405,7 +405,7 @@ class adapter_tacode(orbital):
       header_tmp = "Variables="
       for n in range(0,len(result_var_tmp)):
         header_tmp = header_tmp + result_var_tmp[n] + ','
-      header_tmp = header_tmp.rstrip(",") 
+      header_tmp = header_tmp.rstrip(',')
       # Addition
       header_tmp = header_tmp + ',' + self.str_time_day
       

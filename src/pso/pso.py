@@ -10,6 +10,7 @@ class pso(orbital):
 
     print("Constructing class: PSO")
 
+    self.str_num_optiter = 'number_iteration'
     self.str_position = 'position'
     self.str_velocity = 'velocity'
     self.str_error = 'Error'
@@ -81,11 +82,11 @@ class pso(orbital):
     particle_velocity_viz = np.zeros(num_optiter*num_particle*num_dimension).reshape(num_optiter,num_particle,num_dimension)
     particle_solutioin    = np.zeros(num_optiter*num_particle).reshape(num_optiter,num_particle)
 
+    global_best_value_prev = 0.0
+    num_optiter_optimized = num_optiter
+
     for i in range(0, num_optiter):
       for n in range(0, num_particle):
-        # パーティクルの位置の更新
-        particle_position[n] += particle_velocity[n]
-    
         # パーソナルベストの更新
         # --下記のreshape追加の理由、Bayesian　Optの引数が(1,dim)の次元になるので、それに合わせている。
         value = objective_function( particle_position[n].reshape(1, num_dimension) )
@@ -97,7 +98,7 @@ class pso(orbital):
         if value < global_best_value:
           global_best_position = particle_position[n].copy()
           global_best_value = value
-    
+
         particle_solutioin[i,n] = value
 
       # パーティクルの速度の更新
@@ -106,12 +107,30 @@ class pso(orbital):
         rand2 = np.random.rand(num_dimension)
         cognitive_velocity = cognitive_coef * rand1 * (particle_best_position[n] - particle_position[n])
         social_velocity = social_coef * rand2 * (global_best_position - particle_position[n])
+
+        # Update position and velocity of particle
         particle_velocity[n] = inertia * particle_velocity[n] + cognitive_velocity + social_velocity
+        particle_position[n] = particle_position[n] + particle_velocity[n]
+
         particle_position_viz[i,n,:] =  particle_position[n][:]
         particle_velocity_viz[i,n,:] =  particle_velocity[n][:]
+      
+      if i == 0: 
+        global_best_value_init = global_best_value
 
+      # Residual of error in objective function
+      #print(global_best_value,global_best_value_prev)
+      print("Best position, best value: ", global_best_position, global_best_value)
+      residual = abs((global_best_value-global_best_value_prev)/global_best_value_init)
+      print("Step, relative residual, ", i, f'{residual:.10e}')
+      #if residual <= config['PSO']['tolerance'] :
+      #  num_optiter_optimized = i
+      #  break
+      global_best_value_prev =  global_best_value.copy()
+    
     # Store data
     solution_dict = {}
+    solution_dict[self.str_num_optiter] = num_optiter_optimized
     solution_dict[self.str_position] = particle_position_viz
     solution_dict[self.str_velocity] = particle_velocity_viz
     solution_dict[self.str_error] = particle_solutioin
@@ -123,6 +142,12 @@ class pso(orbital):
 
 
   def write_optimization_process(self, config, solution_dict):
+
+    # Number of iteration
+    num_optiter = solution_dict[self.str_num_optiter]
+
+    # Number of particles
+    num_particle = config['PSO']['num_particle']
 
     # Dimension 
     boundary = config['parameter_optimized']['boundary']
@@ -138,12 +163,6 @@ class pso(orbital):
       parameter_component = boundary[n]['component']
       for m in range(0, len(parameter_component)):
         solution_name_list.append( parameter_component[m]['type']+'_Velocity' )
-
-    # Number of particles
-    num_particle = config['PSO']['num_particle']
-
-    # Number of iteration
-    num_optiter = config['PSO']['num_optiter']
 
     # Variables
     particle_position_viz = solution_dict[self.str_position]

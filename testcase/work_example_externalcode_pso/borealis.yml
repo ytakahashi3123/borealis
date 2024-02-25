@@ -26,8 +26,6 @@ parameter_optimized:
           bound_min: -10.0
           bound_max:  10.0
 
-  tolerance: 1.e-5
-
 
 Bayesian_optimization:
   # Optimizer settings
@@ -57,14 +55,18 @@ Bayesian_optimization:
   filename_image_convergence: convergence.png
 
 
-PSO:
-  # particle swarm optimization
-
+PSO: # Particle swarm optimization
   # Number of iterations
   num_optiter: 100
 
   # Number of particles
   num_particle: 20
+
+  # Minimize or maximize the objective function
+  maximize: False
+
+  # Tolerance of effor of objective function
+  tolerance: 1.e-150
 
   # Particle parameter for PSO
   inertia: 0.5

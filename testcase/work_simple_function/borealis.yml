@@ -5,6 +5,21 @@ adapter:
   kind_adapter: simple_function  
 
 
+optimizer: 
+  # Bayesian_optimization or PSO
+  kind_optimizer: Bayesian_optimization
+  
+
+parameter_optimized:
+  # Parameter boundaries
+  boundary:
+    - name: 'simple_function'
+      component:
+        - type: x
+          bound_min: -10
+          bound_max:  10
+
+
 Bayesian_optimization:
 
   # Optimizer settings
@@ -20,14 +35,6 @@ Bayesian_optimization:
   verbosity: True
 
   num_optiter: 25
-
-  # Parameter boundaries
-  boundary:
-    - name: 'simple_function'
-      component:
-        - type: x
-          bound_min: -10
-          bound_max:  10
 
   # Results data file (Tecplot data format)
   result_dir: result_bopt

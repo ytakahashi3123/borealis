@@ -60,10 +60,12 @@ class adapter_simple_function(orbital):
 
     print('Iteration: ', self.iter)
 
-    # Function
-    result_opt = self.function(parameter_opt)
+    x = parameter_opt[0,0]
 
-    print('x,y:',parameter_opt,result_opt)
+    # Function
+    result_opt = self.function(x)
+
+    print('x,y:',x,result_opt)
 
     # カウンタの更新
     self.iter += 1

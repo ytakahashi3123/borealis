@@ -42,7 +42,6 @@ parameter_optimized:
           bound_min: 0.5
           bound_max: 1.5
 
-  tolerance: 1.e-5
 
 Bayesian_optimization:
 
@@ -81,6 +80,12 @@ PSO:
 
   # Number of particles
   num_particle: 20
+
+  # Minimize or maximize the objective function
+  maximize: False
+
+  # Tolerance of effor of objective function
+  tolerance: 1.e-5
 
   # Particle parameter for PSO
   inertia: 0.5

@@ -5,6 +5,28 @@ adapter:
   kind_adapter: example_externalcode
   
 
+optimizer: 
+  # Bayesian_optimization or PSO
+  kind_optimizer: Bayesian_optimization
+  #kind_optimizer: PSO
+
+
+parameter_optimized:
+  # Parameter boundaries
+  boundary:
+    - name: 'curve.coefficient:' #'# Initial coordinate' 
+      component:
+        - type: a
+          bound_min: -1.0
+          bound_max:  1.0
+        - type: b
+          bound_min: 0.0
+          bound_max: 5.0
+        - type: c
+          bound_min: -10.0
+          bound_max:  10.0
+
+
 Bayesian_optimization:
 
   # Optimizer settings
@@ -20,20 +42,6 @@ Bayesian_optimization:
   verbosity: True
 
   num_optiter: 50
-
-  # Parameter boundaries
-  boundary:
-    - name: 'curve.coefficient:' #'# Initial coordinate' 
-      component:
-        - type: a
-          bound_min: -1.0
-          bound_max:  1.0
-        - type: b
-          bound_min: 0.0
-          bound_max: 5.0
-        - type: c
-          bound_min: -10.0
-          bound_max:  10.0
 
   # Results data file (Tecplot data format)
   result_dir: result_bopt
