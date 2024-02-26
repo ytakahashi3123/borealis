@@ -11,6 +11,7 @@ class pso(orbital):
     print("Constructing class: PSO")
 
     self.str_num_optiter = 'number_iteration'
+    self.str_residual = 'residual_hisotry'
     self.str_position = 'position'
     self.str_velocity = 'velocity'
     self.str_error = 'Error'
@@ -82,13 +83,16 @@ class pso(orbital):
     particle_velocity_viz = np.zeros(num_optiter*num_particle*num_dimension).reshape(num_optiter,num_particle,num_dimension)
     particle_solutioin    = np.zeros(num_optiter*num_particle).reshape(num_optiter,num_particle)
 
-    global_best_value_prev = 0.0
     num_optiter_optimized = num_optiter
+
+    particle_best_value_init = np.ones(num_particle)
+    particle_best_value_prev = np.ones(num_particle)
+    residual = np.zeros(num_particle)
+    residaul_mean_history = []
 
     for i in range(0, num_optiter):
       for n in range(0, num_particle):
-        # パーソナルベストの更新
-        # --下記のreshape追加の理由、Bayesian　Optの引数が(1,dim)の次元になるので、それに合わせている。
+        # パーソナルベストの更新: 下記のreshape追加の理由、Bayesian　Optの引数が(1,dim)の次元になるので、それに合わせている。
         value = objective_function( particle_position[n].reshape(1, num_dimension) )
         if value < particle_best_value[n]:
           particle_best_position[n] = particle_position[n].copy()
@@ -101,12 +105,15 @@ class pso(orbital):
 
         particle_solutioin[i,n] = value
 
+      if i == 0: 
+        particle_best_value_init[:] = particle_best_value[:].copy() 
+
       # パーティクルの速度の更新
       for n in range(0, num_particle):
         rand1 = np.random.rand(num_dimension)
         rand2 = np.random.rand(num_dimension)
         cognitive_velocity = cognitive_coef * rand1 * (particle_best_position[n] - particle_position[n])
-        social_velocity = social_coef * rand2 * (global_best_position - particle_position[n])
+        social_velocity    = social_coef * rand2 * (global_best_position - particle_position[n])
 
         # Update position and velocity of particle
         particle_velocity[n] = inertia * particle_velocity[n] + cognitive_velocity + social_velocity
@@ -114,29 +121,29 @@ class pso(orbital):
 
         particle_position_viz[i,n,:] =  particle_position[n][:]
         particle_velocity_viz[i,n,:] =  particle_velocity[n][:]
-      
-      if i == 0: 
-        global_best_value_init = global_best_value
 
       # Residual of error in objective function
-      #print(global_best_value,global_best_value_prev)
-      print("Best position, best value: ", global_best_position, global_best_value)
-      residual = abs((global_best_value-global_best_value_prev)/global_best_value_init)
-      print("Step, relative residual, ", i, f'{residual:.10e}')
-      #if residual <= config['PSO']['tolerance'] :
-      #  num_optiter_optimized = i
-      #  break
-      global_best_value_prev =  global_best_value.copy()
-    
-    # Store data
-    solution_dict = {}
-    solution_dict[self.str_num_optiter] = num_optiter_optimized
-    solution_dict[self.str_position] = particle_position_viz
-    solution_dict[self.str_velocity] = particle_velocity_viz
-    solution_dict[self.str_error] = particle_solutioin
+      residual = abs((particle_best_value- particle_best_value_prev)/particle_best_value_init)
+      residual_mean = np.mean(residual)
+      residaul_mean_history.append(residual_mean)
+      print("Step, relative mean residual, ", i, f'{residual_mean:.10e}')
+
+      if residual_mean <= config['PSO']['tolerance'] :
+        num_optiter_optimized = i
+        break
+
+      particle_best_value_prev[:] = particle_best_value[:].copy()
 
     print("Best position:", global_best_position)
     print("Best value:", global_best_value)
+
+    # Store data
+    solution_dict = {}
+    solution_dict[self.str_num_optiter] = num_optiter_optimized
+    solution_dict[self.str_residual]    = residaul_mean_history
+    solution_dict[self.str_position]    = particle_position_viz
+    solution_dict[self.str_velocity]    = particle_velocity_viz
+    solution_dict[self.str_error]       = particle_solutioin
 
     return global_best_position, global_best_value, solution_dict
 
@@ -179,7 +186,7 @@ class pso(orbital):
     for n in range(0,len(solution_name_list)):
       header_tmp = header_tmp + solution_name_list[n] + ','
     # Addition
-    header_tmp = header_tmp + ' ID' + ',' + ' Error' + '\n'
+    header_tmp = header_tmp + ' ID' + ',' + ' Error' + ',' + 'Residual_mean' + '\n'
     file_output.write( header_tmp )
 
     for i in range(0, num_optiter):
@@ -191,7 +198,6 @@ class pso(orbital):
           text_tmp = text_tmp  + str( particle_position_viz[i,n,m] ) + ', '
         for m in range(0,num_dimension):
           text_tmp = text_tmp  + str( particle_velocity_viz[i,n,m] ) + ', '
-        #solution_tmp = self.objective_function(particle_position_viz[i,n,:])
         text_tmp = text_tmp + str(n+1) + ', ' + str(particle_solutioin[i,n]) + '\n'
       file_output.write( text_tmp )
     file_output.close()

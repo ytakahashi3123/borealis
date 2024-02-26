@@ -24,7 +24,7 @@ Optimization by `Borealis` is controled by the configuration file: `borealis.yml
 
 ## External code
 
-When an external code, for example, `Tcode`, is used, the pass needs to be specified in `borealis.yml`.
+When an external code, for example, `Tacode`, is used, the pass needs to be specified in `borealis.yml`.
 
 ## Requirements
 

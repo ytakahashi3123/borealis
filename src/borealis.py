@@ -7,9 +7,11 @@
 # Author: Yusuke Takahashi, Hokkaido University
 # Contact: ytakahashi@eng.hokudai.ac.jp
 
+code_name = "Borealis"
+version = "1.00"
+
 import numpy as np
 from orbital.orbital import orbital
-
 
 def main():
 
@@ -78,7 +80,11 @@ def main():
 
 if __name__ == '__main__':
 
+  print('Program name:',code_name, 'version:', version)
+  print('Initialize optimization process')
+
   main()
 
+  print('Finalize optimization process')
   exit()
 

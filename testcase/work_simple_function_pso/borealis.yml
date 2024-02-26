@@ -61,7 +61,7 @@ PSO:
   maximize: False
 
   # Tolerance of effor of objective function
-  tolerance: 1.e-20
+  tolerance: 1.e-10
 
   # Particle parameter for PSO
   inertia: 0.5
