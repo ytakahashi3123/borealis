@@ -7,8 +7,8 @@ adapter:
 
 optimizer: 
   # Bayesian_optimization or PSO
-  kind_optimizer: Bayesian_optimization
-  
+  kind_optimizer: PSO
+
 
 parameter_optimized:
   # Parameter boundaries
@@ -18,7 +18,6 @@ parameter_optimized:
         - type: x
           bound_min: -10
           bound_max:  10
-
 
 Bayesian_optimization:
 
@@ -48,6 +47,30 @@ Bayesian_optimization:
   flag_image_convergence: True
   filename_image_convergence: convergence.png
 
+
+PSO:
+  # particle swarm optimization
+
+  # Number of iterations
+  num_optiter: 100
+
+  # Number of particles
+  num_particle: 20
+
+  # Minimize or maximize the objective function
+  maximize: False
+
+  # Tolerance of effor of objective function
+  tolerance: 1.e-10
+
+  # Particle parameter for PSO
+  inertia: 0.5
+  cognitive_coef: 1.0
+  social_coef: 1.0
+
+  # Results data file (Tecplot data format)
+  result_dir: result_PSO
+  filename_output: output_PSO.dat
 
 reference:
 

@@ -266,7 +266,7 @@ class orbital(general):
       #text_green = '\033[92m'
       text_yellow = '\033[93m'
       text_end = '\033[0m'
-      flag_time_measurement = True
+      flag_time_measurement = False
       if flag_time_measurement :
         start_time = time.time()
         result = func(*args,**kargs)

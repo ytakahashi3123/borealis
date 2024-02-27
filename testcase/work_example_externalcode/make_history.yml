@@ -1,0 +1,40 @@
+# Configuration file for makeing animation history
+
+# Input file
+filename_base_input: result_externalode/tecplot_output.dat
+str_series: _case
+step_digit: 4
+step_start: 1
+step_end: 700
+
+variable_x: x
+variable_y: y
+headername: 'Variables ='
+headerline: 0
+num_skiprows: 1
+
+# Animations
+limit_x:
+  - -10
+  -  10
+limit_y:
+  - -10
+  - 10
+title_base: Solution
+color_map: winter
+interval: 100 
+
+# Output file
+filename_movie: optimization_history.mp4
+writer: fffmpeg
+
+# Reference
+flag_read_reference: True
+filename_reference: ../../example_externalcode/curve_reference/reference.dat
+variable_x_reference: x
+variable_y_reference: y
+headername_reference: 'Variables ='
+headerline_reference: 1
+num_skiprows_reference: 2
+color_map_reference: black
+label_reference: Reference
