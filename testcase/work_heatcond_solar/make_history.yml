@@ -52,7 +52,7 @@ variable_y_reference: TC1[K]
 headername_reference: 'Variables ='
 headerline_reference: 1
 num_skiprows_reference: 2
-delimiter_reference: None
+delimiter_reference: null
 comments_reference: '#'
 color_map_reference: black
 label_reference: Reference
