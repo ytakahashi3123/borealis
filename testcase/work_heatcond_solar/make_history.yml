@@ -1,0 +1,49 @@
+# Configuration file for makeing animation history
+
+# Input file
+filename_base_input: result_heatcond/output_result.dat
+str_series: _case
+step_digit: 4
+step_start: 1
+step_end: 800
+
+variable_x: Time[s]
+variable_y: T[K]
+
+headername: 'Variables ='
+headerline: 0
+num_skiprows: 1
+delimiter: ','
+comments: '#'
+
+# Animations
+limit_x:
+  - 10176496
+  - 10186536
+limit_y:
+  - 200
+  - 350
+title_base: Temperature
+color_map: winter
+interval: 50
+
+flag_add: True
+variable_y_add: Heatflux[W/m2]
+limit_y_add:
+  - 0
+  - 1000
+
+# Output file
+filename_movie: optimization_history.mp4
+writer: fffmpeg
+
+# Reference
+flag_read_reference: True
+filename_reference: ../../testcase_template/work_heatcond/reference_tc/reference_tc.dat
+variable_x_reference: Time[s]
+variable_y_reference: TC1[K]
+headername_reference: 'Variables ='
+headerline_reference: 1
+num_skiprows_reference: 2
+color_map_reference: black
+label_reference: Reference

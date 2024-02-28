@@ -24,6 +24,18 @@ class pso(orbital):
     result_dir = config['PSO']['result_dir']
     super().make_directory_rm(result_dir)
 
+    boundary = config['parameter_optimized']['boundary']
+    num_dimension = 0
+    parameter_name_list = []
+    for n in range(0, len(boundary) ):
+      parameter_component = boundary[n]['component']
+      for m in range(0, len(parameter_component)):
+        parameter_name_list.append( parameter_component[m]['type'] )
+        num_dimension = num_dimension + 1
+
+    self.num_dimension = num_dimension
+    self.parameter_name_list = parameter_name_list
+
     return
 
 
@@ -44,12 +56,7 @@ class pso(orbital):
   def run_pso(self, config, objective_function, parameter_boundary):
 
     # Dimension 
-    boundary = config['parameter_optimized']['boundary']
-    num_dimension = 0
-    for n in range(0, len(boundary) ):
-      parameter_component = boundary[n]['component']
-      for m in range(0, len(parameter_component)):
-        num_dimension = num_dimension + 1
+    num_dimension = self.num_dimension
 
     # Number of particles
     num_particle = config['PSO']['num_particle']
@@ -156,16 +163,12 @@ class pso(orbital):
     # Number of particles
     num_particle = config['PSO']['num_particle']
 
-    # Dimension 
-    boundary = config['parameter_optimized']['boundary']
-    solution_name_list = []
-    num_dimension = 0
-    for n in range(0, len(boundary) ):
-      parameter_component = boundary[n]['component']
-      for m in range(0, len(parameter_component)):
-        solution_name_list.append( parameter_component[m]['type'] )
-        num_dimension = num_dimension + 1 
+    # Number of dimension
+    num_dimension = self.num_dimension
 
+    # Parameter name list
+    solution_name_list = self.parameter_name_list
+    boundary = config['parameter_optimized']['boundary']
     for n in range(0, len(boundary) ):
       parameter_component = boundary[n]['component']
       for m in range(0, len(parameter_component)):
