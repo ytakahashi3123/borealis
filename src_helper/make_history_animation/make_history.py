@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import os as os
-import shutil as shutil
 import yaml as yaml
-import sys as sys
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -15,6 +12,7 @@ def read_config_yaml(file_control):
     with open(file_control) as file:
       config = yaml.safe_load(file)
   except Exception as e:
+    import sys as sys
     print('Exception occurred while loading YAML...', file=sys.stderr)
     print(e, file=sys.stderr)
     sys.exit(1)
@@ -87,51 +85,46 @@ def main():
   #fig, ax = plt.subplots()
   fig = plt.figure()
   ax = fig.add_subplot(111)
+  ax.grid()
 
   # Read reference data if necessary
   if config['flag_read_reference'] :
-    filename_ref = config['filename_reference']
     var_x_ref = config['variable_x_reference']
     var_y_ref = config['variable_y_reference']
     var_list_ref = [var_x_ref, var_y_ref]
 
-    headername_ref = config['headername_reference']
-    headerline_ref = config['headerline_reference']
-    var_index = read_header_tecplot(filename_ref, headerline_ref, headername_ref, var_list_ref)
+    var_index_ref = read_header_tecplot(config['filename_reference'], config['headerline_reference'], config['headername_reference'], var_list_ref)
 
-    num_skiprows_ref = config['num_skiprows_reference']
-    delimiter_ref = None
-    data_ref = np.loadtxt(filename_ref,comments='#',delimiter=delimiter_ref,skiprows=num_skiprows_ref)
+    data_ref = np.loadtxt( config['filename_reference'],
+                           comments=config['comments_reference'],
+                           delimiter=config['delimiter_reference'],
+                           skiprows=config['num_skiprows_reference'] )
 
     reference_dict = {}
     for m in range( 0,len(var_list_ref) ):
-      reference_dict[ var_list_ref[m] ] = data_ref[:,var_index[m]]
-    x_ref = reference_dict[var_x_ref]
-    y_ref = reference_dict[var_y_ref]
-    ax.grid()
-    ax.plot(x_ref, y_ref, color=config['color_map_reference'], label=config['label_reference'])
+      reference_dict[ var_list_ref[m] ] = data_ref[:,var_index_ref[m]]
+    ax.plot(reference_dict[var_x_ref], reference_dict[var_y_ref], color=config['color_map_reference'], label=config['label_reference'])
 
   # Animation
-  animate, = ax.plot([], [], label='Temperature')
-  ax.set_xlim( config['limit_x'][0], config['limit_x'][1] )
-  ax.set_ylim( config['limit_y'][0], config['limit_y'][1] )
+  animate, = ax.plot([], [], label=config['legend_label'])
+  ax.set_xlim( config['axis_x_limit'][0], config['axis_x_limit'][1] )
+  ax.set_ylim( config['axis_y_limit'][0], config['axis_y_limit'][1] )
   #ax.set_aspect('equal') # グラフのアスペクト比を１：１に設定
 
-  title_base = config['title_base']
   animate_title = ax.set_title("")
-  animate.set_color('c')
-  ax.set_xlabel('Time, s')
-  ax.set_ylabel('Temperature, K')
+  animate.set_color( config['color_map'] )
+  ax.set_xlabel( config['axis_x_label'] )
+  ax.set_ylabel( config['axis_y_label'] )
 
-  color_map = plt.get_cmap(config['color_map'])
+  #color_map = plt.get_cmap(config['color_map'])
   interval = config['interval']
 
   if flag_add :
     ax_add= ax.twinx()
-    animate_add, = ax_add.plot([], [], label='Heat flux')
-    animate_add.set_color('r')
-    ax_add.set_ylim( config['limit_y_add'][0], config['limit_y_add'][1] )
-    ax_add.set_ylabel('Heat flux, W/$m^2$')
+    animate_add, = ax_add.plot([], [], label=config['legend_label_add'])
+    animate_add.set_color( config['color_map_add'] )
+    ax_add.set_ylim( config['axis_y_limit_add'][0], config['axis_y_limit_add'][1] )
+    ax_add.set_ylabel( config['axis_y_label_add' ])
 
   if flag_add :
     # 追加の軸の凡例を元の軸の凡例に結合
@@ -159,9 +152,9 @@ def main():
 
     x = result_dict[var_x]
     y = result_dict[var_y]
-#    animate.set_color(color_map(n / step_end))  # フレームごとの色を設定
+    #animate.set_color(color_map(n / step_end))  # フレームごとの色を設定
     animate.set_data(x,y)
-    animate_title.set_text( title_base+" of TC1 at n="+str(n) )
+    animate_title.set_text( config['title_base'] +" of TC1 at n="+str(n) )
 
     if flag_add :
       y_add = result_dict[var_y_add]
@@ -176,9 +169,11 @@ def main():
   anim = animation.FuncAnimation(fig, read_resultfile, interval=interval, frames=step_end)
 
   # Output
-  filename_movie = config['filename_movie']
-  anim.save(filename_movie)
-  #plt.show()
+  if config['file_output']:
+    anim.save( config['filename_movie'] )
+  else :
+    plt.show()
+
   plt.close()
 
 

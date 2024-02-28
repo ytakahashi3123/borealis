@@ -1,6 +1,6 @@
-# Configuration file for makeing animation history
+# Configuration file for making animation history
 
-# Input file
+# Input data file
 filename_base_input: result_heatcond/output_result.dat
 str_series: _case
 step_digit: 4
@@ -16,26 +16,33 @@ num_skiprows: 1
 delimiter: ','
 comments: '#'
 
+
 # Animations
-limit_x:
+axis_x_limit:
   - 10176496
   - 10186536
-limit_y:
+axis_y_limit:
   - 200
   - 350
 title_base: Temperature
-color_map: winter
+legend_label: Temperature
+axis_x_label: 'Time, s'
+axis_y_label: 'Temperature, K'
+#color_map: winter
+color_map: c
 interval: 50
 
+
+# Animations--Additional
 flag_add: True
 variable_y_add: Heatflux[W/m2]
-limit_y_add:
+axis_y_limit_add:
   - 0
   - 1000
+legend_label_add: 'Heat flux'
+axis_y_label_add: 'Heat flux, W/$m^2$'
+color_map_add: r
 
-# Output file
-filename_movie: optimization_history.mp4
-writer: fffmpeg
 
 # Reference
 flag_read_reference: True
@@ -45,5 +52,13 @@ variable_y_reference: TC1[K]
 headername_reference: 'Variables ='
 headerline_reference: 1
 num_skiprows_reference: 2
+delimiter_reference: None
+comments_reference: '#'
 color_map_reference: black
 label_reference: Reference
+
+
+# Output file
+file_output: True
+filename_movie: optimization_history.mp4
+writer: fffmpeg
