@@ -57,10 +57,10 @@ Bayesian_optimization:
 
 PSO: # Particle swarm optimization
   # Number of iterations
-  num_optiter: 100
+  num_optiter: 10 #100
 
   # Number of particles
-  num_particle: 20
+  num_particle: 10 #20
 
   # Minimize or maximize the objective function
   maximize: False
@@ -75,8 +75,8 @@ PSO: # Particle swarm optimization
 
   # Results data file (Tecplot data format)
   result_dir: result_PSO
-  filename_output: output_PSO.dat
-
+  filename_output: output_optimization.dat
+  filename_global: output_global.dat
 
 reference:
 
