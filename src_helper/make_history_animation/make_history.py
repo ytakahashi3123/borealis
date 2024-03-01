@@ -18,6 +18,7 @@ def read_config_yaml(file_control):
     sys.exit(1)
   return config
 
+
 def insert_suffix(filename, suffix, splitchar):
   parts = filename.split(splitchar)
   if len(parts) == 2:
@@ -26,6 +27,7 @@ def insert_suffix(filename, suffix, splitchar):
   else:
     # ファイル名が拡張子を含まない場合の処理
     return filename + suffix
+
 
 def read_header_tecplot(filename, headerline, headername, var_list):
   # Set header
@@ -56,6 +58,9 @@ def main():
   # Read parameters
   file_control = 'make_history.yml'
   config = read_config_yaml(file_control)
+
+  #file_control_borealis = 'borealis.yml'
+  #config_bor =  read_config_yaml(file_control_borealis)
 
   # Initial settings
   filename_base = config['filename_base_input']
@@ -134,8 +139,28 @@ def main():
   else:
     ax.legend(loc='upper right')
 
+
+  # Number of frames
+  num_frames = step_end
+
+  # Extracting reading files
+  flag_filereading_extracted = config['flag_filereading_extracted']
+  if flag_filereading_extracted:
+    data_extract = np.genfromtxt( config['filename_extract_list'], 
+                                  dtype=int, 
+                                  comments='#',
+                                  delimiter=',', 
+                                  skip_header=1 )
+    index_local_to_global = data_extract[:,1]
+    num_frames = len(index_local_to_global)
+
+  # Data reading
   def read_resultfile(frame):
-    n = frame+1
+    if flag_filereading_extracted:
+      n = index_local_to_global[frame] + 1
+    else:
+      n = frame+1
+
     number_padded = str(n).zfill(step_digit)
     filename_tmp = insert_suffix(filename_base, str_series+number_padded, '.')
     print('--Reading output file...:',filename_tmp)
@@ -154,19 +179,15 @@ def main():
     y = result_dict[var_y]
     #animate.set_color(color_map(n / step_end))  # フレームごとの色を設定
     animate.set_data(x,y)
-    animate_title.set_text( config['title_base'] +" of TC1 at n="+str(n) )
+    animate_title.set_text( config['title_base'] +" of TC1 at Epoch="+str(frame+1) )
 
     if flag_add :
       y_add = result_dict[var_y_add]
       animate_add.set_data(x, y_add)
-    
-    #my_text.set_x(x[1])
-    #my_text.set_y(y[1])
-    #my_text.set_text(f"theta={n%360}°")
 
     return
 
-  anim = animation.FuncAnimation(fig, read_resultfile, interval=interval, frames=step_end)
+  anim = animation.FuncAnimation(fig, read_resultfile, interval=interval, frames=num_frames)
 
   # Output
   if config['file_output']:

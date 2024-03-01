@@ -1,5 +1,10 @@
 # Configuration file for making animation history
 
+# Extracting reading files
+flag_filereading_extracted: True
+filename_extract_list: result_PSO/output_global.dat
+
+
 # Input data file
 filename_base_input: result_heatcond/output_result.dat
 str_series: _case

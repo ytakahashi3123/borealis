@@ -101,7 +101,8 @@ PSO: # Particle swarm optimization
   # Results data file (Tecplot data format)
   result_dir: result_PSO
   filename_output: output_PSO.dat
-  
+  filename_global: output_global.dat  
+
 
 reference:
 

@@ -1,5 +1,9 @@
 # Configuration file for makeing animation history
 
+# Extracting reading files
+flag_filereading_extracted: True
+filename_extract_list: result_PSO/output_global.dat
+
 # Input file
 filename_base_input: result_externalode/tecplot_output.dat
 str_series: _case
