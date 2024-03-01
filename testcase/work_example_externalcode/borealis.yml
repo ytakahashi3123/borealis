@@ -57,7 +57,7 @@ Bayesian_optimization:
 
 PSO: # Particle swarm optimization
   # Number of iterations
-  num_optiter: 10 #100
+  num_optiter: 2 #100
 
   # Number of particles
   num_particle: 10 #20

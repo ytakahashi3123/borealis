@@ -153,7 +153,7 @@ class pso(orbital):
       residual = abs((particle_best_value - particle_best_value_prev)/particle_best_value_init)
       residual_mean = np.mean(residual)
       residaul_mean_history.append(residual_mean)
-      print('Step:',i, ', Relative mean residual:', self.text_color+f'{residual_mean:.10e}'+self.text_end)
+      print('Step:',i+1, ', Relative mean residual:', self.text_color+f'{residual_mean:.10e}'+self.text_end)
 
       if residual_mean <= config['PSO']['tolerance'] :
         num_optiter_optimized = i
@@ -166,7 +166,7 @@ class pso(orbital):
 
     for i in range(0,num_optiter_optimized):
       n_opt=global_best_index_hisotry[i]
-      print(i, n_opt, particle_position_history[i,n_opt,:], particle_solutioin[i,n_opt])
+      print(i+1, n_opt+1, particle_position_history[i,n_opt,:], particle_solutioin[i,n_opt])
 
     # Store data
     solution_dict = {}
@@ -248,28 +248,24 @@ class pso(orbital):
     global_best_index_hisotry = solution_dict[self.str_global_index]
 
     # Output results: Global particle information
-    filename_tmp =  config['PSO']['result_dir'] + '/' + config['PSO']['filename_output']
-    print('--Writing output file...:',filename_tmp)
+    filename_tmp =  config['PSO']['result_dir'] + '/' + config['PSO']['filename_global']
+    print('--Writing global solution file...:',filename_tmp)
 
     file_output = open( filename_tmp , 'w')
     # Header
-    header_tmp = "Variables="
-    for n in range(0,len(solution_name_list)):
-      header_tmp = header_tmp + solution_name_list[n] + ','
-    # Addition
-    header_tmp = header_tmp + ' ID' + ',' + ' Error' + ',' + 'Residual_mean' + '\n'
+    header_tmp = 'Variables = Step, GID, GSolution, '
+    for n in range(0,num_dimension):
+      header_tmp = header_tmp + 'GParameter_' + str(n+1) + ', '
+    header_tmp = header_tmp.rstrip(',') + '\n'
     file_output.write( header_tmp )
 
     for i in range(0, num_optiter):
-      text_tmp = 'zone t="Time'+str(i+1) +' sec"' + '\n'
-      text_tmp =  text_tmp + 'i='+str(num_particle)+' f=point' + '\n'
-      for n in range(0, num_particle):
-        text_tmp = text_tmp
-        for m in range(0,num_dimension):
-          text_tmp = text_tmp  + str( particle_position_history[i,n,m] ) + ', '
-        for m in range(0,num_dimension):
-          text_tmp = text_tmp  + str( particle_velocity_history[i,n,m] ) + ', '
-        text_tmp = text_tmp + str(n+1) + ', ' + str(particle_solutioin[i,n]) + '\n'
+      n_opt = global_best_index_hisotry[i]
+      text_tmp = str(i+1) + ', ' + str(global_best_index_hisotry[i]+1) + ', ' 
+      text_tmp = text_tmp + str(particle_solutioin[i,n_opt]) +  ', ' 
+      for m in range(0,num_dimension):
+        text_tmp = text_tmp + str( particle_position_history[i,n_opt,m] ) + ', '
+      text_tmp = text_tmp.rstrip(',') + '\n'
       file_output.write( text_tmp )
     file_output.close()
 
@@ -277,7 +273,7 @@ class pso(orbital):
 
 
   def write_objective_function(self, config, objective_function):
-    # Function shape
+    # Function form
     flag_function_output = False
     if flag_function_output :
       filename_tmp='tecplot_function.dat'
