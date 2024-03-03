@@ -25,11 +25,11 @@ comments: '#'
 
 # Animations
 axis_x_limit:
-  - 10176496
-  - 10186536
+  - 10234520
+  - 10235300 
 axis_y_limit:
-  - 200
-  - 350
+  - 250
+  - 425
 title_base: Temperature
 legend_label: Temperature
 axis_x_label: 'Time, s'
@@ -45,7 +45,7 @@ flag_add: True
 variable_y_add: Heatflux[W/m2]
 axis_y_limit_add:
   - 0
-  - 1000
+  - 3000
 legend_label_add: 'Heat flux'
 axis_y_label_add: 'Heat flux, W/$m^2$'
 color_map_add: red

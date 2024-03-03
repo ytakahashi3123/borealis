@@ -5,8 +5,9 @@ flag_filereading_extracted: True
 filename_extract_list: result_PSO/output_global.dat
 
 # Input file
-filename_base_input: result_externalode/tecplot_output.dat
-str_series: _case
+work_dir: work_externalcode
+case_dir: case
+filename_result: output.dat
 step_digit: 4
 step_start: 1
 step_end: 700
@@ -15,8 +16,8 @@ variable_x: x
 variable_y: y
 
 headername: 'Variables ='
-headerline: 0
-num_skiprows: 1
+headerline: 1
+num_skiprows: 2
 delimiter: null
 comments: '#'
 
@@ -32,8 +33,9 @@ title_base: Solution
 legend_label: Solution
 axis_x_label: x
 axis_y_label: y
-color_map: c
+color_map: blue
 interval: 100 
+legend_location: 'upper left'
 
 
 # Animations--Additional
@@ -63,5 +65,5 @@ label_reference: Reference
 
 # Output file
 file_output: True
-filename_movie: optimization_history.mp4
+filename_output_movie: optimization_history.mp4
 writer: fffmpeg

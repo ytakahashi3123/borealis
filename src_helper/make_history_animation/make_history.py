@@ -63,8 +63,10 @@ def main():
   #config_bor =  read_config_yaml(file_control_borealis)
 
   # Initial settings
-  filename_base = config['filename_base_input']
-  str_series = config['str_series']
+  work_dir = config['work_dir']
+  case_dir = config['case_dir']
+  filename_result = config['filename_result']
+
   step_start = config['step_start']
   step_end   = config['step_end']
   step_digit = config['step_digit']
@@ -89,7 +91,7 @@ def main():
   # Plot and Animation
   #fig, ax = plt.subplots()
   fig = plt.figure()
-  ax = fig.add_subplot(111)
+  ax = fig.add_subplot(1, 1, 1)
   ax.grid()
 
   # Read reference data if necessary
@@ -135,9 +137,9 @@ def main():
     # 追加の軸の凡例を元の軸の凡例に結合
     handles, labels = ax.get_legend_handles_labels()
     handles_add, labels_add = ax_add.get_legend_handles_labels()
-    ax.legend(handles + handles_add, labels + labels_add, loc='upper right')
+    ax.legend(handles + handles_add, labels + labels_add, loc=config['legend_location'])
   else:
-    ax.legend(loc='upper right')
+    ax.legend(loc=config['legend_location'])
 
 
   # Number of frames
@@ -161,8 +163,8 @@ def main():
     else:
       n = frame+1
 
-    number_padded = str(n).zfill(step_digit)
-    filename_tmp = insert_suffix(filename_base, str_series+number_padded, '.')
+    work_dir_case = work_dir + '/' + case_dir + str(n).zfill(step_digit)
+    filename_tmp = work_dir_case + '/' + filename_result
     print('--Reading output file...:',filename_tmp)
     try:
       data_input = np.genfromtxt(filename_tmp,comments=comments_tmp,delimiter=delimiter_tmp,skiprows=num_skiprows_tmp)
@@ -179,11 +181,13 @@ def main():
     y = result_dict[var_y]
     #animate.set_color(color_map(n / step_end))  # フレームごとの色を設定
     animate.set_data(x,y)
-    animate_title.set_text( config['title_base'] +" of TC1 at Epoch="+str(frame+1) )
 
     if flag_add :
       y_add = result_dict[var_y_add]
       animate_add.set_data(x, y_add)
+
+    # Title
+    animate_title.set_text( config['title_base'] +" of TC1 at Epoch="+str(frame+1) )
 
     return
 
@@ -191,7 +195,7 @@ def main():
 
   # Output
   if config['file_output']:
-    anim.save( config['filename_movie'] )
+    anim.save( config['filename_output_movie'] )
   else :
     plt.show()
 
