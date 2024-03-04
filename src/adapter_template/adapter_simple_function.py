@@ -23,7 +23,6 @@ class adapter_simple_function(orbital):
     #function_user = eval(config['simple_function']['function_eval'])
     #print(function_user)
 
-
     # Function output
     if( config['simple_function']['flag_output'] ):
       result_dir   = config['simple_function']['result_dir']
@@ -53,6 +52,13 @@ class adapter_simple_function(orbital):
 
   def function(self, x):
     return 2*np.sin(x) + 4*np.cos(2 * x) + 3*np.cos(2/5 * x)
+
+  # Ackley
+  #def objective_function(self, x):
+  #  y1 = 22.71828
+  #  y2 = -20 * np.exp(-0.2 * np.sqrt(1.0 / len(x) * np.sum(x ** 2, axis=0)))
+  #  y4 = -np.exp(1.0 / len(x) * np.sum(np.cos(2.0 * np.pi * x), axis=0))
+  #  return y1 + y2 + y4
 
 
   @orbital.time_measurement_decorated

@@ -380,21 +380,21 @@ class adapter_tacode(orbital):
   @orbital.time_measurement_decorated
   def write_result_data(self, result_dict):
 
-    longitude     = result_dict[ self.str_longitude ]
-    latitude      = result_dict[ self.str_latitude ]
-    altitude      = result_dict[ self.str_altitude ]
-    velocity_long = result_dict[ self.str_velocity_longitude ]
-    velocity_lat  = result_dict[ self.str_velocity_latitude ]
-    velocity_alt  = result_dict[ self.str_velocity_altitude ]
-    velocity_mag  = result_dict[ self.str_velocity_magnitude ]
-    density       = result_dict[ self.str_density ]
-    temperature   = result_dict[ self.str_temperature ]
-    kn            = result_dict[ self.str_knudsen ]
-
-    time_sec_offset = result_dict[ self.str_time_sec ]
-    time_day_offset = result_dict[ self.str_time_day ]
-
     if( self.config['tacode']['flag_output'] ):
+      longitude     = result_dict[ self.str_longitude ]
+      latitude      = result_dict[ self.str_latitude ]
+      altitude      = result_dict[ self.str_altitude ]
+      velocity_long = result_dict[ self.str_velocity_longitude ]
+      velocity_lat  = result_dict[ self.str_velocity_latitude ]
+      velocity_alt  = result_dict[ self.str_velocity_altitude ]
+      velocity_mag  = result_dict[ self.str_velocity_magnitude ]
+      density       = result_dict[ self.str_density ]
+      temperature   = result_dict[ self.str_temperature ]
+      kn            = result_dict[ self.str_knudsen ]
+
+      time_sec_offset = result_dict[ self.str_time_sec ]
+      time_day_offset = result_dict[ self.str_time_day ]
+
       result_dir        = self.config['tacode']['result_dir']
       filename_output  = self.config['tacode']['filename_output']
       number_padded     = str(self.iter).zfill(self.step_digit)
