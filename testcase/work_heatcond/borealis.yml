@@ -16,30 +16,30 @@ parameter_optimized:
   boundary:
     - name: '# Aerodynamic heating: Heatflux' 
       component:
-        - type: alt110km
-          bound_min: 1000
-          bound_max: 4000
-        - type: alt115km
-          bound_min: 1000
-          bound_max: 3000
-        - type: alt120km
-          bound_min: 500
-          bound_max: 2500
-        - type: alt125km
-          bound_min: 500
-          bound_max: 2000
-        - type: alt127km
-          bound_min: 100
-          bound_max: 2000
-        - type: alt130km
-          bound_min: 100
-          bound_max: 1000
-        - type: alt133km
-          bound_min: 100
-          bound_max: 1000
         - type: alt135km
           bound_min: 10
           bound_max: 500
+        - type: alt133km
+          bound_min: 100
+          bound_max: 1000
+        - type: alt130km
+          bound_min: 100
+          bound_max: 1000
+        - type: alt127km
+          bound_min: 100
+          bound_max: 2000
+        - type: alt125km
+          bound_min: 500
+          bound_max: 2000
+        - type: alt120km
+          bound_min: 500
+          bound_max: 2500
+        - type: alt115km
+          bound_min: 1000
+          bound_max: 3000
+        - type: alt110km
+          bound_min: 1000
+          bound_max: 4000
 
 
 Bayesian_optimization:
@@ -82,7 +82,7 @@ PSO: # Particle swarm optimization
   maximize: False
 
   # Tolerance of effor of objective function
-  tolerance: 1.e-5
+  tolerance: 1.e-3
 
   # Particle parameter for PSO
   inertia: 0.5

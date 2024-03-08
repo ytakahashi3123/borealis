@@ -11,7 +11,7 @@ case_dir: case
 filename_result: history.dat
 step_digit: 4
 step_start: 1
-step_end: 800
+step_end: 1100
 
 variable_x: Time[s]
 variable_y: T[K]

@@ -16,7 +16,7 @@ Bayesian optimization for finding realizable solutions for discretized equation
 python3 src/borealis.py
 ```
 
-Tutorial case: `testcase/work`
+Tutorial case: `testcase/work*`
 
 ## Configuration file
 

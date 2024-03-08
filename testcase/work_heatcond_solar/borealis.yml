@@ -16,40 +16,39 @@ parameter_optimized:
   boundary:
     - name: '# Aerodynamic heating: Heatflux' 
       component:
-        - type: t10186536s
-          bound_min: 0
-          bound_max: 1000
-        - type: t10185852s
-          bound_min: 0
-          bound_max: 1000
-        - type: t10184992s
-          bound_min: 0
-          bound_max: 1000
-        - type: t10184663s
-          bound_min: 0
-          bound_max: 1000
-        - type: t10183288s
-          bound_min: 0
-          bound_max: 1000
-        - type: t10182027s
-          bound_min: 0
-          bound_max: 1000
-        - type: t10181325s
-          bound_min: 0
-          bound_max: 1000
-        - type: t10179621s
-          bound_min: 0
-          bound_max: 1000
-        - type: t10179263s
+        - type: t10176486s
           bound_min: 0
           bound_max: 1000
         - type: t10177587s
           bound_min: 0
           bound_max: 1000
-        - type: t1017648s
+        - type: t10179263s
           bound_min: 0
           bound_max: 1000
-
+        - type: t10179621s
+          bound_min: 0
+          bound_max: 1000
+        - type: t10181325s
+          bound_min: 0
+          bound_max: 1000
+        - type: t10182027s
+          bound_min: 0
+          bound_max: 1000
+        - type: t10183288s
+          bound_min: 0
+          bound_max: 1000
+        - type: t10184663s
+          bound_min: 0
+          bound_max: 1000
+        - type: t10184992s
+          bound_min: 0
+          bound_max: 1000
+        - type: t10185852s
+          bound_min: 0
+          bound_max: 1000
+        - type: t10186536s
+          bound_min: 0
+          bound_max: 1000
 
 Bayesian_optimization:
 
@@ -91,7 +90,7 @@ PSO: # Particle swarm optimization
   maximize: False
 
   # Tolerance of effor of objective function
-  tolerance: 1.e-5
+  tolerance: 1.e-3
 
   # Particle parameter for PSO
   inertia: 0.5

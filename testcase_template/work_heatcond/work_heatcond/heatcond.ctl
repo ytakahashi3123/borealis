@@ -23,12 +23,11 @@
 0.025d0		# Conductivity of air, W/m.K
 1.0d-5		# Viscosity, Pa.sec
 # Input heatflux -----------------------
-.false.              # true:Reading heat flux file, false:Setting in control file
 .false.              # true:Set by altitude data, false:set by elapsed time data
 8                    # Number of heat flux case
-10235300, 10235230, 10235120, 10234880, 10234660, 10234620, 10234600, 10234510 # Aerodynamic heating: Time
-110, 115, 120, 125, 127, 130, 133, 135          # Aerodynamic heating: Altitude
-2900, 2100, 1300, 1000,  710,  680,  450, 300   # Aerodynamic heating: Heatflux
+10234510, 10234600, 10234620, 10234660, 10234880,10235120, 10235230, 10235300 # Aerodynamic heating: Time
+135, 133, 130, 127, 125, 120, 115, 110         # Aerodynamic heating: Altitude
+300, 450, 680, 710, 1000, 1300, 2100, 2900     # Aerodynamic heating: Heatflux
 # Atmosphere model (constant) ----------------------
 1.e-3               # Density, kg
 300.e0              # Temperature, K
@@ -44,13 +43,9 @@
 69                  # number of variables (ADC)
 24                  # (GPS)
 # Filename -----------------------------
-'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/database/atmospheremodel/atmospheremodel.txt'  # Atmosphere file
-'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/database/reference_egg/2017_0715_EGG_ADC_PHY.dat'  # ADC-PHY (flight)
-'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/database/reference_egg/2017_0715_EGG_GPS.dat'      # GPS data (flight)
-'DSMC_heatflux_TC1.dat'                  # Heat flux file (input)
+'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.10/database/atmospheremodel/atmospheremodel.txt'  # Atmosphere file
+'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.10/database/reference_egg/2017_0715_EGG_ADC_PHY.dat'  # ADC-PHY (flight)
+'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.10/database/reference_egg/2017_0715_EGG_GPS.dat'      # GPS data (flight)
 'heatflux.dat'                        # Heat flux result by Monte Carlo (output)
-'temperature_mc.dat'                     # Temperature result by Monte Carlo (output)
-'error_mc.dat'                           # Temperature Error by Monte Carlo (output)
-'heatflux_ml.dat'                        # Maximum likelihood Heat flux result (output)
-'history.dat'	                         # Time hisotry file name (output)
-'tc.dat'                                 # Measured temperature file (output)
+'history.dat'	                      # Time hisotry file name (output)
+.false.                               # Display verbose
