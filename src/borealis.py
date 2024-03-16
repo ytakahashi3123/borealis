@@ -61,6 +61,9 @@ def main():
   elif config['optimizer']['kind_optimizer'] == 'PSO':
     from pso.pso import pso
     optimize = pso()
+  elif config['optimizer']['kind_optimizer'] == 'ABC':
+    from optimizer_abc.optimizer_abc import optimizer_abc
+    optimize = optimizer_abc()
   else:
     print('Error, invalid optimizer is selected. Check optimizer.kind_optimizer in',file_control,':', config['optimizer']['kind_optimizer'])
     print('Program stopped.')

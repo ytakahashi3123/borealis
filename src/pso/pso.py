@@ -207,6 +207,7 @@ class pso(orbital):
     particle_position_history = solution_dict[self.str_position]
     particle_velocity_history = solution_dict[self.str_velocity]
     particle_solutioin        = solution_dict[self.str_error]
+    residaul_mean_history     = solution_dict[self.str_residual]
 
     # Output results: Particles
     filename_tmp =  config['PSO']['result_dir'] + '/' + config['PSO']['filename_output']
@@ -230,7 +231,7 @@ class pso(orbital):
           text_tmp = text_tmp  + str( particle_position_history[i,n,m] ) + ', '
         for m in range(0,num_dimension):
           text_tmp = text_tmp  + str( particle_velocity_history[i,n,m] ) + ', '
-        text_tmp = text_tmp + str(n+1) + ', ' + str(particle_solutioin[i,n]) + '\n'
+        text_tmp = text_tmp + str(n+1) + ', ' + str(particle_solutioin[i,n]) + ' ,' + str(residaul_mean_history[i]) +  '\n'
       file_output.write( text_tmp )
     file_output.close()
 
