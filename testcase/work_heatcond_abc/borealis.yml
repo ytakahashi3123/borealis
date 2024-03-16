@@ -7,7 +7,7 @@ adapter:
 
 optimizer: 
   # Bayesian_optimization, PSO, or ABC
-  kind_optimizer: PSO
+  kind_optimizer: ABC
 
 
 parameter_optimized:
@@ -101,10 +101,10 @@ ABC:
   num_optiter: 100
 
   # Number of employed bees 
-  num_employ_bees: 80
+  num_employ_bees: 20
 
   # Number of onlooking bees 
-  num_onlook_bee: 20
+  num_onlook_bee: 5
 
   # Limit of visit
   vist_limit: 30

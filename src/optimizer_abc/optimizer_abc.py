@@ -58,8 +58,8 @@ class optimizer_abc(orbital):
 
   def generate_food_source(self, parameter_boundary, num_dimension):
     #food_source = bound_lower + np.random.uniform(low=bound_lower, high=bound_upper, size=num_dimension)
-    food_source = np.array( [np.random.uniform(low=bound_low, high=bound_high, size=num_dimension) for bound_low, bound_high in parameter_boundary] )
-    return food_source 
+    food_source = np.array( [np.random.uniform(low=bound_low, high=bound_high) for bound_low, bound_high in parameter_boundary] )
+    return food_source
 
 
   def fitness_value_function(self, solutioin):
@@ -123,8 +123,8 @@ class optimizer_abc(orbital):
     for i in range(num_employ_bees):
       food_source_tmp = self.generate_food_source(parameter_boundary, num_dimension)
       food_source.append( food_source_tmp )
-      solution.append( objective_function(food_source_tmp) )
-    
+      solution.append( objective_function( food_source_tmp.reshape(1, num_dimension) ) )
+
     solution_init[:] = solution[:].copy() 
 
     # Iteration
@@ -135,7 +135,7 @@ class optimizer_abc(orbital):
         phi = 2.0*np.random.rand(num_dimension) - 1.0
         index = np.random.randint(num_employ_bees-1)
         food_source_new = food_source[i] + phi*( food_source[i] - food_source[index] )
-        solution_new = objective_function(food_source_new)
+        solution_new = objective_function(food_source_new.reshape(1, num_dimension))
         # Update source
         if self.fitness_value_function( solution_new ) > self.fitness_value_function( solution[i] ):
           food_source[i] = food_source_new
@@ -159,7 +159,7 @@ class optimizer_abc(orbital):
         # Replace the food sources that have been visited more than a certain number of times
         if visit_counter[i] > vist_limit:
           food_source[i] = self.generate_food_source(parameter_boundary, num_dimension)
-          solution[i] = objective_function(food_source[i])
+          solution[i] = objective_function(food_source[i].reshape(1, num_dimension))
           visit_counter[i] = 0
 
       # Update best solution
@@ -169,8 +169,8 @@ class optimizer_abc(orbital):
           best_solution = solution[i]
 
       # History
-      food_source_history[n,:,:] = food_source
-      solution_history[n,:] = solution
+      food_source_history[n,:,:] = food_source[:]
+      solution_history[n,:] = solution[:]
       min_index = np.argmin(solution)
       best_index_history[n] = min_index
       #best_food_source_hisotry[n,:] = food_source[min_index]
@@ -186,7 +186,7 @@ class optimizer_abc(orbital):
       print('Step:',n+1, ', Relative mean residual:', self.text_color+f'{residual_mean:.10e}'+self.text_end)
 
       if residual_mean <= config['ABC']['tolerance'] :
-        num_optiter_optimized = i
+        num_optiter_optimized = n
         break
 
       solution_prev[:] = solution[:].copy()
