@@ -57,26 +57,26 @@ def main():
   # Class optimization
   if config['optimizer']['kind_optimizer'] == 'Bayesian_optimization':
     from Bayesian_optimization.Bayesian_optimization import Bayesian_optimization
-    optimize = Bayesian_optimization()
+    optimizer = Bayesian_optimization()
   elif config['optimizer']['kind_optimizer'] == 'PSO':
-    from pso.pso import pso
-    optimize = pso()
+    from optimizer_pso.optimizer_pso import optimizer_pso
+    optimizer = optimizer_pso()
   elif config['optimizer']['kind_optimizer'] == 'ABC':
     from optimizer_abc.optimizer_abc import optimizer_abc
-    optimize = optimizer_abc()
+    optimizer = optimizer_abc()
   else:
     print('Error, invalid optimizer is selected. Check optimizer.kind_optimizer in',file_control,':', config['optimizer']['kind_optimizer'])
     print('Program stopped.')
     exit()
 
   # Initial setting
-  optimize.initial_setting(config)
+  optimizer.initial_setting(config)
 
   # Define parameter boundaries
-  parameter_boundary = optimize.boundary_setting(config)
+  parameter_boundary = optimizer.boundary_setting(config)
 
   # Run Bayesian optimization
-  optimize.drive_optimization(config, objective_function, parameter_boundary)
+  optimizer.drive_optimization(config, objective_function, parameter_boundary)
 
   return
 

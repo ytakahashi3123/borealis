@@ -101,13 +101,13 @@ ABC:
   num_optiter: 100
 
   # Number of employed bees 
-  num_employ_bees: 20
+  num_employ_bees: 50
 
   # Number of onlooking bees 
   num_onlook_bee: 5
 
   # Limit of visit
-  vist_limit: 30
+  vist_limit: 50
 
   # Minimize or maximize the objective function
   maximize: False

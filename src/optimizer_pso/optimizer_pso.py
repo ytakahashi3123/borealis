@@ -4,7 +4,7 @@ import numpy as np
 from orbital.orbital import orbital
 
 
-class pso(orbital):
+class optimizer_pso(orbital):
 
   def __init__(self):
 

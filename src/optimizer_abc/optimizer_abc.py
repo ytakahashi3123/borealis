@@ -11,10 +11,10 @@ class optimizer_abc(orbital):
     print("Constructing class: ABC")
 
     self.str_num_optiter = 'number_iteration'
-    self.str_residual = 'residual'
+    self.str_residual    = 'residual'
     self.str_food_source = 'food_source'
-    self.str_error = 'solution'
-    self.str_best_index = 'best_index'
+    self.str_error       = 'solution'
+    self.str_best_index  = 'best_index'
 
     self.text_color = '\033[96m'
     self.text_end = '\033[0m'
@@ -71,6 +71,11 @@ class optimizer_abc(orbital):
     return fitness
 
 
+  def reshape_array(self, var, num_dim):
+    #下記のreshape追加の理由、Bayesian　Optの引数が(1,dim)の次元になるので、それに合わせている。
+    return var.reshape(1,num_dim)
+
+
   def roulette_wheel_selection(self, fitness_values):
     # Calculate the total sum of the fitness values of each individual
     total_fitness = sum(fitness_values)  
@@ -107,9 +112,9 @@ class optimizer_abc(orbital):
     best_solution = float('inf')
 
     # History
-    best_index_history       = np.zeros(num_optiter, dtype=int)
-    food_source_history      = np.zeros(num_optiter*num_employ_bees*num_dimension).reshape(num_optiter,num_employ_bees,num_dimension)
-    solution_history         = np.zeros(num_optiter*num_employ_bees).reshape(num_optiter,num_employ_bees)
+    best_index_history  = np.zeros(num_optiter, dtype=int)
+    food_source_history = np.zeros(num_optiter*num_employ_bees*num_dimension).reshape(num_optiter,num_employ_bees,num_dimension)
+    solution_history    = np.zeros(num_optiter*num_employ_bees).reshape(num_optiter,num_employ_bees)
 
     # For residual
     solution_init = np.ones(num_employ_bees)
@@ -123,7 +128,7 @@ class optimizer_abc(orbital):
     for i in range(num_employ_bees):
       food_source_tmp = self.generate_food_source(parameter_boundary, num_dimension)
       food_source.append( food_source_tmp )
-      solution.append( objective_function( food_source_tmp.reshape(1, num_dimension) ) )
+      solution.append( objective_function( self.reshape_array(food_source_tmp,num_dimension)) ) 
 
     solution_init[:] = solution[:].copy() 
 
@@ -135,7 +140,7 @@ class optimizer_abc(orbital):
         phi = 2.0*np.random.rand(num_dimension) - 1.0
         index = np.random.randint(num_employ_bees-1)
         food_source_new = food_source[i] + phi*( food_source[i] - food_source[index] )
-        solution_new = objective_function(food_source_new.reshape(1, num_dimension))
+        solution_new = objective_function( self.reshape_array(food_source_new,num_dimension) )
         # Update source
         if self.fitness_value_function( solution_new ) > self.fitness_value_function( solution[i] ):
           food_source[i] = food_source_new
@@ -159,7 +164,7 @@ class optimizer_abc(orbital):
         # Replace the food sources that have been visited more than a certain number of times
         if visit_counter[i] > vist_limit:
           food_source[i] = self.generate_food_source(parameter_boundary, num_dimension)
-          solution[i] = objective_function(food_source[i].reshape(1, num_dimension))
+          solution[i] = objective_function( self.reshape_array(food_source[i], num_dimension) )
           visit_counter[i] = 0
 
       # Update best solution
@@ -173,8 +178,6 @@ class optimizer_abc(orbital):
       solution_history[n,:] = solution[:]
       min_index = np.argmin(solution)
       best_index_history[n] = min_index
-      #best_food_source_hisotry[n,:] = food_source[min_index]
-      #best_solutioin_hisotry[n] = solution[min_index]
 
       #print(n, best_food_source, best_solution)
 
@@ -193,10 +196,10 @@ class optimizer_abc(orbital):
 
     # Output
     print('Best condition:', best_food_source )
-    print("Best value:", best_solution )
-
+    print('Best value:', best_solution )
+    print('Step, Best-condition index, Best condition, Best solution')
     for n in range(0,num_optiter_optimized):
-      i_opt=best_index_history[n]
+      i_opt = best_index_history[n]
       print(n+1, i_opt+1, food_source_history[n,i_opt,:], solution_history[n,i_opt])
 
     # Store data
