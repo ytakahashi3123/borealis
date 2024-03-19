@@ -64,6 +64,9 @@ def main():
   elif config['optimizer']['kind_optimizer'] == 'ABC':
     from optimizer_abc.optimizer_abc import optimizer_abc
     optimizer = optimizer_abc()
+  elif config['optimizer']['kind_optimizer'] == 'GA':
+    from optimizer_ga.optimizer_ga import optimizer_ga
+    optimizer = optimizer_ga()
   else:
     print('Error, invalid optimizer is selected. Check optimizer.kind_optimizer in',file_control,':', config['optimizer']['kind_optimizer'])
     print('Program stopped.')

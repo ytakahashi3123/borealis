@@ -1,9 +1,9 @@
 # Configuration file for Borealis code
 
 adapter: 
-  # tacode or simple_function
-  kind_adapter: simple_function  
-
+  # tacode, simple_function, or example_externalcode
+  kind_adapter: heatcond
+  
 
 optimizer: 
   # Bayesian_optimization, PSO, ABC, or GA
@@ -13,11 +13,33 @@ optimizer:
 parameter_optimized:
   # Parameter boundaries
   boundary:
-    - name: 'simple_function'
+    - name: '# Aerodynamic heating: Heatflux' 
       component:
-        - type: x
-          bound_min: -10
-          bound_max:  10
+        - type: alt135km
+          bound_min: 10
+          bound_max: 500
+        - type: alt133km
+          bound_min: 100
+          bound_max: 1000
+        - type: alt130km
+          bound_min: 100
+          bound_max: 1000
+        - type: alt127km
+          bound_min: 100
+          bound_max: 2000
+        - type: alt125km
+          bound_min: 500
+          bound_max: 2000
+        - type: alt120km
+          bound_min: 500
+          bound_max: 2500
+        - type: alt115km
+          bound_min: 1000
+          bound_max: 3000
+        - type: alt110km
+          bound_min: 1000
+          bound_max: 4000
+
 
 Bayesian_optimization:
 
@@ -33,24 +55,22 @@ Bayesian_optimization:
   model_update_interval: 1
   verbosity: True
 
-  num_optiter: 25
+  num_optiter: 100
 
   # Results data file (Tecplot data format)
   result_dir: result_bopt
   filename_output: output_bopt.dat
 
   # Acquisition
-  flag_image_acquisition: True
+  flag_image_acquisition: False
   filename_image_acquisition: acquisition.png
 
   # Convergence
-  flag_image_convergence: True
+  flag_image_convergence: False
   filename_image_convergence: convergence.png
 
 
-PSO:
-  # particle swarm optimization
-
+PSO: # Particle swarm optimization
   # Number of iterations
   num_optiter: 100
 
@@ -61,7 +81,7 @@ PSO:
   maximize: False
 
   # Tolerance of effor of objective function
-  tolerance: 1.e-10
+  tolerance: 1.e-3
 
   # Particle parameter for PSO
   inertia: 0.5
@@ -81,24 +101,25 @@ ABC:
   num_optiter: 100
 
   # Number of employed bees 
-  num_employ_bees: 20
+  num_employ_bees: 50
 
   # Number of onlooking bees 
   num_onlook_bee: 5
 
   # Limit of visit
-  vist_limit: 10
+  vist_limit: 50
 
   # Minimize or maximize the objective function
   maximize: False
 
   # Tolerance of effor of objective function
-  tolerance: 1.e-10
+  tolerance: 1.e-3
 
   # Results data file (Tecplot data format)
   result_dir: result_ABC
   filename_output: output_ABC.dat
   filename_global: output_global.dat
+
 
 
 GA:
@@ -119,7 +140,7 @@ GA:
   maximize: False
 
   # Tolerance of effor of objective function
-  tolerance: 1.e-10
+  tolerance: 1.e-3
 
   # Results data file (Tecplot data format)
   result_dir: result_GA
@@ -129,16 +150,59 @@ GA:
 
 reference:
 
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/work_heatcond/reference_tc
+  filename_input: reference_tc.dat
 
-simple_function:
- 
-  #flag_eval: False
-  #function_eval: '2*np.sin(x) + 4*np.cos(2 * x) + 3*np.cos(2/5 * x)'
+  timeunit: sec
 
-  # Function output
-  result_dir: result_function
+  var_x: Time[s]
+  var_y: TC1[K]
+
+
+heatcond:
+
+  # tacode case directory
+  work_dir: work_heatcond
+  case_dir: case
+  step_digit: 4
+
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/work_heatcond/work_heatcond
+
+  # Executing script
+  cmd_code: ./run_code.sh
+  
+  # Control file
+  filename_control: heatcond.ctl
+  
+  # Result file name computed by Tacode
+  filename_result: history.dat
+  
+  # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
+  #convert_timeunit_tapost: sec2day
+
+  # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
+  # 時刻オフセット値はここで決定する
+ # time_start: 118.3385
+ # time_end:   118.4003
+ # target_time: 118.3385
+  x_min: 10234520
+  x_max: 10235300
+  x_offset: 0
+
+  # Result trajectory of Tacode 
+  result_dir: result_heatcond
   flag_output: True
-  filename_output: output_function.dat
-  function_discrete: 100
-  function_bound_min: -10
-  function_bound_max: 10
+  filename_output: output_result.dat
+  variables_output: 
+    - Time[s]
+    - T[K]
+#    - Alt.[km]
+#    - Dens[kg/m3]
+#    - Tback[K]
+#    - Tatm[K]
+#    - Htcoef
+#    - Re
+#    - Solar[W/m2]
+    - Heatflux[W/m2]

@@ -48,4 +48,4 @@
 '/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.10/database/reference_egg/2017_0715_EGG_GPS.dat'      # GPS data (flight)
 'heatflux.dat'                        # Heat flux result by Monte Carlo (output)
 'history.dat'	                        # Time hisotry file name (output)
-.false.                               # Display verbose
+1                                     # Display verbose: 0:less,  1:more

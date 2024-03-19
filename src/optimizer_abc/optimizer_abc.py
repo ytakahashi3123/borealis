@@ -56,8 +56,7 @@ class optimizer_abc(orbital):
     return parameter_boundary
 
 
-  def generate_food_source(self, parameter_boundary, num_dimension):
-    #food_source = bound_lower + np.random.uniform(low=bound_lower, high=bound_upper, size=num_dimension)
+  def generate_food_source(self, parameter_boundary):
     food_source = np.array( [np.random.uniform(low=bound_low, high=bound_high) for bound_low, bound_high in parameter_boundary] )
     return food_source
 
@@ -111,7 +110,7 @@ class optimizer_abc(orbital):
     #best_food_source = float('inf')
     best_solution = float('inf')
 
-    # History
+    # For history record
     best_index_history  = np.zeros(num_optiter, dtype=int)
     food_source_history = np.zeros(num_optiter*num_employ_bees*num_dimension).reshape(num_optiter,num_employ_bees,num_dimension)
     solution_history    = np.zeros(num_optiter*num_employ_bees).reshape(num_optiter,num_employ_bees)
@@ -126,7 +125,7 @@ class optimizer_abc(orbital):
     food_source = []
     solution = []
     for i in range(num_employ_bees):
-      food_source_tmp = self.generate_food_source(parameter_boundary, num_dimension)
+      food_source_tmp = self.generate_food_source(parameter_boundary)
       food_source.append( food_source_tmp )
       solution.append( objective_function( self.reshape_array(food_source_tmp,num_dimension)) ) 
 
@@ -163,7 +162,7 @@ class optimizer_abc(orbital):
       for i in range(num_employ_bees):
         # Replace the food sources that have been visited more than a certain number of times
         if visit_counter[i] > vist_limit:
-          food_source[i] = self.generate_food_source(parameter_boundary, num_dimension)
+          food_source[i] = self.generate_food_source(parameter_boundary)
           solution[i] = objective_function( self.reshape_array(food_source[i], num_dimension) )
           visit_counter[i] = 0
 
@@ -178,8 +177,6 @@ class optimizer_abc(orbital):
       solution_history[n,:] = solution[:]
       min_index = np.argmin(solution)
       best_index_history[n] = min_index
-
-      #print(n, best_food_source, best_solution)
 
       # Residual of error in objective function
       #!!!solutionはlist型、solution_prevとsolution_initはnp.ndarrayで一貫してない）
@@ -241,7 +238,6 @@ class optimizer_abc(orbital):
       header_tmp = header_tmp + solution_name_list[n] + ','
     # Addition
     header_tmp = header_tmp + ' ID' + ',' + ' Solution' + ',' + 'Residual_mean' + '\n'
-     #"Variables = X, Y, ID, Epoch, Solution"  + '\n'
     file_output.write( header_tmp )
 
     for n in range(0, num_optiter):
