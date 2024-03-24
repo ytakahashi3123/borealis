@@ -6,7 +6,7 @@ adapter:
   
 
 optimizer: 
-  # Bayesian_optimization, PSO, or ABC
+  # Bayesian_optimization, PSO, ABC, or GA
   kind_optimizer: PSO
 
 
@@ -101,13 +101,13 @@ ABC:
   num_optiter: 100
 
   # Number of employed bees 
-  num_employ_bees: 80
+  num_employ_bees: 50
 
   # Number of onlooking bees 
-  num_onlook_bee: 20
+  num_onlook_bee: 5
 
   # Limit of visit
-  vist_limit: 30
+  vist_limit: 50
 
   # Minimize or maximize the objective function
   maximize: False
@@ -118,6 +118,32 @@ ABC:
   # Results data file (Tecplot data format)
   result_dir: result_ABC
   filename_output: output_ABC.dat
+  filename_global: output_global.dat
+
+
+GA:
+  # Genetic algorithm optimization
+  # Number of genarations
+  num_generation: 100
+
+  # Number of populations
+  num_population: 20
+
+  # Rate of mutation
+  mutation_rate: 0.01
+
+  # Limit of mutation
+  mutation_limit: 0.1
+
+  # Minimize or maximize the objective function
+  maximize: False
+
+  # Tolerance of effor of objective function
+  tolerance: 1.e-3
+
+  # Results data file (Tecplot data format)
+  result_dir: result_GA
+  filename_output: output_GA.dat
   filename_global: output_global.dat
 
 

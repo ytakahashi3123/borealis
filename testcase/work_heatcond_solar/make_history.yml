@@ -25,8 +25,8 @@ comments: '#'
 
 # Animations
 axis_x_limit:
-  - 10176496
-  - 10186536
+  - 10181685
+  - 10186747
 axis_y_limit:
   - 200
   - 350

@@ -248,7 +248,7 @@ class adapter_heatcond(orbital):
   @orbital.time_measurement_decorated
   def write_result_data(self, result_dict):
 
-    if( self.config['heatcond']['filename_output'] ):
+    if( self.config['heatcond']['flag_output'] ):
       var_output = self.config['heatcond']['variables_output']
       result_dir        = self.config['heatcond']['result_dir']
       filename_tecplot  = self.config['heatcond']['filename_output']

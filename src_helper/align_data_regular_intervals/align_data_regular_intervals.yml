@@ -1,5 +1,9 @@
 # Configuration file
 
-x_min: 10176486
-x_max: 10186536
-num_div: 11
+#x_min: 10176486
+#x_max: 10186536
+#num_div: 11
+
+x_min: 10181685
+x_max: 10186747
+num_div: 21

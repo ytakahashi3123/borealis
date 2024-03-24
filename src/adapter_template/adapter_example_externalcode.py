@@ -240,7 +240,7 @@ class adapter_example_externalcode(orbital):
   @orbital.time_measurement_decorated
   def write_result_data(self, result_dict):
 
-    if( self.config['example_externalcode']['filename_output'] ):
+    if( self.config['example_externalcode']['flag_output'] ):
       x_offset = self.config['example_externalcode']['x_offset']
       x_res = result_dict[ self.str_x ] + x_offset
       y_res = result_dict[ self.str_y ]

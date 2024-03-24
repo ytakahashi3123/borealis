@@ -238,7 +238,7 @@ class adapter_user(orbital):
   @orbital.time_measurement_decorated
   def write_result_data(self, result_dict):
 
-    if( self.config['user']['filename_output'] ):
+    if( self.config['user']['flag_output'] ):
       x_res = result_dict[ self.str_x ]
       y_res = result_dict[ self.str_y ]
 
