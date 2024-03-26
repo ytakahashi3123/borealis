@@ -8,9 +8,11 @@ from orbital.orbital import orbital
 
 class Bayesian_optimization(orbital):
 
-  def __init__(self):
+  def __init__(self,mpi_instance):
 
     print("Constructing class: Bayesian_optimization")
+
+    self.mpi_instance = mpi_instance
 
     self.str_error = 'Error'
 
@@ -19,8 +21,11 @@ class Bayesian_optimization(orbital):
 
   def initial_setting(self, config):
 
-    result_dir = config['Bayesian_optimization']['result_dir']
-    super().make_directory_rm(result_dir)
+    if self.mpi_instance.rank == 0:
+      result_dir = config['Bayesian_optimization']['result_dir']
+      super().make_directory_rm(result_dir)
+    if self.mpi_instance.flag_mpi :
+      self.mpi_instance.comm.Barrier()
 
     return
 
@@ -173,9 +178,11 @@ class Bayesian_optimization(orbital):
     problem, solution_dict = self.bayesian_optimization(config, objective_function, parameter_boundary)
 
     # Write data
-    self.write_optimization_data(config, solution_dict)
+    if self.mpi_instance.rank == 0:
+      self.write_optimization_data(config, solution_dict)
 
     # Plot data
-    self.plot_optimization_process(config, problem)
+    if self.mpi_instance.rank == 0:
+      self.plot_optimization_process(config, problem)
 
     return

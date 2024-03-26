@@ -10,6 +10,10 @@ optimizer:
   kind_optimizer: PSO
 
 
+mpi: 
+  flag_mpi: True
+  
+
 parameter_optimized:
   # Parameter boundaries
   boundary:
@@ -113,13 +117,13 @@ PSO: # Particle swarm optimization
   num_optiter: 100
 
   # Number of particles
-  num_particle: 30
+  num_particle: 80
 
   # Minimize or maximize the objective function
   maximize: False
 
   # Tolerance of effor of objective function
-  tolerance: 1.e-3
+  tolerance: 1.e-5
 
   # Particle parameter for PSO
   inertia: 0.5

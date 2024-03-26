@@ -9,9 +9,11 @@ from orbital.orbital import orbital
 
 class adapter_heatcond(orbital):
 
-  def __init__(self):
+  def __init__(self,mpi_instance):
 
     print("Constructing class: adapter_heatcond")
+
+    self.mpi_instance = mpi_instance
 
     return
 
@@ -23,7 +25,8 @@ class adapter_heatcond(orbital):
     self.step_digit = config['heatcond']['step_digit']
 
     # Make directory
-    super().make_directory_rm(self.work_dir)
+    if self.mpi_instance.rank == 0:
+      super().make_directory_rm(self.work_dir)
 
     # Template case 
     path_specify = config['heatcond']['directory_path_specify']
@@ -32,7 +35,8 @@ class adapter_heatcond(orbital):
     self.template_path = self.get_directory_path(path_specify, default_path, manual_path)
   
     self.work_dir_template = self.work_dir+'/'+self.case_dir+'_template'
-    shutil.copytree(self.template_path, self.work_dir_template)
+    if self.mpi_instance.rank == 0:
+      shutil.copytree(self.template_path, self.work_dir_template)
 
     # Control file and computed result file
     self.filename_control_code = config['heatcond']['filename_control']
@@ -47,7 +51,8 @@ class adapter_heatcond(orbital):
     self.parameter_target = config['parameter_optimized']['boundary']
 
     # Result file: Make directory
-    super().make_directory_rm(config['heatcond']['result_dir'])
+    if self.mpi_instance.rank == 0:
+      super().make_directory_rm(config['heatcond']['result_dir'])
 
     # Control file 
     self.config = config
@@ -76,6 +81,10 @@ class adapter_heatcond(orbital):
     # For result data reading
     self.headerline_variables = 1
     self.num_skiprows = 2
+
+    # 同期をとる
+    if self.mpi_instance.flag:
+      self.mpi_instance.comm.Barrier()
 
     return
 
@@ -279,9 +288,11 @@ class adapter_heatcond(orbital):
 
 
   @orbital.time_measurement_decorated
-  def objective_function(self, parameter_opt):
+  def objective_function(self, id_serial, parameter_opt):
 
     # コントロールファイルを適切に修正して、tacodeを実行する。
+
+    self.iter = id_serial
 
     print('Iteration: ', self.iter)
 
@@ -306,6 +317,6 @@ class adapter_heatcond(orbital):
     error = self.evaluate_error(result_dict)
 
     # カウンタの更新
-    self.iter += 1
+    #self.iter += 1
 
     return error

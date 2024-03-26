@@ -2,13 +2,16 @@
 
 import numpy as np
 from orbital.orbital import orbital
+#from mpi4py import MPI
 
 
 class optimizer_pso(orbital):
 
-  def __init__(self):
+  def __init__(self, mpi_instance):
 
     print("Constructing class: PSO")
+
+    self.mpi_instance = mpi_instance
 
     self.str_num_optiter = 'number_iteration'
     self.str_residual = 'residual_hisotry'
@@ -25,8 +28,11 @@ class optimizer_pso(orbital):
 
   def initial_setting(self, config):
 
-    result_dir = config['PSO']['result_dir']
-    super().make_directory_rm(result_dir)
+    if self.mpi_instance.rank == 0:
+      result_dir = config['PSO']['result_dir']
+      super().make_directory_rm(result_dir)
+    if self.mpi_instance.flag_mpi :
+      self.mpi_instance.comm.Barrier()
 
     boundary = config['parameter_optimized']['boundary']
     num_dimension = 0
@@ -76,6 +82,22 @@ class optimizer_pso(orbital):
     cognitive_coef = config['PSO']['cognitive_coef']
     social_coef    = config['PSO']['social_coef']
 
+    # MPI settings
+    flag_mpi = self.mpi_instance.flag_mpi
+    if flag_mpi :
+      MPI = self.mpi_instance.MPI
+      comm = self.mpi_instance.comm
+      size = self.mpi_instance.size
+      rank = self.mpi_instance.rank
+      particle_size = num_particle // size
+      num_particle_start = rank * particle_size
+      num_particle_end   = (rank + 1) * particle_size if rank < size - 1 else num_particle
+      print('Rank, Iter_start, Iter_zend', rank, num_particle_start, num_particle_end)
+    else :
+      rank = 0
+      num_particle_start = 0
+      num_particle_end = num_particle
+
     # Initialize particles
     particle_position = []
     particle_velocity = []
@@ -88,11 +110,6 @@ class optimizer_pso(orbital):
       particle_velocity.append( velocity_tmp )
       particle_best_position.append( particle_position.copy() )
       particle_best_value.append( float('inf') )
-
-    # グローバルベスト位置
-    #global_best_position = None 
-    # グローバルベストの目的関数値
-    #global_best_value = float('inf')
 
     # History
     #global_best_position_hisotry = np.zeros(num_optiter*num_dimension).reshape(num_optiter,num_dimension)
@@ -116,9 +133,11 @@ class optimizer_pso(orbital):
       # グローバルベストの目的関数値
       global_best_value = float('inf')
       
-      for n in range(0, num_particle):
+      #for n in range(0, num_particle):
+      for n in range(num_particle_start, num_particle_end):
         # パーソナルベストの更新: 下記のreshape追加の理由、Bayesian　Optの引数が(1,dim)の次元になるので、それに合わせている。
-        value = objective_function( particle_position[n].reshape(1, num_dimension) )
+        id_serial = i*num_particle + n + 1
+        value = objective_function( id_serial, particle_position[n].reshape(1, num_dimension) )
         particle_solutioin[i,n] = value
         if value < particle_best_value[n]:
           particle_best_position[n] = particle_position[n].copy()
@@ -139,8 +158,28 @@ class optimizer_pso(orbital):
       if i == 0: 
         particle_best_value_init[:] = particle_best_value[:].copy() 
 
+      # MPI process
+      if flag_mpi :
+        global_best_value_g = comm.allreduce(global_best_value, op=MPI.MIN)
+        if global_best_value == global_best_value_g :
+          rank_l = rank
+          global_best_position_l = global_best_position
+          global_best_index_l    = global_best_index_hisotry[i]
+        else:
+          rank_l = -1
+          global_best_position_l = global_best_position
+          global_best_index_l    = global_best_index_hisotry[i]
+        rank_g = comm.allreduce(rank_l, op=MPI.MAX)
+        # --Global values
+        global_best_position_g = comm.bcast(global_best_position_l, root=rank_g)
+        global_best_position   = comm.bcast(global_best_position_l, root=rank_g)
+        global_best_value      = global_best_value_g
+        global_best_index_g    = comm.bcast(global_best_index_l, root=rank_g)
+        global_best_index_hisotry[i] = global_best_index_g
+
       # パーティクルの速度の更新
-      for n in range(0, num_particle):
+      #for n in range(0, num_particle):
+      for n in range(num_particle_start, num_particle_end):
         # History
         particle_velocity_history[i,n,:] =  particle_velocity[n][:]
         particle_position_history[i,n,:] =  particle_position[n][:]
@@ -154,10 +193,15 @@ class optimizer_pso(orbital):
         particle_position[n] = particle_position[n] + particle_velocity[n]
 
       # Residual of error in objective function
-      residual = abs((particle_best_value - particle_best_value_prev)/particle_best_value_init)
+      for n in range(num_particle_start, num_particle_end):
+        residual[n] = abs((particle_best_value[n] - particle_best_value_prev[n])/particle_best_value_init[n])
+      if flag_mpi :
+        residual = comm.allreduce(residual, op=MPI.SUM)
       residual_mean = np.mean(residual)
       residaul_mean_history.append(residual_mean)
-      print('Step:',i+1, ', Relative mean residual:', self.text_color+f'{residual_mean:.10e}'+self.text_end)
+      if self.mpi_instance.rank == 0:
+        print('Step:',i+1, ', Relative mean residual:', self.text_color+f'{residual_mean:.10e}'+self.text_end)
+      residual[:] = 0
 
       if residual_mean <= config['PSO']['tolerance'] :
         num_optiter_optimized = i
@@ -165,12 +209,17 @@ class optimizer_pso(orbital):
 
       particle_best_value_prev[:] = particle_best_value[:].copy()
 
-    print("Best position:", global_best_position)
-    print("Best value:", global_best_value)
+    # MPI process for history data
+    particle_position_history = comm.allreduce(particle_position_history, op=MPI.SUM)
+    particle_velocity_history = comm.allreduce(particle_velocity_history, op=MPI.SUM)
+    particle_solutioin        = comm.allreduce(particle_solutioin, op=MPI.SUM)
 
-    for i in range(0,num_optiter_optimized):
-      n_opt=global_best_index_hisotry[i]
-      print(i+1, n_opt+1, particle_position_history[i,n_opt,:], particle_solutioin[i,n_opt])
+    if self.mpi_instance.rank == 0:
+      print("Best position:", global_best_position)
+      print("Best value:", global_best_value)
+      for i in range(0,num_optiter_optimized):
+        n_opt=global_best_index_hisotry[i]
+        print(i+1, n_opt+1, particle_position_history[i,n_opt,:], particle_solutioin[i,n_opt])
 
     # Store data
     solution_dict = {}
@@ -303,9 +352,11 @@ class optimizer_pso(orbital):
 
     best_position, best_value, solution_dict = self.run_pso(config, objective_function, parameter_boundary)
 
-    self.write_optimization_process(config, solution_dict)
+    if self.mpi_instance.rank == 0:
+      self.write_optimization_process(config, solution_dict)
 
-    self.write_best_solution_history(config, solution_dict)
+    if self.mpi_instance.rank == 0:
+      self.write_best_solution_history(config, solution_dict)
 
     #self.write_objective_function(config, objective_function)
 

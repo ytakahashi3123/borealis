@@ -6,9 +6,11 @@ from orbital.orbital import orbital
 
 class optimizer_ga(orbital):
 
-  def __init__(self):
+  def __init__(self,mpi_instance):
 
     print("Constructing class: GA")
+
+    self.mpi_instance = mpi_instance
 
     self.str_num_generation = 'number_generationn'
     self.str_residual       = 'residual'
@@ -24,8 +26,11 @@ class optimizer_ga(orbital):
 
   def initial_setting(self, config):
 
-    result_dir = config['GA']['result_dir']
-    super().make_directory_rm(result_dir)
+    if self.mpi_instance.rank == 0:
+      result_dir = config['GA']['result_dir']
+      super().make_directory_rm(result_dir)
+    if self.mpi_instance.flag_mpi :
+      self.mpi_instance.comm.Barrier()
 
     boundary = config['parameter_optimized']['boundary']
     num_dimension = 0
@@ -278,8 +283,10 @@ class optimizer_ga(orbital):
 
     best_condition, best_value, solution_dict = self.run_optimizer_ga(config, objective_function, parameter_boundary)
 
-    self.write_optimization_process(config, solution_dict)
+    if self.mpi_instance.rank == 0:
+      self.write_optimization_process(config, solution_dict)
 
-    self.write_best_solution_history(config, solution_dict)
+    if self.mpi_instance.rank == 0:
+      self.write_best_solution_history(config, solution_dict)
 
     return

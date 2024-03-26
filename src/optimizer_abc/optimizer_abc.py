@@ -6,9 +6,11 @@ from orbital.orbital import orbital
 
 class optimizer_abc(orbital):
 
-  def __init__(self):
+  def __init__(self,mpi_instance):
 
     print("Constructing class: ABC")
+
+    self.mpi_instance = mpi_instance
 
     self.str_num_optiter = 'number_iteration'
     self.str_residual    = 'residual'
@@ -24,8 +26,11 @@ class optimizer_abc(orbital):
 
   def initial_setting(self, config):
 
-    result_dir = config['ABC']['result_dir']
-    super().make_directory_rm(result_dir)
+    if self.mpi_instance.rank == 0:
+      result_dir = config['ABC']['result_dir']
+      super().make_directory_rm(result_dir)
+    if self.mpi_instance.flag_mpi :
+      self.mpi_instance.comm.Barrier()
 
     boundary = config['parameter_optimized']['boundary']
     num_dimension = 0
@@ -298,8 +303,10 @@ class optimizer_abc(orbital):
 
     best_condition, best_value, solution_dict = self.run_optimizer_abc(config, objective_function, parameter_boundary)
 
-    self.write_optimization_process(config, solution_dict)
+    if self.mpi_instance.rank == 0:
+      self.write_optimization_process(config, solution_dict)
 
-    self.write_best_solution_history(config, solution_dict)
+    if self.mpi_instance.rank == 0:
+      self.write_best_solution_history(config, solution_dict)
 
     return

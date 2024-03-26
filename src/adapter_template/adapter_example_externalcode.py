@@ -9,9 +9,11 @@ from orbital.orbital import orbital
 
 class adapter_example_externalcode(orbital):
 
-  def __init__(self):
+  def __init__(self,mpi_instance):
 
     print("Constructing class: adapter_example_externalcode")
+
+    self.mpi_instance = mpi_instance
 
     return
 
@@ -23,7 +25,8 @@ class adapter_example_externalcode(orbital):
     self.step_digit = config['example_externalcode']['step_digit']
 
     # Make directory
-    super().make_directory_rm(self.work_dir)
+    if self.mpi_instance.rank == 0:
+      super().make_directory_rm(self.work_dir)
 
     # Template case 
     path_specify = config['example_externalcode']['directory_path_specify']
@@ -32,7 +35,8 @@ class adapter_example_externalcode(orbital):
     self.template_path = self.get_directory_path(path_specify, default_path, manual_path)
   
     self.work_dir_template = self.work_dir+'/'+self.case_dir+'_template'
-    shutil.copytree(self.template_path, self.work_dir_template)
+    if self.mpi_instance.rank == 0:
+      shutil.copytree(self.template_path, self.work_dir_template)
 
     # Control file and computed result file
     self.filename_control_code = config['example_externalcode']['filename_control']
@@ -47,7 +51,8 @@ class adapter_example_externalcode(orbital):
     self.parameter_target = config['parameter_optimized']['boundary']
 
     # Result file: Make directory
-    super().make_directory_rm(config['example_externalcode']['result_dir'])
+    if self.mpi_instance.rank == 0:
+      super().make_directory_rm(config['example_externalcode']['result_dir'])
 
     # Control file 
     self.config = config
@@ -64,6 +69,10 @@ class adapter_example_externalcode(orbital):
     # For trajectory data reading
     self.headerline_variables = 1
     self.num_skiprows = 3
+
+    # 同期をとる
+    if self.mpi_instance.flag:
+      self.mpi_instance.comm.Barrier()
 
     return
 
@@ -266,9 +275,11 @@ class adapter_example_externalcode(orbital):
 
 
   @orbital.time_measurement_decorated
-  def objective_function(self, parameter_opt):
+  def objective_function(self, id_serial, parameter_opt):
 
     # コントロールファイルを適切に修正して、tacodeを実行する。
+
+    self.iter = id_serial
 
     print('Iteration: ', self.iter)
 
@@ -293,6 +304,6 @@ class adapter_example_externalcode(orbital):
     error = self.evaluate_error(result_dict)
 
     # カウンタの更新
-    self.iter += 1
+    #self.iter += 1
 
     return error
