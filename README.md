@@ -33,6 +33,7 @@ When an external code, for example, `Tacode`, is used, the pass needs to be spec
 - numpy (>=1.22.3)
 - yaml (>= 5.3.1)
 - GPyOpt (>= 1.2.6)
+- mpi4py (>=3.0.3)
 
 
 # Contact:
