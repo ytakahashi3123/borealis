@@ -29,6 +29,7 @@
 200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200  # Aerodynamic heating: Altitude (dummy)
 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 0, 0, 0, 0, 0, 0, 0, 0 # Aerodynamic heating: Heatflux
 # Atmosphere model (constant) ----------------------
+1                   # 1: File reading, 2: Parameter setting
 1.e-3               # Density, kg
 300.e0              # Temperature, K
 7                   # Number of parameter
@@ -40,12 +41,14 @@
 "Temperature_neutral", "K"
 "N", "cm-3"
 # Flight -------------------------------
+1                   # 1: File reading, 2: Parameter setting
+300.0               # Altitude set, km
 69                  # number of variables (ADC)
 24                  # (GPS)
 # Filename -----------------------------
-'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.10/database/atmospheremodel/atmospheremodel.txt'  # Atmosphere file
-'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.10/database/reference_egg/2017_0715_EGG_ADC_PHY.dat'  # ADC-PHY (flight)
-'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.10/database/reference_egg/2017_0715_EGG_GPS.dat'      # GPS data (flight)
+'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.30/database/atmospheremodel/atmospheremodel.txt'  # Atmosphere file
+'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.30/database/reference_egg/2017_0715_EGG_ADC_PHY.dat'  # ADC-PHY (flight)
+'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.30/database/reference_egg/2017_0715_EGG_GPS.dat'      # GPS data (flight)
 'heatflux.dat'                        # Heat flux result by Monte Carlo (output)
 'history.dat'	                        # Time hisotry file name (output)
 1                                     # Display verbose: 0:less,  1:more

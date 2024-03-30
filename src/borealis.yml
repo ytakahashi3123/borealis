@@ -10,8 +10,8 @@ optimizer:
   kind_optimizer: PSO
 
 
-mpi: 
-  flag_mpi: True
+#mpi: 
+#  flag_mpi: True
 
 
 parameter_optimized:

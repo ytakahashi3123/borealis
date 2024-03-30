@@ -34,7 +34,7 @@ def main():
   print(' x:', [ x[i] for i in range(0,num_div) ] )
 
   # Dummy
-  dummy_value=200.0
+  dummy_value=10.0
   print(' dummy:', [ dummy_value for i in range(0,num_div) ] )
 
   # Function

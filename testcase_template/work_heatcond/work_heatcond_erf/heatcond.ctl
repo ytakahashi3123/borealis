@@ -1,13 +1,13 @@
 # Calculatetion condition --------------
 500000      # Maximum calcuation number
-10234520    # Start time (0~10236310 sec)
-10235300    # Maximum time, sec
-1.0         # Time increment (sec)
+0           # Start time (0~10236310 sec)
+100000      # Maximum time, sec
+10.0         # Time increment (sec)
 1           # TC number for Display (MC routine), 1--8
 # Material properties ------------------
-6.11d-5      # Thickness, m
-265.d0      # Temperaturem K
-900.d0      # Density, kg/m3
+1.d-4       # Thickness, m
+300.d0      # Temperaturem K
+1000.d0      # Density, kg/m3
 1.0d3       # Specific heat, J/kg.K
 0.2d0       # Conductivity, W/m.K
 0.9d0       # Emissivity
@@ -16,20 +16,20 @@
 1.0d0       # Characteristic length, m
 7800        # Velocity
 # Solar condition ----------------------
-10234610, 10235300 # Duration that solar radiation occurs
-0.0d0              # Coeffiecient for solar radiation
+0 100000    # Duration that solar radiation occurs
+0.0d0       # Coeffiecient for solar radiation
 # Ambient condition --------------------
 0.7d0		# Prandtl number of air
 0.025d0		# Conductivity of air, W/m.K
 1.0d-5		# Viscosity, Pa.sec
 # Input heatflux -----------------------
 .false.              # true:Set by altitude data, false:set by elapsed time data
-8                    # Number of heat flux case
-10234510, 10234600, 10234620, 10234660, 10234880,10235120, 10235230, 10235300 # Aerodynamic heating: Time
-135, 133, 130, 127, 125, 120, 115, 110         # Aerodynamic heating: Altitude
-300, 450, 680, 710, 1000, 1300, 2100, 2900     # Aerodynamic heating: Heatflux
+21                   # Number of heat flux case
+0.0, 5000.0, 10000.0, 15000.0, 20000.0, 25000.0, 30000.0, 35000.0, 40000.0, 45000.0, 50000.0, 55000.0, 60000.0, 65000.0, 70000.0, 75000.0, 80000.0, 85000.0, 90000.0, 95000.0, 100000.0 # Aerodynamic heating: Time
+200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200  # Aerodynamic heating: Altitude (dummy)
+500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500 # Aerodynamic heating: Heatflux
 # Atmosphere model (constant) ----------------------
-1                   # 1: File reading, 2: Parameter setting
+2                   # 1: File reading, 2: Parameter setting
 1.e-3               # Density, kg
 300.e0              # Temperature, K
 7                   # Number of parameter
@@ -41,7 +41,7 @@
 "Temperature_neutral", "K"
 "N", "cm-3"
 # Flight -------------------------------
-1                   # 1: File reading, 2: Parameter setting
+2                   # 1: File reading, 2: Parameter setting
 300.0               # Altitude set, km
 69                  # number of variables (ADC)
 24                  # (GPS)
@@ -50,5 +50,5 @@
 '/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.30/database/reference_egg/2017_0715_EGG_ADC_PHY.dat'  # ADC-PHY (flight)
 '/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.30/database/reference_egg/2017_0715_EGG_GPS.dat'      # GPS data (flight)
 'heatflux.dat'                        # Heat flux result by Monte Carlo (output)
-'history.dat'	                      # Time hisotry file name (output)
-1                                     # Display verbose: 0:less,  1:more
+'history.dat'	                        # Time hisotry file name (output)
+0                                     # Display verbose: 0:less,  1:more

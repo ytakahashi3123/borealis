@@ -5,18 +5,29 @@ from mpi4py import MPI
 
 class mpi():
 
-  def __init__(self,config):
+  def __init__(self):
 
-    if config['mpi']['flag_mpi']:
-      self.MPI = MPI
-      self.comm = MPI.COMM_WORLD
-      self.rank = MPI.COMM_WORLD.Get_rank()
-      self.size = MPI.COMM_WORLD.Get_size()
-      self.flag_mpi = True
-    else:
-      self.rank = 0
-      self.size = 1
+    self.MPI = MPI
+    self.comm = MPI.COMM_WORLD
+    self.rank = MPI.COMM_WORLD.Get_rank()
+    self.size = MPI.COMM_WORLD.Get_size()
+    self.name = MPI.Get_processor_name()
+
+    if self.size == 1:
       self.flag_mpi = False
+    else :
+      self.flag_mpi = True
+
+    #if config['mpi']['flag_mpi']:
+    #  self.MPI = MPI
+    #  self.comm = MPI.COMM_WORLD
+    #  self.rank = MPI.COMM_WORLD.Get_rank()
+    #  self.size = MPI.COMM_WORLD.Get_size()
+    #  self.flag_mpi = True
+    #else:
+    #  self.rank = 0
+    #  self.size = 1
+    #  self.flag_mpi = False
 
     return
 
@@ -41,13 +52,3 @@ class mpi():
       return result 
     return wrapper
 
-#  def mpi_initial_settings(self):
-
-#    comm = MPI.COMM_WORLD
-#    rank = comm.Get_rank()
-#    size = comm.Get_size()
-#    name = MPI.Get_processor_name() 
-#    print('Rank:',rank, ', Num process:',size, ', Name:',name)
-#    mpi_dict = {'comm':comm, 'rank':rank, 'size':size, 'name':name}
-
-#    return mpi_dict

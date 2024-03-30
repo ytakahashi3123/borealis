@@ -6,4 +6,5 @@ LOG=log_heatcond
 
 export OMP_NUM_THREADS=1
 
-$LD | tee $LOG
+$LD > $LOG
+

@@ -2,7 +2,6 @@
 
 import numpy as np
 from orbital.orbital import orbital
-#from mpi4py import MPI
 
 
 class optimizer_pso(orbital):

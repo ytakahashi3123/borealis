@@ -15,69 +15,69 @@ parameter_optimized:
   boundary:
     - name: '# Aerodynamic heating: Heatflux' 
       component:
-        - type: t10181685s
+        - type: t000000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10181938s
+          bound_max: 2000
+        - type: t005000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10182191s
+          bound_max: 2000
+        - type: t010000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10182444s
+          bound_max: 2000
+        - type: t015000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10182697s
+          bound_max: 2000
+        - type: t020000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10182950s
+          bound_max: 2000
+        - type: t025000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10183203s
+          bound_max: 2000
+        - type: t030000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10183456s
+          bound_max: 2000
+        - type: t035000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10183709s
+          bound_max: 2000
+        - type: t040000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10183962s
+          bound_max: 2000
+        - type: t045000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10184216s
+          bound_max: 2000
+        - type: t050000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10184469s
+          bound_max: 2000
+        - type: t055000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10184722s
+          bound_max: 2000
+        - type: t060000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10184975s
+          bound_max: 2000
+        - type: t065000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10185228s
+          bound_max: 2000
+        - type: t070000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10185481s
+          bound_max: 2000
+        - type: t075000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10185734s
+          bound_max: 2000
+        - type: t080000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10185987s
+          bound_max: 2000
+        - type: t085000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10186240s
+          bound_max: 2000
+        - type: t090000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10186493s
+          bound_max: 2000
+        - type: t095000s
           bound_min: 0
-          bound_max: 1000
-        - type: t10186747s
+          bound_max: 2000
+        - type: t100000s
           bound_min: 0
-          bound_max: 1000
+          bound_max: 2000
 
 Bayesian_optimization:
 
@@ -188,13 +188,13 @@ GA:
 reference:
 
   directory_path_specify: manual # default or manual
-  manual_path: ../../testcase_template/work_heatcond/reference_tc
-  filename_input: reference_tc.dat
+  manual_path: ../../testcase_template/work_heatcond/reference_erf
+  filename_input: history.dat
 
   timeunit: sec
 
   var_x: Time[s]
-  var_y: TC1[K]
+  var_y: T[K]
 
 
 heatcond:
@@ -205,7 +205,7 @@ heatcond:
   step_digit: 4
 
   directory_path_specify: manual # default or manual
-  manual_path: ../../testcase_template/work_heatcond/work_heatcond_solar
+  manual_path: ../../testcase_template/work_heatcond/work_heatcond_erf
 
   # Executing script
   cmd_code: ./run_code.sh
@@ -224,8 +224,8 @@ heatcond:
  # time_start: 118.3385
  # time_end:   118.4003
  # target_time: 118.3385
-  x_min: 10181685
-  x_max: 10186747
+  x_min: 0
+  x_max: 100000
   x_offset: 0
 
   # Result trajectory of Tacode 

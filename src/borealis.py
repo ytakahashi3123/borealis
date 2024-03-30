@@ -11,10 +11,13 @@ code_name = "Borealis"
 version = "1.1.0"
 
 import numpy as np
-from orbital.orbital import orbital
 from mpi.mpi import mpi
+from orbital.orbital import orbital
 
 def main():
+
+  # MPI settings
+  mpi_instance = mpi()
 
   # Class orbital
   orbit = orbital()
@@ -24,9 +27,6 @@ def main():
   arg          = orbit.argument(file_control_default)
   file_control = arg.file
   config       = orbit.read_config_yaml(file_control)
-
-  # MPI settings
-  mpi_instance = mpi(config)
 
   # Select adapter
   if config['adapter']['kind_adapter'] == 'tacode':

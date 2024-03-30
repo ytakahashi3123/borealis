@@ -71,7 +71,7 @@ class adapter_user(orbital):
     self.num_skiprows = 3
 
     # 同期をとる
-    if self.mpi_instance.flag:
+    if self.mpi_instance.flag_mpi:
       self.mpi_instance.comm.Barrier()
 
     return
