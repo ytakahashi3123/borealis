@@ -189,7 +189,7 @@ def main():
       animate_add.set_data(x, y_add)
 
     # Title
-    animate_title.set_text( config['title_base'] +" of TC1 at Epoch="+str(frame+1) )
+    animate_title.set_text( config['title_base'] + str(frame+1) )
 
     return
 
