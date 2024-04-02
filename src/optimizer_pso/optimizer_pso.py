@@ -136,7 +136,7 @@ class optimizer_pso(orbital):
       for n in range(num_particle_start, num_particle_end):
         # パーソナルベストの更新: 下記のreshape追加の理由、Bayesian　Optの引数が(1,dim)の次元になるので、それに合わせている。
         id_serial = i*num_particle + n + 1
-        value = objective_function( id_serial, particle_position[n].reshape(1, num_dimension) )
+        value = objective_function( particle_position[n].reshape(1, num_dimension), id_serial )
         particle_solutioin[i,n] = value
         if value < particle_best_value[n]:
           particle_best_position[n] = particle_position[n].copy()

@@ -304,11 +304,13 @@ class adapter_heatcond(orbital):
 
 
   @orbital.time_measurement_decorated
-  def objective_function(self, id_serial, parameter_opt):
+#  def objective_function(self, id_serial, parameter_opt):
+  def objective_function(self, parameter_opt, *id_serial):
 
     # コントロールファイルを適切に修正して、tacodeを実行する。
 
-    self.iter = id_serial
+    if id_serial:
+      self.iter = id_serial[0]
 
     print('Iteration: ', self.iter)
 
@@ -333,6 +335,7 @@ class adapter_heatcond(orbital):
     error = self.evaluate_error(result_dict)
 
     # カウンタの更新
-    #self.iter += 1
+    if not id_serial:
+      self.iter += 1
 
     return error
