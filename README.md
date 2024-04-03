@@ -6,7 +6,8 @@ Bayesian optimization for finding realizable solutions for discretized equation
 # Code description
 
 `Borealis` solves an inverse problem based on the Bayesian optimization.
-![Optimization for estimating input heat flux in heat conduction analysis.\label{fig:trajectory}](figure/optimization_heatcond_erf.mp4)
+The following animation is an example of optimization for estimating input heat flux in heat conduction analysis.
+<div><video controls src="figure/optimization_heatcond_erf.mp4" muted="false"></video></div>
 
 # How to start calculation
 
@@ -41,11 +42,6 @@ When an external code, for example, `Tacode`, is used, the pass needs to be spec
 Yusuke Takahashi, Hokkaido University
 
 ytakahashi@eng.hokudai.ac.jp
-
-
-# Date:
-
-2024/2/29
 
 
 # References
