@@ -69,10 +69,10 @@ class adapter_simple_function(orbital):
 
 
   @orbital.time_measurement_decorated
-  def objective_function(self, parameter_opt, *id_serial):
+  def objective_function(self, parameter_opt, *args):
 
-    if id_serial:
-      self.iter = id_serial[0]
+    if args:
+      self.iter = args[0]
 
     print('Iteration: ', self.iter)
 
@@ -85,7 +85,7 @@ class adapter_simple_function(orbital):
     print('x,y:',x.squeeze(),result_opt.squeeze())
 
     # カウンタの更新
-    if not id_serial:
+    if not args:
       self.iter += 1
 
     return result_opt.squeeze()

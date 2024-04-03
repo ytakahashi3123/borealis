@@ -427,13 +427,12 @@ class adapter_tacode(orbital):
 
 
   @orbital.time_measurement_decorated
-#  def objective_function(self, id_serial, parameter_opt):
-  def objective_function(self, parameter_opt, *id_serial):
+  def objective_function(self, parameter_opt, *args):
 
     # コントロールファイルを適切に修正して、tacodeを実行する。
 
-    if id_serial:
-      self.iter = id_serial[0]
+    if args:
+      self.iter = args[0]
 
     print('Iteration: ', self.iter)
 
@@ -461,7 +460,7 @@ class adapter_tacode(orbital):
     error = self.evaluate_error(result_dict)
 
     # カウンタの更新
-    if not id_serial:
+    if not args:
       self.iter += 1
 
     return error
