@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PYTHON_RUN=python3.9
-EXCODE_HOME=$HOME/research/repository/borealis/borealis_ver1.00/example_externalcode/curve
+EXCODE_HOME=$HOME/research/repository/borealis/borealis_ver1.1.0/example_externalcode/curve
 LD=$EXCODE_HOME/curve.py
 LOG=log_curve
 
