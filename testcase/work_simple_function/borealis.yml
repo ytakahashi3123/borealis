@@ -7,7 +7,7 @@ adapter:
 
 optimizer: 
   # Bayesian_optimization, PSO, ABC, or GA
-  kind_optimizer: GA
+  kind_optimizer: PSO
 
 
 parameter_optimized:
@@ -15,7 +15,19 @@ parameter_optimized:
   boundary:
     - name: 'simple_function'
       component:
-        - type: x
+        - type: x1
+          bound_min: -10
+          bound_max:  10
+        - type: x2
+          bound_min: -10
+          bound_max:  10
+        - type: x3
+          bound_min: -10
+          bound_max:  10
+        - type: x4
+          bound_min: -10
+          bound_max:  10
+        - type: x5
           bound_min: -10
           bound_max:  10
 
@@ -137,7 +149,7 @@ simple_function:
 
   # Function output
   result_dir: result_function
-  flag_output: True
+  flag_output: False
   filename_output: output_function.dat
   function_discrete: 100
   function_bound_min: -10

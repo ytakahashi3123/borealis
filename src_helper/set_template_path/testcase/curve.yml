@@ -1,0 +1,15 @@
+# Configuration file
+
+curve:
+
+  function_discrete: 100
+  function_bound_min: -10
+  function_bound_max: 10
+
+  # y=a*sin(x)+b*cos(2x)+c*sin(7/8*x)
+  coefficient:
+    a:  1.0
+    b:  2.0
+    c: -5.0
+
+  filename_output: output.dat

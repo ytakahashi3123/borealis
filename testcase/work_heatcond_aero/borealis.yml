@@ -81,7 +81,7 @@ PSO: # Particle swarm optimization
   maximize: False
 
   # Tolerance of effor of objective function
-  tolerance: 1.e-3
+  tolerance: 1.e-5
 
   # Particle parameter for PSO
   inertia: 0.5
@@ -167,7 +167,7 @@ heatcond:
   step_digit: 4
 
   directory_path_specify: manual # default or manual
-  manual_path: ../../testcase_template/work_heatcond/work_heatcond
+  manual_path: ../../testcase_template/work_heatcond/work_heatcond_aero
 
   # Executing script
   cmd_code: ./run_code.sh

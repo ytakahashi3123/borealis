@@ -309,7 +309,7 @@ class adapter_heatcond(orbital):
     # コントロールファイルを適切に修正して、tacodeを実行する。
 
     if args:
-      self.iter = id_serial[0]
+      self.iter = args[0]
 
     print('Iteration: ', self.iter)
 

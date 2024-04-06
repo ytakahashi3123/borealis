@@ -209,9 +209,10 @@ class optimizer_pso(orbital):
       particle_best_value_prev[:] = particle_best_value[:].copy()
 
     # MPI process for history data
-    particle_position_history = comm.allreduce(particle_position_history, op=MPI.SUM)
-    particle_velocity_history = comm.allreduce(particle_velocity_history, op=MPI.SUM)
-    particle_solutioin        = comm.allreduce(particle_solutioin, op=MPI.SUM)
+    if flag_mpi :
+      particle_position_history = comm.allreduce(particle_position_history, op=MPI.SUM)
+      particle_velocity_history = comm.allreduce(particle_velocity_history, op=MPI.SUM)
+      particle_solutioin        = comm.allreduce(particle_solutioin, op=MPI.SUM)
 
     if self.mpi_instance.rank == 0:
       print("Best position:", global_best_position)

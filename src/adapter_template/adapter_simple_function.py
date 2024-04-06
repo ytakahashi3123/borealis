@@ -53,8 +53,8 @@ class adapter_simple_function(orbital):
     return
 
 
-  def function(self, x):
-    return 2*np.sin(x) + 4*np.cos(2 * x) + 3*np.cos(2/5 * x)
+  #def function(self, x):
+  #  return 2*np.sin(x) + 4*np.cos(2 * x) + 3*np.cos(2/5 * x)
 
   #def objective_function(self, x):
   # Ackley
@@ -63,9 +63,9 @@ class adapter_simple_function(orbital):
   #  y4 = -np.exp(1.0 / len(x) * np.sum(np.cos(2.0 * np.pi * x), axis=0))
   #  return y1 + y2 + y4
 
-  #def fitness_function(self, x):
-  #  # Sphere_function
-  #  return np.sum(x**2)
+  def function(self, x):
+    # Sphere_function
+    return np.sum(x**2)
 
 
   @orbital.time_measurement_decorated
