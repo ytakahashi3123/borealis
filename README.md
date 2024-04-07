@@ -5,13 +5,19 @@ Bayesian optimization for finding realizable solutions for discretized equation
 
 # Code description
 
-`Borealis` solves an inverse problem based on the Bayesian optimization.
+`Borealis` solves an inverse problem in various mathematical models based on the Bayesian optimization and swarm intelligence algorithm.
+This software is designed to evaluate an objective function based on the user's program output data and to optimize by changing input parameters.
+User programs serve as adapters, allowing `Borealis` to execute and optimize via the user's input configuration file.
+Templates for adapter programs are provided.
+The Bayesian optimization, the particle swarm optimization (PSO) algorithm, the artificial bee colony (ABC) algorithm, and the genetic algorithm (GA) are implemented as optimizers.
+PSO also supports distributed parallel processing using `mpi4py`.
 The following animation is an example of optimization for estimating input heat flux in heat conduction analysis.
-<div><video controls src="figure/optimization_heatcond_erf.gif" muted="false"></video></div>
+
+![Optimization process for estimating input heat flux in heat conduction analysis.\label{fig:optimization}](figure/optimization_heatcond_erf.gif)
 
 # How to start calculation
 
-## Execution
+## Run `Borealis`
 
 ```console
 python3 src/borealis.py
