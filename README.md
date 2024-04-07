@@ -7,7 +7,7 @@ Bayesian optimization for finding realizable solutions for discretized equation
 
 `Borealis` solves an inverse problem based on the Bayesian optimization.
 The following animation is an example of optimization for estimating input heat flux in heat conduction analysis.
-<div><video controls src="figure/optimization_heatcond_erf.mp4" muted="false"></video></div>
+<div><video controls src="figure/optimization_heatcond_erf.gif" muted="false"></video></div>
 
 # How to start calculation
 
