@@ -15,7 +15,7 @@ The following animation is an example of optimization for estimating input heat 
 
 ![Optimization process for estimating input heat flux in heat conduction analysis.\label{fig:optimization}](figure/optimization_heatcond_erf.gif)
 
-# How to start calculation
+# How to start optimization
 
 ## Run `Borealis`
 
@@ -24,6 +24,7 @@ python3 src/borealis.py
 ```
 
 Tutorial case: `testcase/work*`
+The tutorials recommended are `testcase/work_example_externalcode` and `testcase/work_simple_function`
 
 ## Configuration file
 
@@ -31,7 +32,7 @@ Optimization by `Borealis` is controled by the configuration file: `borealis.yml
 
 ## External code
 
-When an external code, for example, `Tacode`, is used, the pass needs to be specified in `borealis.yml`.
+When an external code, for example, `Tacode`, is used, the pass needs to be specified in `borealis.yml` and file permissions also be given.
 
 ## Requirements
 
