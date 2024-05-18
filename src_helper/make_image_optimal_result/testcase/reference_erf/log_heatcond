@@ -1,0 +1,8 @@
+ Reading control file... heatcond.ctl
+ The order of altitude/elapsed time (True:Ascend, False:Descend) T
+ Starting solving unsteady heat conduction...
+ --Loop number (history):        10000
+ Routine done 
+ Output result...
+ --Writing history file...: history.dat
+ --Writing heat flux file...: heatflux.dat

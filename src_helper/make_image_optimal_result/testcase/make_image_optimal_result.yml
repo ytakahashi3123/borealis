@@ -1,0 +1,58 @@
+# Configuration file for making image of optimal solution
+
+# Input file and data
+work_dir: result_PSO/case18415
+filename_result: history.dat
+variable_x: Time[s]
+variable_y: T[K]
+headername: 'Variables ='
+headerline: 1
+num_skiprows: 2
+delimiter: null
+comments: '#'
+
+
+# Plots
+title_base: Optimal solution
+legend_label: Temperature
+axis_x_label: 'Time, s'
+axis_y_label: 'Temperature, K'
+axis_x_limit:
+  - 0
+  - 100000
+axis_y_limit:
+  - 200
+  - 400
+#color_map: winter
+color_map: blue
+legend_location: 'upper left'
+
+
+# Additional
+flag_add: True
+variable_y_add: Heatflux[W/m2]
+axis_y_limit_add:
+  - 0
+  - 2000
+legend_label_add: 'Heat flux'
+axis_y_label_add: 'Heat flux, W/$m^2$'
+color_map_add: red
+
+
+# Reference
+flag_read_reference: True
+filename_reference: ./reference_erf/history.dat
+variable_x_reference: Time[s]
+variable_y_reference: T[K]
+headername_reference: 'Variables ='
+headerline_reference: 1
+num_skiprows_reference: 2
+delimiter_reference: null
+comments_reference: '#'
+color_map_reference: black
+label_reference: Reference
+
+
+# Output file
+filename_output_image: optimal_solution.png
+dpi_image: 150
