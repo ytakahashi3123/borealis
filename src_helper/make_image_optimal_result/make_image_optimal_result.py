@@ -46,72 +46,32 @@ def read_header_tecplot(filename, headerline, headername, var_list):
   return result_index
 
 
-def main():
+def read_optimal_data(config,var_list):
 
-  # Read parameters
-  file_control = 'make_image_optimal_result.yml'
-  config = read_config_yaml(file_control)
-
-  #file_control_borealis = 'borealis.yml'
-  #config_bor =  read_config_yaml(file_control_borealis)
-
-  # Initial settings
-  work_dir = config['work_dir']
-  filename_result = config['filename_result']
-
-  var_x = config['variable_x']
-  var_y = config['variable_y']
-
-  flag_add = config['flag_add']
-  if flag_add :
-    var_y_add = config['variable_y_add']
-    var_list = [var_x, var_y, var_y_add]
+  # Extracting reading files
+  if config['flag_filereading_extracted']:
+    data_extract = np.genfromtxt( config['filename_extract_list'], 
+                                  dtype=int, 
+                                  comments='#',
+                                  delimiter=',', 
+                                  skip_header=1 )
+    index_local_to_global = data_extract[:,1]
+    index_last = index_local_to_global[-1]
   else:
-    var_list = [var_x, var_y]
+    index_last = step_end
+  print('Index of optimal solution:', index_last)
 
+  # Rading optimal result
+  n = index_last+1
+  
   headername_tmp = config['headername']
   headerline_variables = config['headerline']
   num_skiprows_tmp = config['num_skiprows']
   comments_tmp  = config['comments']
   delimiter_tmp = config['delimiter']
 
-  # Plot and Animation
-  fig = plt.figure()
-  ax = fig.add_subplot(1, 1, 1)
-  ax.set_title(config['title_base'])
-
-  # Plots
-  ax.set_xlim( config['axis_x_limit'][0], config['axis_x_limit'][1] )
-  ax.set_ylim( config['axis_y_limit'][0], config['axis_y_limit'][1] )
-  #ax.set_aspect('equal') # グラフのアスペクト比を１：１に設定
-
-  ax.set_xlabel( config['axis_x_label'] )
-  ax.set_ylabel( config['axis_y_label'] )
-
-  # Read reference data if necessary
-  flag_ref = config['flag_read_reference']
-  if flag_ref :
-    var_x_ref = config['variable_x_reference']
-    var_y_ref = config['variable_y_reference']
-    var_list_ref = [var_x_ref, var_y_ref]
-    var_index_ref = read_header_tecplot(config['filename_reference'], config['headerline_reference'], config['headername_reference'], var_list_ref)
-    data_ref = np.loadtxt( config['filename_reference'],
-                           comments=config['comments_reference'],
-                           delimiter=config['delimiter_reference'],
-                           skiprows=config['num_skiprows_reference'] )
-    # Store data as dictionary
-    reference_dict = {}
-    for m in range( 0,len(var_list_ref) ):
-      reference_dict[ var_list_ref[m] ] = data_ref[:,var_index_ref[m]]
-    # Make plot
-    ax.plot( reference_dict[var_x_ref], 
-             reference_dict[var_y_ref], 
-             color=config['color_map_reference'], 
-             label=config['label_reference'])
-
-  # Optimal data
-  filename_tmp = config['work_dir'] + '/' + config['filename_result']
-  print('--Reading output file...:',filename_tmp)
+  filename_tmp = config['work_dir'] + '/' +  config['case_dir'] + str(n).zfill(config['step_digit']) + '/' + config['filename_result']
+  print('Reading output file...:',filename_tmp)  
   try:
     data_input = np.genfromtxt(filename_tmp,comments=comments_tmp,delimiter=delimiter_tmp,skiprows=num_skiprows_tmp)
   except:
@@ -121,7 +81,81 @@ def main():
   result_dict = {}
   for m in range( 0,len(var_list) ):
     result_dict[ var_list[m] ] = data_input[:,var_index[m]]
-  # Make plot
+
+  return result_dict
+
+
+def read_reference_data(config,var_list):
+
+  var_index = read_header_tecplot(config['filename_reference'], config['headerline_reference'], config['headername_reference'], var_list)
+  filename_tmp = config['filename_reference']
+  print('Reading reference file...:',filename_tmp)  
+  data_ref = np.loadtxt( filename_tmp,
+                         comments=config['comments_reference'],
+                         delimiter=config['delimiter_reference'],
+                         skiprows=config['num_skiprows_reference'] )
+
+  # Store data as dictionary
+  result_dict = {}
+  for m in range( 0,len(var_list) ):
+    result_dict[ var_list[m] ] = data_ref[:,var_index[m]]
+
+  return result_dict
+
+
+def main():
+
+  # Read parameters
+  file_control = 'make_image_optimal_result.yml'
+  config = read_config_yaml(file_control)
+
+  #file_control_borealis = 'borealis.yml'
+  #config_bor =  read_config_yaml(file_control_borealis)
+
+  # Define data variables
+  var_x = config['variable_x']
+  var_y = config['variable_y']
+  flag_add = config['flag_add']
+  if flag_add :
+    var_y_add = config['variable_y_add']
+    var_list = [var_x, var_y, var_y_add]
+  else:
+    var_list = [var_x, var_y]
+
+  # Read optimal data
+  result_dict = read_optimal_data(config,var_list)
+
+  # Read reference data if necessary
+  flag_ref = config['flag_read_reference']
+  if flag_ref :
+    var_x_ref = config['variable_x_reference']
+    var_y_ref = config['variable_y_reference']
+    var_list_ref = [var_x_ref, var_y_ref]
+    reference_dict = read_reference_data(config,var_list_ref)
+
+
+  # Plots
+  fig = plt.figure()
+  ax = fig.add_subplot(1, 1, 1)
+  ax.set_title(config['title_base'])
+
+  # Variables visualized
+  ax.set_xlim( config['axis_x_limit'][0], config['axis_x_limit'][1] )
+  ax.set_ylim( config['axis_y_limit'][0], config['axis_y_limit'][1] )
+  #ax.set_aspect('equal') # グラフのアスペクト比を１：１に設定
+
+  ax.set_xlabel( config['axis_x_label'] )
+  ax.set_ylabel( config['axis_y_label'] )
+
+  # Read reference data if necessary
+  if flag_ref :
+    # Make plot
+    ax.plot( reference_dict[var_x_ref], 
+             reference_dict[var_y_ref], 
+             color=config['color_map_reference'], 
+             label=config['label_reference'])
+
+  # Optimal data: Make plot
   ax.plot( result_dict[var_x],
            result_dict[var_y],
            color=config['color_map'], 

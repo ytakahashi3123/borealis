@@ -1,8 +1,17 @@
 # Configuration file for making image of optimal solution
 
+# Extracting reading files
+flag_filereading_extracted: True
+filename_extract_list: result_PSO/output_global.dat
+
 # Input file and data
-work_dir: result_PSO/case18415
+work_dir: work_heatcond
+case_dir: case
 filename_result: history.dat
+step_digit: 5
+#step_start: 1
+#step_end: 15000
+
 variable_x: Time[s]
 variable_y: T[K]
 headername: 'Variables ='
@@ -10,7 +19,6 @@ headerline: 1
 num_skiprows: 2
 delimiter: null
 comments: '#'
-
 
 # Plots
 title_base: Optimal solution
