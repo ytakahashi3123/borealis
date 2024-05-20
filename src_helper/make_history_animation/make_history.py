@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 
+# Script for making animation of optimal solution history
+
 import numpy as np
 import yaml as yaml
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+
+# Add ath of parent directory to Python path
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if parent_dir not in sys.path:
+  sys.path.insert(0, parent_dir)  
+from general import general
 
 
 def read_config_yaml(file_control):
@@ -19,16 +27,6 @@ def read_config_yaml(file_control):
     print(e, file=sys.stderr)
     sys.exit(1)
   return config
-
-
-def insert_suffix(filename, suffix, splitchar):
-  parts = filename.split(splitchar)
-  if len(parts) == 2:
-    new_filename = f"{parts[0]}{suffix}.{parts[1]}"
-    return new_filename
-  else:
-    # ファイル名が拡張子を含まない場合の処理
-    return filename + suffix
 
 
 def read_header_tecplot(filename, headerline, headername, var_list):
