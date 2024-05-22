@@ -3,7 +3,8 @@
 # Script for making animation of optimal solution history
 
 import numpy as np
-import yaml as yaml
+import sys
+import os
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -16,48 +17,11 @@ if parent_dir not in sys.path:
 from general import general
 
 
-def read_config_yaml(file_control):
-  print("Reading control file...:", file_control)
-  try:
-    with open(file_control) as file:
-      config = yaml.safe_load(file)
-  except Exception as e:
-    import sys as sys
-    print('Exception occurred while loading YAML...', file=sys.stderr)
-    print(e, file=sys.stderr)
-    sys.exit(1)
-  return config
-
-
-def read_header_tecplot(filename, headerline, headername, var_list):
-  # Set header
-  with open(filename) as f:
-    lines = f.readlines()
-  # リストとして取得
-  lines_strip = [line.strip() for line in lines]
-  # ”Variables ="を削除した上で、カンマとスペースを削除
-  variables_line = lines_strip[headerline].replace(headername, '')
-  variables_line = variables_line.replace(',', ' ').replace('"', ' ')
-  # 空白文字で分割して単語のリストを取得
-  words = variables_line.split()
-
-  # set variables
-  result_var   = var_list
-  result_index = []
-  for i in range( 0,len(result_var) ):
-    for n in range( 0,len(words) ):
-      if result_var[i] == words[n] :
-        result_index.append(n)
-        break
-
-  return result_index
-
-
 def main():
 
   # Read parameters
   file_control = 'make_history.yml'
-  config = read_config_yaml(file_control)
+  config = general.read_config_yaml(file_control)
 
   #file_control_borealis = 'borealis.yml'
   #config_bor =  read_config_yaml(file_control_borealis)
@@ -100,7 +64,7 @@ def main():
     var_y_ref = config['variable_y_reference']
     var_list_ref = [var_x_ref, var_y_ref]
 
-    var_index_ref = read_header_tecplot(config['filename_reference'], config['headerline_reference'], config['headername_reference'], var_list_ref)
+    var_index_ref = general.read_header_tecplot(config['filename_reference'], config['headerline_reference'], config['headername_reference'], var_list_ref)
 
     data_ref = np.loadtxt( config['filename_reference'],
                            comments=config['comments_reference'],
@@ -171,7 +135,7 @@ def main():
     except:
       data_input = np.genfromtxt(filename_tmp, comments=comments_tmp, delimiter=delimiter_tmp, skip_header=num_skiprows_tmp)
 
-    var_index = read_header_tecplot(filename_tmp, headerline_variables, headername_tmp, var_list)
+    var_index = general.read_header_tecplot(filename_tmp, headerline_variables, headername_tmp, var_list)
     # Store data as dictionary
     result_dict = {}
     for m in range( 0,len(var_list) ):
