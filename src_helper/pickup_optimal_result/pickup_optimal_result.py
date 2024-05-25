@@ -3,38 +3,25 @@
 # Script to copy the optimal solution
 
 import numpy as np
-import yaml as yaml
-import os as os
+import sys
+import os
 import shutil as shutil
 
-
-def read_config_yaml(file_control):
-  print("Reading control file...:", file_control)
-  try:
-    with open(file_control) as file:
-      config = yaml.safe_load(file)
-  except Exception as e:
-    import sys as sys
-    print('Exception occurred while loading YAML...', file=sys.stderr)
-    print(e, file=sys.stderr)
-    sys.exit(1)
-  return config
-
-
-def make_directory(dir_path):
-  if not os.path.exists(dir_path):
-    os.mkdir(dir_path)
-  return
+# Add ath of parent directory to Python path
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if parent_dir not in sys.path:
+  sys.path.insert(0, parent_dir)  
+from general import general
 
 
 def main():
 
   # Read parameters
   file_control = 'pickup_optimal_result.yml'
-  config = read_config_yaml(file_control)
+  config = general.read_config_yaml(file_control)
 
   #file_control_borealis = 'borealis.yml'
-  #config_bor =  read_config_yaml(file_control_borealis)
+  #config_bor =  general.read_config_yaml(file_control_borealis)
 
   # Initial settings
   work_dir = config['work_dir']
@@ -67,7 +54,7 @@ def main():
   work_dir_copyto   = config['copy_dir'] + '/' + dirname_optimal
   print('Copy optimal solution from',work_dir_copyfrom,'to',work_dir_copyto)
  
-  make_directory(config['copy_dir'])
+  general.make_directory(config['copy_dir'])
   shutil.copytree(work_dir_copyfrom, work_dir_copyto, dirs_exist_ok=True)
 
 

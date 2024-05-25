@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-import yaml as yaml
+import yaml
+import sys
+import os
 
 def read_config_yaml(file_control):
   print("Reading control file...:", file_control)
@@ -8,11 +10,16 @@ def read_config_yaml(file_control):
     with open(file_control) as file:
       config = yaml.safe_load(file)
   except Exception as e:
-    import sys as sys
     print('Exception occurred while loading YAML...', file=sys.stderr)
     print(e, file=sys.stderr)
     sys.exit(1)
   return config
+
+
+def make_directory(dir_path):
+  if not os.path.exists(dir_path):
+    os.mkdir(dir_path)
+  return
 
 
 def insert_suffix(filename, suffix, splitchar):
