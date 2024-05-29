@@ -200,3 +200,89 @@ example_externalcode:
   x_max:  10
   x_offset: 0
 
+
+heatcond:
+
+  # tacode case directory
+  work_dir: work_heatcond
+  case_dir: case
+  step_digit: 4
+
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/work_heatcond/work_heatcond_solar
+
+  # Executing script
+  cmd_code: ./run_code.sh
+  
+  # Control file
+  filename_control: heatcond.ctl
+  
+  # Result file name computed by Tacode
+  filename_result: history.dat
+  
+  # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
+  #convert_timeunit_tapost: sec2day
+
+  # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
+  # 時刻オフセット値はここで決定する
+ # time_start: 118.3385
+ # time_end:   118.4003
+ # target_time: 118.3385
+  x_min: 10181685
+  x_max: 10186747
+  x_offset: 0
+
+  # Result trajectory of Tacode 
+  result_dir: result_heatcond
+  flag_output: False
+  filename_output: output_result.dat
+  variables_output: 
+    - Time[s]
+    - T[K]
+#    - Alt.[km]
+#    - Dens[kg/m3]
+#    - Tback[K]
+#    - Tatm[K]
+#    - Htcoef
+#    - Re
+#    - Solar[W/m2]
+    - Heatflux[W/m2]
+
+
+cage:
+
+  # tacode case directory
+  work_dir: work_cage
+  case_dir: case
+  step_digit: 4
+
+  directory_path_specify: manual # default or manual
+  manual_path: ../../testcase_template/work_cage/work_solar
+
+  # Executing script
+  cmd_code: ./run_code.sh
+  
+  # Control file
+  filename_control: cage.yml
+  
+  # Result file name computed by Tacode
+  filename_result: history.dat
+  
+  # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
+  #convert_timeunit_tapost: sec2day
+
+  # 時刻にオフセットを与える
+  # 時刻オフセット値はここで決定する
+ # time_start: 118.3385
+ # time_end:   118.4003
+ # target_time: 118.3385
+  x_min: 10181685
+  x_max: 10186747
+  x_offset: 0
+
+  # Result file of Cage
+  result_dir: result_cage
+  flag_output: False
+  filename_output: result/probe_brightness_ave.dat
+  variables_output: 
+    - TC1

@@ -110,10 +110,10 @@ Bayesian_optimization:
 
 PSO: # Particle swarm optimization
   # Number of iterations
-  num_optiter: 100
+  num_optiter: 200
 
   # Number of particles
-  num_particle: 80
+  num_particle: 160
 
   # Minimize or maximize the objective function
   maximize: False
@@ -202,7 +202,7 @@ heatcond:
   # tacode case directory
   work_dir: work_heatcond
   case_dir: case
-  step_digit: 4
+  step_digit: 5
 
   directory_path_specify: manual # default or manual
   manual_path: ../../testcase_template/work_heatcond/work_heatcond_erf

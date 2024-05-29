@@ -170,7 +170,7 @@ class optimizer_pso(orbital):
           global_best_index_l    = global_best_index_hisotry[i]
         rank_g = comm.allreduce(rank_l, op=MPI.MAX)
         # --Global values
-        global_best_position_g = comm.bcast(global_best_position_l, root=rank_g)
+        global_best_position_g = comm.bcast(global_best_position_l, root=rank_g) # <- 不要？
         global_best_position   = comm.bcast(global_best_position_l, root=rank_g)
         global_best_value      = global_best_value_g
         global_best_index_g    = comm.bcast(global_best_index_l, root=rank_g)

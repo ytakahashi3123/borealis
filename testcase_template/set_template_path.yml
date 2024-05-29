@@ -4,18 +4,18 @@ template:
   - file: testcase/run_externalcode.sh
     name: EXCODE_HOME
     path: $HOME/research/repository/borealis/borealis_ver1.1.0/example_externalcode/curve
-#  - file: work_heatcond/work_heatcond/run_code.sh
-#    name: EXCODE_HOME
-#    path: $HOME/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.30/bin
-#  - file: work_heatcond/work_heatcond_erf/run_code.sh
-#    name: EXCODE_HOME
-#    path: $HOME/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.30/bin
-#  - file: work_heatcond/work_heatcond_solar/run_code.sh
-#    name: EXCODE_HOME
-#    path: $HOME/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.30/bin
-#  - file: work_tacode/run_tacode.sh
-#    name: TACODE_HOME
-#    path: $HOME/research/calc/code/orbit_edl/tacode_ver2.1.0/src
-#  - file: work_tacode_fortran/run_tacode.sh
-#    name: TACODE_HOME
-#    path: /opt/tacode/tacode_ver1.12/bin
+  - file: work_heatcond/work_heatcond/run_code.sh
+    name: EXCODE_HOME
+    path: $HOME/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.3.0/bin
+  - file: work_heatcond/work_heatcond_erf/run_code.sh
+    name: EXCODE_HOME
+    path: $HOME/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.3.0/bin
+  - file: work_heatcond/work_heatcond_solar/run_code.sh
+    name: EXCODE_HOME
+    path: $HOME/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.3.0/bin
+  - file: work_tacode/run_tacode.sh
+    name: TACODE_HOME
+    path: $HOME/research/calc/code/orbit_edl/tacode_ver2.1.0/src
+  - file: work_tacode_fortran/run_tacode.sh
+    name: TACODE_HOME
+    path: /opt/tacode/tacode_ver1.12/bin

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXCODE_HOME=$HOME/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.30/bin
+EXCODE_HOME=$HOME/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.3.0/bin
 LD=$EXCODE_HOME/heatcond
 LOG=log_heatcond
 
