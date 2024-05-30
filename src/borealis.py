@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 # Borealis: Bayesian optimization for finding a realizable solution for a discretized equation
-# Version 1.1.0
-# Date: 2024/04/30
+# Version 1.2.0
+# Date: 2024/06/15
 
 # Author: Yusuke Takahashi, Hokkaido University
 # Contact: ytakahashi@eng.hokudai.ac.jp
 
 code_name = "Borealis"
-version = "1.1.0"
+version = "1.2.0"
 
 import numpy as np
 from mpi.mpi import mpi
@@ -41,6 +41,9 @@ def main():
   elif config['adapter']['kind_adapter'] == 'heatcond':
     from adapter_heatcond.adapter_heatcond import adapter_heatcond
     adapter = adapter_heatcond(mpi_instance)
+  elif config['adapter']['kind_adapter'] == 'cage':
+    from adapter_cage.adapter_cage import adapter_cage
+    adapter = adapter_cage(mpi_instance)
   elif config['adapter']['kind_adapter'] == 'user':
     from adapter_user.adapter_user import adapter_user
     adapter = adapter_user(mpi_instance)

@@ -170,7 +170,6 @@ class adapter_tacode(orbital):
     # 何度もファイル開閉をするのは問題かもしれない
 
     print('--Modify control file')
-
     filename = self.work_dir_case+'/'+self.filename_control_code
 
     count = 0
@@ -190,35 +189,34 @@ class adapter_tacode(orbital):
         count = count + 1
       print('--Variable:',var_name_ctl,'in',var_root_ctl, ', Parameters:',txt_replaced)
 
-      # File operation
+      # Reading control file
+      with open(filename) as f:
+        lines = f.readlines()
+      # リストとして取得 
+      lines_strip = [line.strip() for line in lines]
+      # 置換する行を特定する
+      line_both        = [(i, line) for i, line in enumerate(lines_strip) if txt_indentified in line]
+      i_line, str_line = list(zip(*line_both))
+
+      lines_updated = lines
       for m in range(0,ele_indentified):
-        # Reading control file
-        with open(filename) as f:
-          lines = f.readlines()
-
-        # リストとして取得 
-        lines_strip = [line.strip() for line in lines]
-
-        # 置換する行を特定する
-        line_both        = [(i, line) for i, line in enumerate(lines_strip) if txt_indentified in line]
-        i_line, str_line = list(zip(*line_both))
+        num_lines = i_line[0]+m+1
 
         # 抽出した行をスペース・タブで分割する。そのele_indentified列目を置換し、line_replacedというstr型に戻す。
-        words = lines_strip[i_line[0]+m+1].split()
+        words = lines_strip[num_lines].split()
         # Replace (words[0]に該当する'-'は置換しない、その次のwords[1]を置換する)
         words[1] = txt_replaced[m]
         # インデントを考慮して新しい行を構築
         line_replaced  = ' '.join(words)
-
         # 行を置換
-        # lines_newはリストになることに注意。そのため、'',joinでstr型に戻す
-        lines_updated = [item.replace( lines_strip[i_line[0]+m+1], line_replaced ) for item in lines]
+        lines_updated = lines
+        lines_updated[num_lines] = lines_updated[num_lines].replace(lines_strip[num_lines], line_replaced)
 
         str_lines_new = ''.join(lines_updated)
 
-        # Update the file
-        with open(filename, mode="w") as f:
-          f.write(str_lines_new)
+      # Update the file
+      with open(filename, mode="w") as f:
+        f.write(str_lines_new)
     
     return
 

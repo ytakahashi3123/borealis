@@ -249,6 +249,16 @@ class orbital(general):
 
     return result_index
 
+  def store_data_as_dictionary(self, var_list, var_index, var_data):
+    reference_dict = {}
+    if var_data.ndim == 1:
+      for n in range( 0,len(var_list) ):
+        reference_dict[ var_list[n] ] = var_data[var_index[n]]
+    else:
+      for n in range( 0,len(var_list) ):
+        reference_dict[ var_list[n] ] = var_data[:,var_index[n]]
+    return reference_dict
+
 
   def write_tecplotdata( self, filename, print_message, header, delimiter, comments, output_data ):
     
