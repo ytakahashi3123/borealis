@@ -46,9 +46,9 @@
 69                  # number of variables (ADC)
 24                  # (GPS)
 # Filename -----------------------------
-'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.3.0/database/atmospheremodel/atmospheremodel.txt'  # Atmosphere file
-'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.3.0/database/reference_egg/2017_0715_EGG_ADC_PHY.dat'  # ADC-PHY (flight)
-'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell_ver1.3.0/database/reference_egg/2017_0715_EGG_GPS.dat'      # GPS data (flight)
+'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell-v1.3.0/database/atmospheremodel/atmospheremodel.txt'  # Atmosphere file
+'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell-v1.3.0/database/reference_egg/2017_0715_EGG_ADC_PHY.dat'  # ADC-PHY (flight)
+'/Users/ytakahashi/research/calc/code/heatconduction/heatcond_membraneaeroshell/heatcond_membraneaeroshell-v1.3.0/database/reference_egg/2017_0715_EGG_GPS.dat'      # GPS data (flight)
 'heatflux.dat'                        # Heat flux result by Monte Carlo (output)
 'history.dat'	                        # Time hisotry file name (output)
 0                                     # Display verbose: 0:less,  1:more

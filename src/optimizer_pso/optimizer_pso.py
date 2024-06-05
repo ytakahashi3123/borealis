@@ -218,8 +218,11 @@ class optimizer_pso(orbital):
       print("Best position:", global_best_position)
       print("Best value:", global_best_value)
       for i in range(0,num_optiter_optimized):
-        n_opt=global_best_index_hisotry[i]
-        print(i+1, n_opt+1, particle_position_history[i,n_opt,:], particle_solutioin[i,n_opt])
+        n_opt = global_best_index_hisotry[i]
+        particle_position_tmp = particle_position_history[i, n_opt, :]
+        solution_tmp = particle_solutioin[i, n_opt]
+        #print(i+1, n_opt+1, particle_position_history[i,n_opt,:], particle_solutioin[i,n_opt])
+        print(f"{i+1} {n_opt+1} {particle_position_tmp} {solution_tmp}")
 
     # Store data
     solution_dict = {}

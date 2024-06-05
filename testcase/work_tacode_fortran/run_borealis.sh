@@ -5,7 +5,7 @@ parallel=true
 PYTHON=python3.9
 LD=../../src/borealis.py
 LOG=log_borealis
-MPIP=mpirun
+MPIP=mpirun.openmpi
 num_process=4
 
 touch timestamp_start_$(date "+%Y%m%d-%H%M%S")
