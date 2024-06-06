@@ -213,15 +213,8 @@ class adapter_cage(orbital):
 
     # Penalty
     boundary = self.config['parameter_optimized']['boundary']
-    penalty = 0
-    count_tmp = 0
-    for n in range(0, len(boundary) ):
-      parameter_component = boundary[n]['component']
-      for m in range(0, len(parameter_component)):
-        if not ( parameter_opt[0,count_tmp] >= parameter_component[m]['bound_min'] 
-           and   parameter_opt[0,count_tmp] <= parameter_component[m]['bound_max'] ) :
-          penalty = 1.e3
-        count_tmp += 1
+    penalty = 0.0
+    penalty = orbital.get_penalty_term(self, parameter_opt, boundary)
 
     # 誤差評価の計算
     #error = 0.0
@@ -255,9 +248,11 @@ class adapter_cage(orbital):
     #error = np.sqrt( error/float(count) )
 
     error = 0.0
+    count = 0
     for n in range(0,len(var_y)):
-      error = error + (y_ref[n]-y_res[n])**2 
-    error = np.sqrt( error ) + penalty
+      count += 1
+      error += ( y_ref[n]-y_res[n] )**2 
+    error = np.sqrt( error )/float(count) + penalty
 
     # Green color
     print('--Error:','\033[92m'+str(error)+'\033[0m', 'in Epoch',str(self.iter) )

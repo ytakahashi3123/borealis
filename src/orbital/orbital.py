@@ -268,6 +268,20 @@ class orbital(general):
     return
 
 
+  def get_penalty_term(self, parameter_opt, boundary):
+    hugevalue_tmp = 1.e3
+    penalty = 0.0
+    count_tmp = 0
+    for n in range(0, len(boundary) ):
+      parameter_component = boundary[n]['component']
+      for m in range(0, len(parameter_component)):
+        if not ( parameter_opt[0,count_tmp] >= parameter_component[m]['bound_min'] 
+           and   parameter_opt[0,count_tmp] <= parameter_component[m]['bound_max'] ) :
+          penalty = hugevalue_tmp
+        count_tmp += 1
+    return penalty
+
+
   # Decorator for time measurement
   def time_measurement_decorated(func):
     @wraps(func)

@@ -1,0 +1,8 @@
+# Lonitude (rad), Latitude (rad), Altitude (m) 
+-126.76427528637089, 47.59216768160328, 211092.5432920908   # Initial coordinate 
+# Velocities (longitude, latitude, altitude), m/s 
+6807.774808843553, 3074.9142586530893, 2.110451859208588,   # Initial velocity, m/s, (Direction--> 1:Long, 2:Lati, 3:Alti) |7470.0 m/s, |1
+6816.888295870117, 3079.030609735624, 2.113277095967904,   # Initial velocity, m/s, (Direction--> 1:Long, 2:Lati, 3:Alti) |7480.0 m/s, |2
+6826.001782896681, 3083.146960818158, 2.116102332727219,   # Initial velocity, m/s, (Direction--> 1:Long, 2:Lati, 3:Alti) |7490.0 m/s, |3
+6835.115269923245, 3087.2633119006923, 2.1189275694865346,   # Initial velocity, m/s, (Direction--> 1:Long, 2:Lati, 3:Alti) |7500.0 m/s, |4
+6844.22875694981, 3091.3796629832264, 2.12175280624585,   # Initial velocity, m/s, (Direction--> 1:Long, 2:Lati, 3:Alti) |7510.0 m/s, |5

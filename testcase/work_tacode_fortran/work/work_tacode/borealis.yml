@@ -1,0 +1,157 @@
+# Configuration file for Borealis code
+
+adapter: 
+  # tacode, simple_function, or example_externalcode
+  kind_adapter: tacode
+  
+
+optimizer: 
+  # Bayesian_optimization or PSO
+  #kind_optimizer: Bayesian_optimization
+  kind_optimizer: PSO
+
+
+parameter_optimized:
+  # Parameter boundaries
+  boundary:
+    - name: '# Initial coordinate' 
+      component:
+        - type: coord_longitude # Degree
+          bound_min: -126.76427528637089
+          bound_max: -126.76427528637089
+        - type: coord_latitude  # Degree
+          bound_min: 47.59216768160328
+          bound_max: 47.59216768160328
+        - type: coord_altitude # meter in Tacode-Fotran
+          bound_min: 211092.5432920908
+          bound_max: 211092.5432920908
+    - name: '# Initial velocity' 
+      component:
+        - type: longitude
+          bound_min: 6775
+          bound_max: 6875
+        - type: latitude
+          bound_min: 2950
+          bound_max: 3100
+        - type: altitude
+          bound_min: 0
+          bound_max: 5
+    - name: '# Density factor opimized'
+      component:
+        - type: lower_bound_0
+          bound_min: 0.5
+          bound_max: 1.5
+        - type: lower_bound_200
+          bound_min: 0.5
+          bound_max: 1.5
+        - type: lower_bound_400
+          bound_min: 0.5
+          bound_max: 1.5
+
+
+Bayesian_optimization:
+
+  # Optimizer settings
+  model_type: GP     # GP, GP_MCMC, sparseGP, warperdGP, InputWarpedG, RF
+  normalize_Y: False # 目的関数(ガウス過程)を標準化する場合はTrue(予測を真値と比較しやすくするためFalse)
+  maximize: False
+  acquisition_type: EI # EI, EI_MCMC, MPI, MPI_MCMC, LCB, LCB_MCMC
+  acquisition_weight: 2
+  acquisition_optimizer_type: lbfgs # lbfgs, DIRECT, CMA
+  initial_design_numdata: 5 # 設定する初期データの数、X, Yを指定した場合は設定不要。 
+  initial_design_type: random # random, latin
+  model_update_interval: 1
+  verbosity: True
+  
+  num_optiter: 100
+
+  # Results data file (Tecplot data format)
+  result_dir: result_bopt
+  filename_output: output_bopt.dat
+
+  # Acquisition
+  flag_image_acquisition: False
+  filename_image_acquisition: acquisition.png
+
+  # Convergence
+  flag_image_convergence: False
+  filename_image_convergence: convergence.png
+
+
+PSO: # Particle swarm optimization
+  # Number of iterations
+  num_optiter: 100
+
+  # Number of particles
+  num_particle: 50
+
+  # Minimize or maximize the objective function
+  maximize: False
+
+  # Tolerance of effor of objective function
+  tolerance: 1.e-5
+
+  # Particle parameter for PSO
+  inertia: 0.5
+  cognitive_coef: 1.5
+  social_coef: 1.5
+
+  # Results data file (Tecplot data format)
+  result_dir: result_PSO
+  filename_output: output_PSO.dat
+  filename_global: output_global.dat  
+
+
+reference:
+
+  directory_path_specify: manual # default or manual
+  manual_path: ../../reference/case_day118.339/output
+  filename_input: trajectory.dat
+
+  var_x: time_day
+  var_y:
+    - longitude
+    - latitude
+    - altitude
+
+  timeunit: day
+
+
+tacode:
+
+  # Code system: python3 (tacode ver2.0) or Fortran (tacoed ver1.0)
+  code_system: fortran
+
+  # tacode case directory
+  work_dir: work_tacode
+  case_dir: case
+  step_digit: 4
+
+  directory_path_specify: manual # default or manual
+  manual_path: ../../template/work_tacode
+
+  # Executing script
+  cmd_code: ./run_tacode.sh
+  
+  # Control file
+  filename_control: orbit.ctl
+  
+  # Result file name computed by Tacode
+  filename_result: trajectory.dat
+  
+  # Tiem variables (Tacodeではsecondで出力されるのでその変換を行う)
+  convert_timeunit_tapost: sec2day
+
+  # 時刻にオフセットを与える（Tacodeでは0secondが計算開始時刻なので、サンプル・最適化結果と比較用するときはこれをつかう）
+  # 時刻オフセット値はここで決定する
+ # time_start: 118.3385
+ # time_end:   118.4003
+ # target_time: 118.3385
+  time_start: 118.3480
+  time_end:   118.3931
+  target_time: 118.3480
+
+  # Result trajectory of Tacode 
+  result_dir: result_tacode
+  flag_output: False
+  filename_output: output_result.dat
