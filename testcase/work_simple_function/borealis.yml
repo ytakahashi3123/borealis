@@ -30,6 +30,10 @@ parameter_optimized:
         - type: x5
           bound_min: -10
           bound_max:  10
+  # Penalty
+  flag_penalty: False
+  penalty_value: 1000.0
+
 
 Bayesian_optimization:
 

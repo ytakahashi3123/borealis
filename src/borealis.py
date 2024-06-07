@@ -52,7 +52,7 @@ def main():
     print('Program stopped.')
     exit()
 
-  # Initialize for trajectory analysis
+  # Initialize for simulation software defined in adapter
   adapter.initial_settings(config)
 
   # Reference data for objective function

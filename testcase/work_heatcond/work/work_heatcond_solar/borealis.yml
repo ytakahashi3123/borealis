@@ -78,6 +78,10 @@ parameter_optimized:
         - type: t10186747s
           bound_min: 0
           bound_max: 1000
+  # Penalty
+  flag_penalty: True
+  penalty_value: 1000.0
+
 
 Bayesian_optimization:
 

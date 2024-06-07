@@ -39,6 +39,9 @@ parameter_optimized:
         - type: alt110km
           bound_min: 1000
           bound_max: 4000
+  # Penalty
+  flag_penalty: True
+  penalty_value: 1000.0
 
 
 Bayesian_optimization:

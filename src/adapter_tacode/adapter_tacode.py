@@ -287,7 +287,7 @@ class adapter_tacode(orbital):
 
 
   @orbital.time_measurement_decorated
-  def evaluate_error(self, result_dict):
+  def evaluate_error(self, parameter_opt, result_dict):
 
     # Tacodeによるトラジェクトリ結果とReferenceの誤差を評価する
 
@@ -306,6 +306,13 @@ class adapter_tacode(orbital):
     _, i_start = super().closest_value_index(time_day_offset, time_start)
     _, i_end   = super().closest_value_index(time_day_offset, time_end)
 
+    # Penalty
+    penalty = 0.0
+    if self.config['parameter_optimized']['flag_penalty']:
+      boundary = self.config['parameter_optimized']['boundary']
+      huge_tmp = self.config['parameter_optimized']['penalty_value']
+      penalty = super().get_penalty_term(parameter_opt, boundary, huge_tmp)
+
     # 誤差評価の計算
     error_tmp = 0.0
     count_tmp = 0
@@ -322,7 +329,7 @@ class adapter_tacode(orbital):
       error_tmp = error_tmp + ( altitude[n] - altitude_opt_cor )**2 
 
 #        error_tmp = error_tmp/float(count_tmp)
-    error_tmp = np.sqrt( error_tmp/float(count_tmp) )
+    error_tmp = np.sqrt( error_tmp )/float( count_tmp ) + penalty
 
     # Green color
     print('--Error:','\033[92m'+str(error_tmp)+'\033[0m', 'in Epoch',str(self.iter) )
@@ -455,7 +462,7 @@ class adapter_tacode(orbital):
     self.write_result_data(result_dict)
 
     # Evaluate error
-    error = self.evaluate_error(result_dict)
+    error = self.evaluate_error(parameter_opt, result_dict)
 
     # カウンタの更新
     if not args:

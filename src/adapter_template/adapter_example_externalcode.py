@@ -169,7 +169,7 @@ class adapter_example_externalcode(orbital):
 
 
   @orbital.time_measurement_decorated
-  def evaluate_error(self, result_dict):
+  def evaluate_error(self, parameter_opt, result_dict):
 
     # 外部コード結果とReferenceの誤差を評価する
 
@@ -185,6 +185,13 @@ class adapter_example_externalcode(orbital):
     _, i_start = super().closest_value_index(x_res, x_min)
     _, i_end   = super().closest_value_index(x_res, x_max)
 
+    # Penalty
+    penalty = 0.0
+    if self.config['parameter_optimized']['flag_penalty']:
+      boundary = self.config['parameter_optimized']['boundary']
+      huge_tmp = self.config['parameter_optimized']['penalty_value']
+      penalty = super().get_penalty_term(parameter_opt, boundary, huge_tmp)
+
     # 誤差評価の計算
     error = 0.0
     count = 0
@@ -198,7 +205,7 @@ class adapter_example_externalcode(orbital):
       y_ref_cor = ( self.y_ref[m_opt]  - self.y_ref[m_opt-1]  )*grad_fact + self.y_ref[m_opt-1]
       error = error + ( y_res[n] - y_ref_cor )**2 
 
-    error = np.sqrt( error/float(count) )
+    error = np.sqrt( error )/float( count ) + penalty
 
     # Green color
     print('--Error:','\033[92m'+str(error)+'\033[0m', 'in Epoch',str(self.iter) )
@@ -302,7 +309,7 @@ class adapter_example_externalcode(orbital):
     self.write_result_data(result_dict)
 
     # Evaluate error
-    error = self.evaluate_error(result_dict)
+    error = self.evaluate_error(parameter_opt, result_dict)
 
     # カウンタの更新
     if not args:
