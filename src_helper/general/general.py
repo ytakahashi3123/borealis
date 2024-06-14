@@ -54,3 +54,9 @@ def read_header_tecplot(filename, headerline, headername, var_list):
         break
 
   return result_index
+
+
+def closest_value_index(numbers, value):
+  closest_index = min(range(len(numbers)), key=lambda i: abs(numbers[i] - value))
+  closest_value = numbers[closest_index]
+  return closest_value, closest_index

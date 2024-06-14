@@ -1,0 +1,48 @@
+# Configuration file for copying optimal solution
+
+# Extracting reading files
+flag_filereading_extracted: True
+directory_input: 
+  - work_haetcond_TC1
+  - work_haetcond_TC2
+  - work_haetcond_TC3
+  - work_haetcond_TC4
+  - work_haetcond_TC5
+  - work_haetcond_TC6
+  - work_haetcond_TC7
+filename_extract_list: result_PSO/output_global.dat
+
+# Input file and data
+work_dir: work_heatcond
+case_dir: case
+filename_result: history.dat
+step_digit: 4
+#step_start: 1
+step_end: 15000
+
+variable_x: Time[s]
+variable_y: Heatflux[W/m2]
+headername: 'Variables ='
+headerline: 1
+num_skiprows: 2
+delimiter: null
+comments: '#'
+
+# Time (x-value)) extracted
+x_extracted: 10181875
+x_offset: 0
+
+# Normalized
+value_normalization: 1370
+
+# Output file
+filename_output: reference_tc.dat
+result_x_name: Time[s]
+result_y_name:
+  - TC1
+  - TC2
+  - TC3
+  - TC4
+  - TC5
+  - TC6
+  - TC7

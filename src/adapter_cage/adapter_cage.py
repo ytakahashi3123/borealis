@@ -219,42 +219,10 @@ class adapter_cage(orbital):
       penalty = super().get_penalty_term(parameter_opt, boundary, huge_tmp)
 
     # 誤差評価の計算
-    #error = 0.0
-    #count = 0
-    #for n in range(i_start, i_end):
-    #  count = count+1
-    #  for m in range(0,len(x_ref)):
-    #    if (x_ref[m] >= x_res[n] ):
-    #      m_opt = m
-    #      break
-    #  if self.mpi_instance.rank ==0: print(n,m_opt)
-    #  grad_fact = ( x_res[n] - x_ref[m_opt-1] )/( x_ref[m_opt] - x_ref[m_opt-1] )
-    #  y_ref_cor = ( y_ref[m_opt]  - y_ref[m_opt-1]  )*grad_fact + y_ref[m_opt-1]
-    #  error = error + ( y_res[n] - y_ref_cor )**2
-    #error = np.sqrt( error/float(count) )
-
-    #error = 0.0
-    #count = 0
-    # x_resの各要素に対して、対応するy_resとy_ref_corを計算
-    #for n in range(i_start, i_end):
-    #  count += 1
-    #  # x_res[n]より大きい最初の要素のインデックスを見つける
-    #  m_opt = np.argmax(x_ref >= x_res[n])
-    #  if m_opt == 0:
-    #    grad_fact = 0.0
-    #  else:
-    #    grad_fact = (x_res[n] - x_ref[m_opt - 1]) / (x_ref[m_opt] - x_ref[m_opt - 1])
-    #  y_ref_cor = (y_ref[m_opt] - y_ref[m_opt - 1]) * grad_fact + y_ref[m_opt - 1]
-    #  # 誤差を計算し、errorに加算
-    #  error += (y_res[n] - y_ref_cor) ** 2
-    #error = np.sqrt( error/float(count) )
-
     error = 0.0
-    count = 0
     for n in range(0,len(var_y)):
-      count += 1
       error += ( y_ref[n]-y_res[n] )**2 
-    error = np.sqrt( error )/float( count ) + penalty
+    error = np.sqrt( error )/float( len(var_y) ) + penalty
 
     # Green color
     print('--Error:','\033[92m'+str(error)+'\033[0m', 'in Epoch',str(self.iter) )
