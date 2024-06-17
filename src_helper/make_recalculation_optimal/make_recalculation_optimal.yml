@@ -1,0 +1,14 @@
+# Configuration file for making recalculating directory
+
+directory: ./result_PSO
+
+filename_replaced: cage.yml
+replaced_text:
+  - name: line1
+    text:
+      - "flag_filename_vtk_series: False"
+      - "flag_filename_vtk_series: True"
+  - name: line2
+    text:
+      - "flag_filename_vtk_ave: False"
+      - "flag_filename_vtk_ave: True"

@@ -1,0 +1,111 @@
+# Configuration file for Cage code
+
+# Input STL data
+filename_input_stl: "egg_deformed_l.stl"
+
+# Light source (x,y,z)
+light_source:
+  - name: sun
+    intensity: 0.7
+    component:
+    - 0
+    - 0
+    - -1
+  - name: earth
+    intensity: 0.3
+    component:
+    - 0
+    - 0
+    - 1
+
+# STL rotation (x,y,z)
+rotation_center:
+  - 0.183
+  - 0
+  - 0
+euler_angle_bodyaxis: #order:xyz: x-axis->[0,360], y-axis->[0,360], z-axis->[0,90]
+  - -36.474728904933606
+  - 28.435142186963947
+  - -122.78570533316974
+polar_angle_rotationaxis: # Zenith and Azimuth angles (Radial distance r=1 fixed)
+  - 0
+  - 0
+# Angular velocity around rotation axis, degree/s
+angular_velocity:
+  - 0
+#rotation_order: XYZ
+#rotation_bydegrees: True
+
+# Time marching
+number_step: 1
+
+# Shade computing
+flag_shade: True
+
+# Shadow computing
+flag_shadow: False
+flag_shadow_calculation_onprobe: True
+depth_bvh: 5
+
+# Output data
+directory_output: result
+# --Initial STL data rotated by initial Euler angle
+flag_filename_initial_stl: False
+filename_initial_stl: initial_model.stl
+# --Series data
+flag_filename_vtk_series: False
+filename_vtk_series: egg_rotated.vtu
+step_digit: 4
+variable_mesh_rotate_series: True
+variable_name_series: Brightness
+variable_scale_series: 1.0
+# --Average data over series
+flag_filename_vtk_ave: False
+filename_vtk_ave: egg_rotated_ave.vtu
+variable_name_ave: Brightness
+variable_scale_ave: 1.0
+# --Series data: rotation and body axes
+flag_filename_axis_series: False
+filename_axis_series: egg_rotaion_axis.vtu
+
+# Probe
+probe:
+  - name: TC1
+    coordinate:
+    - 0.18287873
+    - 0.076605612
+    - 0.25332926
+  - name: TC2
+    coordinate:
+    - 0.28980632
+    - 0.13215315
+    - 0.3449895
+  - name: TC3
+    coordinate:
+    - 0.3092199
+    - 9.40E-17
+    - 0.4231836
+  - name: TC4
+    coordinate:
+    - 0.18942816
+    - -0.080984381
+    - -0.26511896
+  - name: TC5
+    coordinate:
+    - 0.28761615
+    - -0.13186157
+    - -0.34453602
+  - name: TC6
+    coordinate:
+    - 0.30917205
+    - -9.29E-17
+    - -0.41831359
+  - name: TC7
+    coordinate:
+    - 0.25070428
+    - -9.55E-17
+    - -0.4300454
+filename_probe: probe_brightness.dat
+filename_probe_ave: probe_brightness_ave.dat
+
+display_verbose: True
