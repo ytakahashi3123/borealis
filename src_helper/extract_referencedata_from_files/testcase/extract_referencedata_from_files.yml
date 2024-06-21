@@ -3,13 +3,13 @@
 # Extracting reading files
 flag_filereading_extracted: True
 directory_input: 
-  - work_haetcond_TC1
-  - work_haetcond_TC2
-  - work_haetcond_TC3
-  - work_haetcond_TC4
-  - work_haetcond_TC5
-  - work_haetcond_TC6
-  - work_haetcond_TC7
+  - work_heatcond_TC1
+  - work_heatcond_TC2
+  - work_heatcond_TC3
+  - work_heatcond_TC4
+  - work_heatcond_TC5
+  - work_heatcond_TC6
+  - work_heatcond_TC7
 filename_extract_list: result_PSO/output_global.dat
 
 # Input file and data
