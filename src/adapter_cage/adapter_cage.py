@@ -186,22 +186,6 @@ class adapter_cage(orbital):
 
     print('--Evaluating error between computed result and reference data')
 
-    x_min    = self.config['cage']['x_min']
-    x_max    = self.config['cage']['x_max']
-    x_offset = self.config['cage']['x_offset']
-
-    var_x = self.config['cage']['var_x'] 
-    var_y = self.config['cage']['var_y']
-
-    # Result data
-    x_res = result_dict[ var_x ] + x_offset
-    y_res = []
-    for n in range(0,len(var_y)):
-      y_res.append( result_dict[ var_y[n] ] )
-
-    #_, i_start = super().closest_value_index(x_res, x_min)
-    #_, i_end   = super().closest_value_index(x_res, x_max)
-
     # Reference data
     var_x = self.config['reference']['var_x'] 
     var_y = self.config['reference']['var_y']
@@ -210,6 +194,38 @@ class adapter_cage(orbital):
     y_ref = []
     for n in range(0,len(var_y)):
       y_ref.append( self.reference_dict[ var_y[n] ] )
+
+    # --Normalization
+    try:
+      flag_normalized_reference = self.config['reference']['flag_normalized_reference']
+    except KeyError:
+      flag_normalized_reference = False
+    if flag_normalized_reference:
+      max_value_tmp = np.max(y_ref)
+      max_index_tmp = np.argmax(y_ref)
+      y_ref = y_ref/max_value_tmp
+    #  print('Normalized_ref',y_ref)
+
+    # Result data
+    x_min    = self.config['cage']['x_min']
+    x_max    = self.config['cage']['x_max']
+    x_offset = self.config['cage']['x_offset']
+
+    var_x = self.config['cage']['var_x'] 
+    var_y = self.config['cage']['var_y']
+
+    x_res = result_dict[ var_x ] + x_offset
+    y_res = []
+    for n in range(0,len(var_y)):
+      y_res.append( result_dict[ var_y[n] ] )
+    # --Normalization
+    if flag_normalized_reference:
+      max_value_tmp = y_res[max_index_tmp]
+      y_res = y_res/max_value_tmp
+    #  print('Normalized_res',y_res)
+
+    #_, i_start = super().closest_value_index(x_res, x_min)
+    #_, i_end   = super().closest_value_index(x_res, x_max)
 
     # Penalty
     penalty = 0.0
@@ -221,7 +237,8 @@ class adapter_cage(orbital):
     # 誤差評価の計算
     error = 0.0
     for n in range(0,len(var_y)):
-      error += ( y_ref[n]-y_res[n] )**2 
+#      error += ( y_ref[n]-y_res[n] )**2 
+      error += (( y_ref[n]-y_res[n] )/y_ref[n])**2 
     error = np.sqrt( error )/float( len(var_y) ) + penalty
 
     # Green color
@@ -292,7 +309,7 @@ class adapter_cage(orbital):
   @orbital.time_measurement_decorated
   def objective_function(self, parameter_opt, *args):
 
-    # コントロールファイルを適切に修正して、tacodeを実行する。
+    # コントロールファイルを適切に修正して、プログラムを実行する。
 
     if args:
       self.iter = args[0]

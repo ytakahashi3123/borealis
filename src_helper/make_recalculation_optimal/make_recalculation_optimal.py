@@ -59,7 +59,13 @@ def main():
   # 対象ディレクトリを検出
   directories_copy = detect_directories(work_directory)
   print('Found directory:',directories_copy)
-    
+  
+  # "_recal"を含むサブディレクトリが存在するか確認
+  for dir_tmp in directories_copy:
+    if '_recal' in os.path.basename(os.path.normpath(dir_tmp)):
+      print(f"Directory {dir_tmp} contains '_recal'. Stopping process.")
+      return
+
   # 各ディレクトリについて処理を行う
   for dir_tmp in directories_copy:
     dir_tmp_name = os.path.basename(os.path.normpath(dir_tmp))
