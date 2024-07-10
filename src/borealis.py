@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 # Borealis: Bayesian optimization for finding a realizable solution for a discretized equation
-# Version 1.2.0
-# Date: 2024/06/15
+# Version 1.3.0
+# Date: 2024/07/31
 
 # Author: Yusuke Takahashi, Hokkaido University
 # Contact: ytakahashi@eng.hokudai.ac.jp
 
 code_name = "Borealis"
-version = "1.2.0"
+version = "1.3.0"
 
 import numpy as np
 from mpi.mpi import mpi
