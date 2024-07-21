@@ -143,9 +143,15 @@ class adapter_cage(orbital):
       line_both        = [(i, line) for i, line in enumerate(lines_strip) if txt_indentified in line]
       i_line, str_line = list(zip(*line_both))
 
+      # 設定変数がネストしていないか("-"を含んでいるか)確認する。ネストしていない：
+      flag_nest = orbital.extract_number_from_prefixed_string(str_line[0], txt_indentified)
+
       lines_updated = lines
       for m in range(0,ele_indentified):
-        num_lines = i_line[0]+m+1
+        if flag_nest:
+          num_lines = i_line[0]+m+1
+        else:
+          num_lines = i_line[0]
 
         # 抽出した行をスペース・タブで分割する。そのele_indentified列目を置換し、line_replacedというstr型に戻す。
         words = lines_strip[num_lines].split()
@@ -162,6 +168,7 @@ class adapter_cage(orbital):
       # Update the file
       with open(filename, mode="w") as f:
         f.write(str_lines_new)
+
 
     return
 

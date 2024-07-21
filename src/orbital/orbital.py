@@ -290,6 +290,21 @@ class orbital(general):
     return 0.0
 
 
+  def extract_number_from_prefixed_string(str1, str0):
+    # "absorption_solar: 0.3"のようなymlファイル内の設定変数がネストしているかどうか確認
+    # str1がstr0で始まるか確認
+    if str1.startswith(str0):
+      # str0をstr1から削除
+      remaining_str = str1[len(str0):].strip()
+      try:
+        # 残った文字列が数値に変換可能か確認
+        number = float(remaining_str)
+        return False
+      except ValueError:
+        return True
+    return True
+
+
   # Decorator for time measurement
   def time_measurement_decorated(func):
     @wraps(func)
