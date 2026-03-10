@@ -1,0 +1,13 @@
+# Configuration file for copying optimal solution
+
+# Extracting reading files
+filename_extract_list: result_PSO/output_global.dat
+
+# Input file
+work_dir: work_shapeoptimizer
+case_dir: case_rank
+num_rank: 6
+step_digit: 2
+
+# Output file
+copy_dir: result_PSO

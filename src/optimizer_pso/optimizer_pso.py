@@ -45,6 +45,33 @@ class optimizer_pso(orbital):
     self.num_dimension = num_dimension
     self.parameter_name_list = parameter_name_list
 
+    # Parameter boundary at initial step
+    try:
+      self.boundary_initial = config['parameter_optimized']['boundary_initial']
+      self.flag_boundary_initial = True
+    except (KeyError):
+      self.flag_boundary_initial = False
+
+    # Parameter velocity at initial step
+    try:
+      self.velocity_initial = config['parameter_optimized']['velocity_initial']
+      self.flag_velocity_initial = True
+    except (KeyError):
+      self.flag_velocity_initial = False
+
+    # Time step
+    try:
+      self.times_spte_pso = config['PSO']['times_spte_pso']
+    except (KeyError, TypeError):
+      self.times_spte_pso = 1.0
+
+    # Kind of computation of redisuals
+    try:
+      self.kind_residual_computation = config['PSO']['kind_residual_computation']
+    except (KeyError, TypeError):
+      self.kind_residual_computation = 'relative_change'
+    print(f'[PSO-Borealis] Residual computation: {self.kind_residual_computation}')
+
     return
 
 
@@ -81,6 +108,15 @@ class optimizer_pso(orbital):
     cognitive_coef = config['PSO']['cognitive_coef']
     social_coef    = config['PSO']['social_coef']
 
+    # Maximization or minimization of the objective function
+    flag_Maximization_of = config['PSO']['maximize'] 
+    if flag_Maximization_of :
+      sign_of = -1.0
+    elif flag_Maximization_of is False :
+      sign_of = 1.0
+    else:
+      raise ValueError("[PSO-Borealis] Error: config['PSO']['maximize'] must be either True or False.")
+
     # MPI settings
     flag_mpi = self.mpi_instance.flag_mpi
     if flag_mpi :
@@ -91,7 +127,7 @@ class optimizer_pso(orbital):
       particle_size = num_particle // size
       num_particle_start = rank * particle_size
       num_particle_end   = (rank + 1) * particle_size if rank < size - 1 else num_particle
-      print('Rank, Iter_start, Iter_zend', rank, num_particle_start, num_particle_end)
+      print(f'[PSO-Borealis] Rank: {rank}, Iter_start: {num_particle_start}, Iter_zend: {num_particle_end}')
     else :
       rank = 0
       num_particle_start = 0
@@ -103,8 +139,25 @@ class optimizer_pso(orbital):
     particle_best_position = []
     particle_best_value = []
     for n in range(0, num_particle):
-      position_tmp = np.array( [np.random.uniform(low, high) for low, high in parameter_boundary] )
-      velocity_tmp = np.array( [np.random.uniform(-1, 1) for _ in range(num_dimension)] )
+      # Initial positions
+      if self.flag_boundary_initial :
+        low  = self.boundary_initial['bound_min']
+        high = self.boundary_initial['bound_max']
+        position_tmp = []
+        for m in range(0,len(parameter_boundary)):
+          position_tmp.append( np.random.uniform(low, high) )
+        position_tmp = np.array( position_tmp )
+      else :
+        position_tmp = np.array( [np.random.uniform(low, high) for low, high in parameter_boundary] )
+      
+      # Initial velocities
+      if self.flag_velocity_initial :
+        low  = self.velocity_initial['velocity_min']
+        high = self.velocity_initial['velocity_max']
+        velocity_tmp = np.array( [np.random.uniform(low, high) for _ in range(num_dimension)] )
+      else :
+        velocity_tmp = np.array( [np.random.uniform(-1.0, 1.0) for _ in range(num_dimension)] )
+
       particle_position.append( position_tmp )
       particle_velocity.append( velocity_tmp )
       particle_best_position.append( particle_position.copy() )
@@ -136,7 +189,8 @@ class optimizer_pso(orbital):
       for n in range(num_particle_start, num_particle_end):
         # パーソナルベストの更新: 下記のreshape追加の理由、Bayesian　Optの引数が(1,dim)の次元になるので、それに合わせている。
         id_serial = i*num_particle + n + 1
-        value = objective_function( particle_position[n].reshape(1, num_dimension), id_serial )
+        value = objective_function( particle_position[n].reshape(1, num_dimension), id_serial, i, sign_of )
+        #print('PSO-Obj',i+1,n+1,value)
         particle_solutioin[i,n] = value
         if value < particle_best_value[n]:
           particle_best_position[n] = particle_position[n].copy()
@@ -189,17 +243,27 @@ class optimizer_pso(orbital):
         cognitive_velocity = cognitive_coef * rand1 * (particle_best_position[n] - particle_position[n])
         social_velocity    = social_coef * rand2 * (global_best_position - particle_position[n])
         particle_velocity[n] = inertia * particle_velocity[n] + cognitive_velocity + social_velocity
-        particle_position[n] = particle_position[n] + particle_velocity[n]
+        particle_position[n] = particle_position[n] + particle_velocity[n] * self.times_spte_pso 
+        #print('PSO-0',i,n,particle_position[n])
 
       # Residual of error in objective function
-      for n in range(num_particle_start, num_particle_end):
-        residual[n] = abs((particle_best_value[n] - particle_best_value_prev[n])/particle_best_value_init[n])
+      if self.kind_residual_computation == 'relative_value':
+        if flag_Maximization_of :
+          for n in range(num_particle_start, num_particle_end):
+            residual[n] = abs(particle_best_value_init[n]/particle_best_value[n])
+        else :
+          for n in range(num_particle_start, num_particle_end):
+            residual[n] = abs((particle_best_value[n])/particle_best_value_init[n])
+      else:
+        for n in range(num_particle_start, num_particle_end):
+          residual[n] = abs((particle_best_value[n] - particle_best_value_prev[n])/particle_best_value_init[n])
+
       if flag_mpi :
         residual = comm.allreduce(residual, op=MPI.SUM)
       residual_mean = np.mean(residual)
       residaul_mean_history.append(residual_mean)
       if self.mpi_instance.rank == 0:
-        print('Step:',i+1, ', Relative mean residual:', self.text_color+f'{residual_mean:.10e}'+self.text_end)
+        print('[PSO-Borealis] Step:',i+1, ', Relative mean residual:', self.text_color+f'{residual_mean:.10e}'+self.text_end)
       residual[:] = 0
 
       if residual_mean <= config['PSO']['tolerance'] :
@@ -215,14 +279,14 @@ class optimizer_pso(orbital):
       particle_solutioin        = comm.allreduce(particle_solutioin, op=MPI.SUM)
 
     if self.mpi_instance.rank == 0:
-      print("Best position:", global_best_position)
-      print("Best value:", global_best_value)
+      print(f"[PSO-Borealis] Best parameter: {global_best_position}")
+      print(f"[PSO-Borealis] Best value: {global_best_value}")
       for i in range(0,num_optiter_optimized):
         n_opt = global_best_index_hisotry[i]
         particle_position_tmp = particle_position_history[i, n_opt, :]
         solution_tmp = particle_solutioin[i, n_opt]
         #print(i+1, n_opt+1, particle_position_history[i,n_opt,:], particle_solutioin[i,n_opt])
-        print(f"{i+1} {n_opt+1} {particle_position_tmp} {solution_tmp}")
+        print(f"[PSO-Borealis] Step: {i+1}, Particle: {n_opt+1}, Parameter: {particle_position_tmp}, Solution: {solution_tmp}")
 
     # Store data
     solution_dict = {}
@@ -263,7 +327,7 @@ class optimizer_pso(orbital):
 
     # Output results: Particles
     filename_tmp =  config['PSO']['result_dir'] + '/' + config['PSO']['filename_output']
-    print('--Writing output file...:',filename_tmp)
+    print('[PSO-Borealis] --Writing output file...:',filename_tmp)
 
     file_output = open( filename_tmp , 'w')
     # Header
@@ -306,7 +370,7 @@ class optimizer_pso(orbital):
 
     # Output results: Global particle information
     filename_tmp =  config['PSO']['result_dir'] + '/' + config['PSO']['filename_global']
-    print('--Writing global solution file...:',filename_tmp)
+    print('[PSO-Borealis] --Writing global solution file...:',filename_tmp)
 
     file_output = open( filename_tmp , 'w')
     # Header

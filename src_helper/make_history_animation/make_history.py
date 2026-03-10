@@ -75,6 +75,8 @@ def main():
     for m in range( 0,len(var_list_ref) ):
       reference_dict[ var_list_ref[m] ] = data_ref[:,var_index_ref[m]]
     ax.plot(reference_dict[var_x_ref], reference_dict[var_y_ref], color=config['color_map_reference'], label=config['label_reference'])
+    #ax.scatter(reference_dict[var_x_ref], reference_dict[var_y_ref], color=config['color_map_reference'], label=config['label_reference'], marker='o')
+
 
   # Animation
   animate, = ax.plot([], [], label=config['legend_label'])
