@@ -2,7 +2,7 @@ reference_tc/
 CHANGELOG.md
 hidden*
 testcase/work_cage
-testcase/work_shapeoptimizer
+testcase/work_shapeoptimizer/template/grids
 src_helper/src_tmp
 src_pilot
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-parallel=true
+parallel_mpi=true
 
 PYTHON=python3.9
 LD=../../../../src/borealis.py
@@ -9,7 +9,7 @@ MPIP=mpirun.openmpi
 num_process=4
 
 touch timestamp_start_$(date "+%Y%m%d-%H%M%S")
-if $parallel ; then
+if $parallel_mpi ; then
   $MPIP -n $num_process $PYTHON $LD
 else
   $PYTHON $LD

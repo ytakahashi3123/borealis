@@ -9,7 +9,7 @@ Bayesian optimization for finding realizable solutions for discretized equation
 This software is designed to evaluate an objective function based on the user's program output data and to optimize by changing input parameters.
 User programs serve as adapters, allowing `Borealis` to execute and optimize via the user's input configuration file.
 Templates for adapter programs are provided.
-The Bayesian optimization, the particle swarm optimization (PSO) algorithm, the artificial bee colony (ABC) algorithm, and the genetic algorithm (GA) are implemented as optimizers.
+The Bayesian optimization and the particle swarm optimization (PSO) algorithm are implemented as optimizers.
 PSO also supports distributed parallel processing using `mpi4py`.
 The following animation is an example of optimization for estimating input heat flux in heat conduction analysis.
 
@@ -68,3 +68,4 @@ ytakahashi@eng.hokudai.ac.jp
 # References
 
 - Yusuke Takahashi, Masahiro Saito, Nobuyuki Oshima, and Kazuhiko Yamada, “Trajectory Reconstruction for Nanosatellite in Very Low Earth Orbit Using Machine Learning.” Acta Astronautica 194: 301–8. 2022. https://doi.org/https://doi.org/10.1016/j.actaastro.2022.02.010.
+- Tomoki Sakai and Yusuke Takahashi, “Atmospheric density estimation in very low Earth orbit based on nanosatellite measurement data using machine learning”, Aerospace Science and Technology, Volume 153, 2024. https://doi.org/10.1016/j.ast.2024.109418.

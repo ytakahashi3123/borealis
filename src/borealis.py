@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 # Borealis: Bayesian optimization for finding a realizable solution for a discretized equation
-# Version 1.4.0
-# Date: 2025/08/31
+# Version 1.5.0
+# Date: 2026/03/31
 
 # Author: Yusuke Takahashi, Hokkaido University
 # Contact: ytakahashi@eng.hokudai.ac.jp
 
 code_name = "Borealis"
-version = "1.4.0"
+version = "1.5.0"
 
 import numpy as np
 from mpi.mpi import mpi
@@ -71,12 +71,15 @@ def main():
   elif config['optimizer']['kind_optimizer'] == 'PSO':
     from optimizer_pso.optimizer_pso import optimizer_pso
     optimizer = optimizer_pso(mpi_instance)
-  elif config['optimizer']['kind_optimizer'] == 'ABC':
-    from optimizer_abc.optimizer_abc import optimizer_abc
-    optimizer = optimizer_abc(mpi_instance)
-  elif config['optimizer']['kind_optimizer'] == 'GA':
-    from optimizer_ga.optimizer_ga import optimizer_ga
-    optimizer = optimizer_ga(mpi_instance)
+  elif config['optimizer']['kind_optimizer'] == 'PSO_MP':
+    from optimizer_pso.optimizer_pso_mp import optimizer_pso_mp
+    optimizer = optimizer_pso_mp(mpi_instance)
+  #elif config['optimizer']['kind_optimizer'] == 'ABC':
+  #  from optimizer_abc.optimizer_abc import optimizer_abc
+  #  optimizer = optimizer_abc(mpi_instance)
+  #elif config['optimizer']['kind_optimizer'] == 'GA':
+  #  from optimizer_ga.optimizer_ga import optimizer_ga
+  #  optimizer = optimizer_ga(mpi_instance)
   else:
     print('Error, invalid optimizer is selected. Check optimizer.kind_optimizer in',file_control,':', config['optimizer']['kind_optimizer'])
     print('Program stopped.')
