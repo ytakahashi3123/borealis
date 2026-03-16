@@ -1,0 +1,135 @@
+関数 main():
+
+    #-----------------------------------------
+    # 1. 設定ファイルの読み込み
+    #-----------------------------------------
+    config_file = "shapeoptimizer.yml"
+    設定データ = YAMLファイルから読み込む(config_file)
+
+    # preCICEやその他設定を取得（デフォルト付き）
+    with_MPI       = 設定データ["with_MPI"]       または False
+    precice_name   = 設定データ["precice_name"]    または "Optimizer"
+    precice_config = 設定データ["precice_config"]  または "../precice-config.xml"
+    precice_mesh   = 設定データ["precice_mesh"]    または "Optimizer-Mesh"
+    nDim           = 設定データ["nDim"]            または 2
+
+    #-----------------------------------------
+    # 2. MPI の初期化（今回はシリアル実行）
+    #-----------------------------------------
+    comm = 0
+    rank = 0
+    size = 1
+
+    #-----------------------------------------
+    # 3. preCICE の初期化
+    #-----------------------------------------
+    participant = preCICEのParticipantを作成(precice_name, precice_config, rank, size)
+    mesh_name = precice_mesh
+
+    # 次元チェック（SU2側とpreCICE側が一致しているか）
+    もし participantのメッシュ次元(mesh_name) ≠ nDim なら:
+        エラー出力して終了
+
+    #-----------------------------------------
+    # 4. マーカー点データの読み込み
+    #-----------------------------------------
+    marker_file = 設定データ["filename_marker"] または "marker_points.dat"
+    marker_data = markerファイルを読み込む(marker_file, nDim)
+    marker座標 = marker_dataの各点のnearest_node_coord
+
+    nMarker = marker座標の数
+    coords = 配列(marker座標)
+
+    # preCICEにメッシュ頂点を登録
+    vertex_ids = participant.set_mesh_vertices(mesh_name, coords)
+
+    #-----------------------------------------
+    # 5. 読み書きデータ設定
+    #-----------------------------------------
+    precice_write = 設定データ["precice_write"] または "Displacement"
+    precice_read  = 設定データ["precice_read"]  または "Force"
+
+    # 初期値設定
+    write初期値 = 設定データ["precice_write_var_initial"] または 0.0
+    read初期値  = 設定データ["precice_read_var_initial"]  または 0.0
+
+    displacements = 全要素write初期値の配列(nMarker, nDim)
+    forces        = 全要素read初期値の配列(nMarker, nDim)
+    forces_object = ゼロ配列(nDim)
+
+    center_of_gravity = 設定データ["center_of_gravity"] または ゼロ配列(nDim)
+    もし次元が一致しなければエラー終了
+
+    #-----------------------------------------
+    # 6. 時間・反復設定
+    #-----------------------------------------
+    timestep       = 設定データ["timestep"]         または 1e-3
+    iteration_start = 設定データ["iteration_start"] または 0
+
+    time_elapsed = timestep * iteration_start
+    iteration    = iteration_start
+
+    #-----------------------------------------
+    # 7. 初期変形データの読み込みとpreCICE初期化
+    #-----------------------------------------
+    displacements_file = "displacements_stepXXXXX.dat"（iteration番号付き）
+    displacements = ファイルから読み込む(displacements_file)
+
+    もし participantが初期データを要求するなら:
+        participantに書き込む(mesh_name, precice_write, vertex_ids, displacements)
+
+    participantを初期化()
+
+    #-----------------------------------------
+    # 8. 時間発展ループ（カップリング進行中）
+    #-----------------------------------------
+    while participant.is_coupling_ongoing():
+
+        # チェックポイント保存要求がある場合、現在の時刻と反復を保存
+        もし participantがチェックポイント書き込み要求:
+            保存_time = time_elapsed
+            保存_iter = iteration
+
+        # preCICEから許可された最大タイムステップを取得
+        precice_timestep = participant.get_max_time_step_size()
+        timestep = min(precice_timestep, 設定のtimestep)
+
+        #--- 変形データの読み込み ---
+        displacements_file = "displacements_stepXXXXX.dat"（現在iteration番号付き）
+        ファイルが存在するまで待機(0.1秒ずつ)
+        displacements = ファイルから読み込む(displacements_file)
+
+        # preCICEに変位データを書き込み
+        participant.write_data(mesh_name, precice_write, vertex_ids, displacements)
+
+        # preCICEから力データを読み込み
+        forces = participant.read_data(mesh_name, precice_read, vertex_ids, timestep)
+
+        # 各マーカー点の力を合計して物体全体の力を計算
+        forces_object = ゼロ配列
+        各マーカー点について:
+            forces_object += forces[i]
+
+        # 経過時間と反復数を更新
+        iteration += 1
+        time_elapsed += timestep
+
+        # preCICEを進める
+        participant.advance(timestep)
+
+        # チェックポイント復元が要求された場合、保存した値に戻す
+        もし participantがチェックポイント読み込み要求:
+            time_elapsed = 保存_time
+            iteration = 保存_iter
+
+        # 時間ウィンドウが完了した場合
+        もし participant.is_time_window_complete():
+            forces_file = "forces_stepXXXXX.dat"（現在iteration番号付き）
+            forces_objectをファイルに書き出す(forces_file)
+
+    #-----------------------------------------
+    # 9. 終了処理
+    #-----------------------------------------
+    participant.finalize()
+
+終了

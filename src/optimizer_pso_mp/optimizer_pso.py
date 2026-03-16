@@ -28,7 +28,7 @@ def evaluate_particle(args):
 
 
 # PSO_MP class
-class optimizer_pso_mp(orbital):
+class optimizer_pso(orbital):
 
   def __init__(self, mpi_instance):
 

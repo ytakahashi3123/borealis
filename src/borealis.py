@@ -47,6 +47,9 @@ def main():
   elif config['adapter']['kind_adapter'] == 'shapeoptimizer':
     from adapter_shapeoptimizer.adapter_shapeoptimizer import adapter_shapeoptimizer
     adapter = adapter_shapeoptimizer(mpi_instance)
+  elif config['adapter']['kind_adapter'] == 'shapeoptimizer_mp':
+    from adapter_shapeoptimizer_mp.adapter_shapeoptimizer import adapter_shapeoptimizer
+    adapter = adapter_shapeoptimizer(mpi_instance)
   elif config['adapter']['kind_adapter'] == 'user':
     from adapter_user.adapter_user import adapter_user
     adapter = adapter_user(mpi_instance)
@@ -71,9 +74,9 @@ def main():
   elif config['optimizer']['kind_optimizer'] == 'PSO':
     from optimizer_pso.optimizer_pso import optimizer_pso
     optimizer = optimizer_pso(mpi_instance)
-  elif config['optimizer']['kind_optimizer'] == 'PSO_MP':
-    from optimizer_pso.optimizer_pso_mp import optimizer_pso_mp
-    optimizer = optimizer_pso_mp(mpi_instance)
+  elif config['optimizer']['kind_optimizer'] == 'PSO_mp':
+    from optimizer_pso_mp.optimizer_pso import optimizer_pso
+    optimizer = optimizer_pso(mpi_instance)
   #elif config['optimizer']['kind_optimizer'] == 'ABC':
   #  from optimizer_abc.optimizer_abc import optimizer_abc
   #  optimizer = optimizer_abc(mpi_instance)
