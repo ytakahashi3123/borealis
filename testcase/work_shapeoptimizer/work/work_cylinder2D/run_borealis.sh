@@ -62,7 +62,7 @@ else
 fi
 
 # Optimization
-LD_O=${HOME_BORE}/src/adapter_shapeoptimizer/shapeoptimizer_preCICE.py
+LD_O=${HOME_BORE}/src_interface/interface-shapeoptimizer/shapeoptimizer_preCICE.py
 LOG_O=log_shapeoptimization
 
 # ファイルが出現するまで待つ

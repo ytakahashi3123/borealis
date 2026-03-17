@@ -6,7 +6,7 @@ cd ${current_dir}
 source ${HOME}/venvs/myenv/bin/activate
 source ${HOME}/.dir_opt_bashrc/.bashrc_precice-v320
 source ${HOME}/.dir_opt_bashrc/.bashrc_precice-v320_su2
-source ${HOME}/.dir_opt_bashrc/.bashrc_precice-v320_python
+#source ${HOME}/.dir_opt_bashrc/.bashrc_precice-v320_python
 source ${HOME}/.dir_opt_bashrc/.bashrc_precice-v320_borealis
 
 parallel=true
@@ -17,7 +17,7 @@ DIR_FLUID=./fluid
 DIR_OPT=./optimization
 
 # Parallel
-MPIP=mpirun
+MPIP=mpirun.openmpi
 ncpu_f=2
 ncpu_o=1
 
@@ -35,7 +35,7 @@ fi
 
 # Optimization
 PYHON=python3
-LD_O=${HOME_BORE}/src/adapter_shapeoptimizer/shapeoptimizer_preCICE.py
+LD_O=${HOME_BORE}/src_interface/interface-shapeoptimizer/shapeoptimizer_preCICE.py
 LOG_O=log_shapeoptimization
 
 

@@ -16,7 +16,7 @@ DIR_FLUID=./fluid
 DIR_OPT=./optimization
 
 # Parallel
-MPIP=mpirun
+MPIP=mpirun.openmpi
 ncpu_f=2
 ncpu_o=1
 
@@ -34,7 +34,7 @@ fi
 
 # Optimization
 PYHON=python3
-LD_O=${HOME_BORE}/src/adapter_shapeoptimizer/shapeoptimizer_preCICE.py
+LD_O=${HOME_BORE}/src_interface/interface-shapeoptimizer/shapeoptimizer_preCICE.py
 LOG_O=log_shapeoptimization
 
 
