@@ -24,7 +24,8 @@ ncpu_o=1
 # Fluid
 if ! $fluid ; then # Coupled
   #LD_F=${SU2_ADAPTER_HOME}/run/SU2_preCICE_FSI.py
-  LD_F=${HOME_BORE}/src_helper/src_tmp/SU2_preCICE_FSI.py
+  #LD_F=${HOME_BORE}/src_helper/src_tmp/SU2_preCICE_FSI.py
+  LD_F=${HOME_BORE}/src_interface/interface-SU2-OPT/SU2_preCICE_OPT.py
   LOG_F=log_su2
   INP_F=sphere.cfg
 else
@@ -34,7 +35,7 @@ else
 fi
 
 # Optimization
-PYHON=python3
+PYTHON=python3
 LD_O=${HOME_BORE}/src_interface/interface-shapeoptimizer/shapeoptimizer_preCICE.py
 LOG_O=log_shapeoptimization
 
@@ -55,7 +56,7 @@ for (( i = 0; i < ${#DIR_OUTPUT[*]}; i++ ))
 
 if ! $fluid ; then # Coupled
   if $parallel ; then
-    $MPIP -np $ncpu_f --report-bindings --bind-to core --map-by core ${PYHON} ${LD_F} -f ${INP_F} --parallel > $LOG_F 2>&1 &
+    $MPIP -np $ncpu_f --report-bindings --bind-to core --map-by core ${PYTHON} ${LD_F} -f ${INP_F} --parallel > $LOG_F 2>&1 &
   else
     ${LD_F} -f ${INP_F} -p SU2_CFD --parallel > $LOG_F 2>&1 &
   fi
@@ -78,7 +79,7 @@ if ! $fluid ; then
   else
     export OMP_NUM_THREADS=1
   fi
-  $PYHON $LD_O > $LOG_O 2>&1 &
+  $PYTHON $LD_O > $LOG_O 2>&1 &
   PIDParticipant2=$!
 fi
 cd ${current_dir}

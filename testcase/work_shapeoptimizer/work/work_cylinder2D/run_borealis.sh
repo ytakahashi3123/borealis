@@ -52,7 +52,7 @@ ncpu_o=1
 
 # Fluid
 if ! $fluid ; then # Coupled
-  LD_F=${HOME_BORE}/src_helper/src_tmp/SU2_preCICE_FSI.py
+  LD_F=${HOME_BORE}/src_interface/interface-SU2-OPT/SU2_preCICE_OPT.py
   LOG_F=log_su2
   INP_F=sphere.cfg
 else
