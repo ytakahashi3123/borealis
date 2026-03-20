@@ -74,7 +74,7 @@ parameter_optimized:
 
 PSO: # Particle swarm optimization
   # Number of iterations
-  num_optiter: 300
+  num_optiter: 50
 
   # Number of particles
   num_particle: 6

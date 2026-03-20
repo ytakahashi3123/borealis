@@ -291,7 +291,8 @@ def main():
 
     # Read initial displacements data from Borealis for optimization
     step_str = f"{interation:05d}"
-    displacements_file = f"displacements_step{step_str}.dat"
+    #displacements_file = f"displacements_step{step_str}.dat"
+    displacements_file = f"displacements.dat"
     displacements = read_displacements_from_file(displacements_file)
     # Set displacements
     print('displacements',displacements)
@@ -310,6 +311,7 @@ def main():
 
     precice_saved_time = 0
     precice_saved_iter = 0
+
     while (participant.is_coupling_ongoing()): #(TimeIter < nTimeIter):
         
         # Implicit coupling
@@ -323,12 +325,10 @@ def main():
         # Update timestep based on preCICE
         timestep = min(precice_timestep, timestep_set)
 
-        # File name
-        step_str = f"{interation:05d}"
-
         # Read data from Borealis for optimization
         step_str = f"{interation:05d}"
-        displacements_file = f"displacements_step{step_str}.dat"
+        #displacements_file = f"displacements_step{step_str}.dat"
+        displacements_file = f"displacements.dat"
         while not os.path.exists(displacements_file):
           time.sleep(0.1)
         displacements = read_displacements_from_file(displacements_file)
@@ -360,22 +360,24 @@ def main():
         
         #print(participant.is_time_window_complete())
         #sys.stdout.flush()
-        
         if participant.is_time_window_complete() :
           # Writing data to Borealis for optimization
-          forces_file = f"forces_step{step_str}.dat"
+          #forces_file = f"forces_step{step_str}.dat"
+          forces_file = f"forces.dat"
+          participant.requires_writing_checkpoint()
           write_forces_marker(forces_file, forces_object)
+          break
           #filename_time_window_complete = 'flag_timewindow_complete_true'
           #with open(filename_time_window_complete, 'w') as f:
           #  pass
 
-       # if (participant.is_time_window_complete()):
-        #    SU2Driver.Output(TimeIter)
-        #    if (stopCalc == True):
-        #        break
 
+    #print('test3')
+    #sys.stdout.flush()
+    #participant.requires_writing_checkpoint() # Finalizeを正常に実施する上で、この呼び出しが必要。requires_reading_checkpoint()だとだめっぽい、なぜ？
     participant.finalize()
-
+    
+    return
 
 if __name__ == '__main__':
     main()

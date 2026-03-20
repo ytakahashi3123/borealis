@@ -3,18 +3,6 @@
 # Original source was copied from preCICE SU2 adapter
 # Modified by Y.Takahashi for Borealis optimization, 20260430
 
-## \file SU2_preCICE_FSI.py
-#  \brief Python script to launch SU2_CFD with preCICE for fluid-structure interation simulations.
-#  \author Joseph Signorelli
-#  \version 7.5.1 "Blackbird"
-#
-# Part of the SU2-preCICE adapter: https://github.com/precice/su2-adapter
-# This adapter is distributed under the GNU Lesser General Public
-# License (see LICENSE file).
-
-# ----------------------------------------------------------------------
-#  Imports
-# ----------------------------------------------------------------------
 
 import sys
 from optparse import OptionParser	# use a parser for configuration
@@ -25,9 +13,6 @@ import precice
 from time import sleep
 import SU2
 
-# -------------------------------------------------------------------
-#  Main
-# -------------------------------------------------------------------
 
 def main():
 
@@ -49,14 +34,14 @@ def main():
     options.nZone = int(1)
 
     # SU2 config file
-    config_su2 = SU2.io.Config(options.filename)
+    #config_su2 = SU2.io.Config(options.filename)
     #state  = SU2.io.State()
-    flag_steady = True
-    if config_su2.get('TIME_DOMAIN') == 'YES' :
-        flag_steady = False
-    flag_restart = True
-    if config_su2.get('RESTART_SOL') == 'NO' :
-        flag_restart = False
+    #flag_steady = True
+    #if config_su2.get('TIME_DOMAIN') == 'YES' :
+    #    flag_steady = False
+    #flag_restart = True
+    #if config_su2.get('RESTART_SOL') == 'NO' :
+    #    flag_restart = False
     #print( config_su2.get('TIME_DOMAIN'),state.find_files(config_su2) )
 
     # Import mpi4py for parallel run
@@ -64,10 +49,12 @@ def main():
         from mpi4py import MPI
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
+        size = comm.Get_size()
         print('Using MPI')
     else:
         comm = 0
         rank = 0
+        size = 1
         print('Not using MPI')
 
     # Initialize the corresponding driver of SU2, this includes solver preprocessing
@@ -75,14 +62,9 @@ def main():
         SU2Driver = pysu2.CSinglezoneDriver(options.filename, options.nZone, comm);
     except TypeError as exception:
         print('A TypeError occured in pysu2.CDriver : ',exception)
-        if options.with_MPI == True:
-            print('ERROR : You are trying to initialize MPI with a serial build of the wrapper. Please, remove the --parallel option that is incompatible with a serial build.')
-        else:
-            print('ERROR : You are trying to launch a computation without initializing MPI but the wrapper has been built in parallel. Please add the --parallel option in order to initialize MPI for the wrapper.')
         return
 
     # Configure preCICE:
-    size = comm.Get_size()
     try:
         participant = precice.Participant(options.precice_name, options.precice_config, rank, size)#, comm)
     except:
@@ -185,17 +167,15 @@ def main():
     if rank == 0:
         print("\n------------------------------ Begin Solver -----------------------------\n")
     sys.stdout.flush()
+    
     if options.with_MPI == True:
         comm.Barrier()
 
     precice_saved_time = 0
     precice_saved_iter = 0
 
-    precice_step = 0
-    precice_max_step = 10
-
+    # Coupling loop
     while (participant.is_coupling_ongoing()):#(TimeIter < nTimeIter):
-        print('preCICE on going', participant.is_coupling_ongoing())
         
         # Implicit coupling
         if (participant.requires_writing_checkpoint()):
@@ -203,13 +183,9 @@ def main():
             SU2Driver.SaveOldState()
             precice_saved_time = time
             precice_saved_iter = TimeIter
-        #SU2Driver.SaveOldState() # 'TIME_DOMAIN' = 'NO'のときエラーが生じる
-        #precice_saved_time = time
-        #precice_saved_iter = TimeIter
 
         # Get the maximum time step size allowed by preCICE
         precice_deltaT = participant.get_max_time_step_size()
-        #precice_deltaT = 1.0
 
         # Retreive data from preCICE
         displacements = participant.read_data(mesh_name, precice_read, vertex_ids, deltaT)
@@ -221,20 +197,20 @@ def main():
             DisplX = displacements[i][0]
             DisplY = displacements[i][1]
             DisplZ = 0 if options.nDim == 2 else displacements[i][2]
-
             SU2Driver.SetMeshDisplacement(MovingMarkerID, iVertex, DisplX, DisplY, DisplZ)
         
         if options.with_MPI == True:
             comm.Barrier()
 
         # SU2 main routine
+        
+        # Update timestep based on preCICE
+        deltaT = SU2Driver.GetUnsteady_TimeStep()
+        #deltaT = min(precice_deltaT, deltaT)
+        SU2Driver.SetUnsteady_TimeStep(deltaT)
+        
         while (TimeIter < nTimeIter):
 
-            # Update timestep based on preCICE
-            deltaT = SU2Driver.GetUnsteady_TimeStep()
-            #deltaT = min(precice_deltaT, deltaT)
-            SU2Driver.SetUnsteady_TimeStep(deltaT)
-            
             # Time iteration preprocessing (mesh is deformed here)
             SU2Driver.Preprocess(TimeIter)
 
@@ -249,7 +225,6 @@ def main():
 
             # Monitor the solver
             stopCalc = SU2Driver.Monitor(TimeIter)
-            print('stopCalc',stopCalc,TimeIter)
 
             # Loop over the vertices
             for i, iVertex in enumerate(iVertices_MovingMarker_PHYS):
@@ -263,27 +238,21 @@ def main():
             TimeIter += 1
             time += deltaT
 
-        print('test1')
         # Write data to preCICE
         participant.write_data(mesh_name, precice_write, vertex_ids, forces)
 
-        print('test2')
         # Advance preCICE
         participant.advance(precice_deltaT)
 
-        print('test3')
         # Implicit coupling:
         if (participant.requires_reading_checkpoint()):
             # Reload old state
             SU2Driver.ReloadOldState()
             time = precice_saved_time
             TimeIter = precice_saved_iter
-        #SU2Driver.ReloadOldState()  # 'TIME_DOMAIN' = 'NO'のときエラーが生じる    
-        #time = precice_saved_time
-        #TimeIter = precice_saved_iter
 
-        print('test4',participant.is_time_window_complete())
         if (participant.is_time_window_complete()):
+            participant.requires_writing_checkpoint()
             SU2Driver.Output(TimeIter)
             if (stopCalc == True):
                 break
@@ -294,13 +263,15 @@ def main():
     # Postprocess the solver and exit cleanly
     SU2Driver.Postprocessing()
 
-    if options.with_MPI == True:
-        comm.Barrier()
+    participant.finalize()
 
     if SU2Driver != None:
         del SU2Driver
-
-    participant.finalize()
+    
+    if options.with_MPI == True:
+        MPI.Finalize()
+    
+    return
 
 # -------------------------------------------------------------------
 #  Run Main Program
