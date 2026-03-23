@@ -364,20 +364,16 @@ def main():
           # Writing data to Borealis for optimization
           #forces_file = f"forces_step{step_str}.dat"
           forces_file = f"forces.dat"
-          participant.requires_writing_checkpoint()
+          participant.requires_writing_checkpoint() # これがないと、終了時エラー
           write_forces_marker(forces_file, forces_object)
           break
           #filename_time_window_complete = 'flag_timewindow_complete_true'
           #with open(filename_time_window_complete, 'w') as f:
           #  pass
 
-
-    #print('test3')
-    #sys.stdout.flush()
-    #participant.requires_writing_checkpoint() # Finalizeを正常に実施する上で、この呼び出しが必要。requires_reading_checkpoint()だとだめっぽい、なぜ？
     participant.finalize()
     
-    return
+    #return
 
 if __name__ == '__main__':
     main()

@@ -7,20 +7,30 @@
 import sys
 from optparse import OptionParser	# use a parser for configuration
 import pysu2			            # imports the SU2 wrapped module
-#from math import *
+import SU2
 import numpy
 import precice
 from time import sleep
-import SU2
+import yaml
+
+def read_config_yaml(file_control):
+    print("Reading control file...:", file_control)
+    try:
+      with open(file_control) as file:
+        config = yaml.safe_load(file)
+    except Exception as e:
+      print('Exception occurred while loading YAML...', file=sys.stderr)
+      print(e, file=sys.stderr)
+      sys.exit(1)
+    return config
 
 
 def main():
 
     # Command line options
     parser=OptionParser()
-    parser.add_option("-f", "--file", dest="filename", help="Read config from FILE", metavar="FILE")
-    parser.add_option("--parallel", action="store_true",
-                    help="Specify if we need to initialize MPI", dest="with_MPI", default=False)
+    parser.add_option("-f", "--file", dest="filename", help="Read config from FILE for SU2", metavar="FILE")
+    parser.add_option("--parallel", action="store_true",help="Specify if we need to initialize MPI", dest="with_MPI", default=False)
 
     # preCICE options with default settings
     parser.add_option("-p", "--precice-participant", dest="precice_name", help="Specify preCICE participant name", default="Fluid" )
@@ -32,6 +42,15 @@ def main():
   
     (options, args) = parser.parse_args()
     options.nZone = int(1)
+
+    # Read control file
+    #file_control    = "config_su2opt.yml"
+    #config          = read_config_yaml(file_control)
+    ##with_MPI        = config.get('with_MPI', False) 
+    #precice_name    = config.get('precice_name', 'Fluid')
+    #precice_config  = config.get('precice_config', '../precice-config.xml')
+    #precice_mesh    = config.get('precice_mesh', 'Fluid-Mesh')
+    #nDim            = config.get('nDim', 2)
 
     # SU2 config file
     #config_su2 = SU2.io.Config(options.filename)
@@ -80,6 +99,7 @@ def main():
 
     MovingMarkerID = None
     MovingMarker = 'interface'       #specified by the user
+    #MovingMarker = config.get('MovingMarker', 'interface')
 #    MovingMarker = 'wetsurface'
 
     # Get all the tags with the moving option
@@ -135,6 +155,8 @@ def main():
     displacements = numpy.zeros((nVertex_MovingMarker_PHYS,options.nDim))
     forces = numpy.zeros((nVertex_MovingMarker_PHYS,options.nDim))
 
+    forces_mean = numpy.zeros((nVertex_MovingMarker_PHYS,options.nDim))
+
     # Retrieve some control parameters from the driver
     deltaT = SU2Driver.GetUnsteady_TimeStep()
     TimeIter = SU2Driver.GetTime_Iter()
@@ -143,12 +165,11 @@ def main():
 
     # Set up initial data for preCICE
     if (participant.requires_initial_data()):
-
         for i, iVertex in enumerate(iVertices_MovingMarker_PHYS):
             forces[i] = SU2Driver.GetFlowLoad(MovingMarkerID, iVertex)[:-1]
-
+        forces_mean = forces
         #participant.write_block_vector_data(mesh_name, precice_write, vertex_ids, forces)
-        participant.write_data(mesh_name, precice_write, vertex_ids, forces)
+        participant.write_data(mesh_name, precice_write, vertex_ids, forces_mean)
 
     # Initialize preCICE
     participant.initialize()
@@ -203,12 +224,13 @@ def main():
             comm.Barrier()
 
         # SU2 main routine
-        
         # Update timestep based on preCICE
         deltaT = SU2Driver.GetUnsteady_TimeStep()
         #deltaT = min(precice_deltaT, deltaT)
-        SU2Driver.SetUnsteady_TimeStep(deltaT)
-        
+        SU2Driver.SetUnsteady_TimeStep(deltaT)        
+
+        count_iter = 0
+        forces_mean = 0.0
         while (TimeIter < nTimeIter):
 
             # Time iteration preprocessing (mesh is deformed here)
@@ -227,19 +249,23 @@ def main():
             stopCalc = SU2Driver.Monitor(TimeIter)
 
             # Loop over the vertices
+            participant.requires_reading_checkpoint()
             for i, iVertex in enumerate(iVertices_MovingMarker_PHYS):
                 # Get forces at each vertex
                 #forces[i] = SU2Driver.GetFlowLoad(MovingMarkerID, iVertex)[:-1]
                 load = SU2Driver.GetFlowLoad(MovingMarkerID, iVertex)
                 forces[i] = load[:options.nDim]
                 #print('Force',TimeIter, i,forces[i])
+            
+            count_iter += 1
+            forces_mean += (forces - forces_mean )/count_iter
 
             # Update control parameters
             TimeIter += 1
             time += deltaT
 
         # Write data to preCICE
-        participant.write_data(mesh_name, precice_write, vertex_ids, forces)
+        participant.write_data(mesh_name, precice_write, vertex_ids, forces_mean)
 
         # Advance preCICE
         participant.advance(precice_deltaT)
@@ -271,7 +297,7 @@ def main():
     if options.with_MPI == True:
         MPI.Finalize()
     
-    return
+    #return
 
 # -------------------------------------------------------------------
 #  Run Main Program

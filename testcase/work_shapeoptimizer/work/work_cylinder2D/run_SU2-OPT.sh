@@ -17,7 +17,7 @@ DIR_FLUID=./fluid
 DIR_OPT=./optimization
 
 # Parallel
-MPIP=mpirun
+MPIP=mpirun.openmpi
 ncpu_f=2
 ncpu_o=1
 
@@ -77,9 +77,7 @@ while true; do
 
           echo "CPU set: $cpu_set"
 
-          $MPIP -np $ncpu_f \
-            --bind-to core --cpu-set "$cpu_set" \
-            ${PYTHON} ${LD_F} -f ${INP_F} --parallel > $LOG_F 2>&1 &
+          $MPIP -np $ncpu_f --bind-to core --cpu-set "$cpu_set" ${PYTHON} ${LD_F} -f ${INP_F} --parallel > $LOG_F & #2>&1 &
 
           PID1=$!
 
@@ -91,12 +89,16 @@ while true; do
           cd ${DIR_OPT}
 
           export OMP_NUM_THREADS=$ncpu_o
-          $PYTHON $LD_O > $LOG_O 2>&1 &
+          $PYTHON $LD_O > $LOG_O & #2>&1 &
+          
           PID2=$!
 
           cd ${current_dir}
 
           echo "Started processes: $PID1 $PID2"
+
+          wait $PID1
+          wait $PID2
 
         ) &  # ← 並列実行
 

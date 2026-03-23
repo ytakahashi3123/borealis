@@ -50,16 +50,17 @@
 
   <m2n:sockets acceptor="Fluid" connector="Optimizer" network="lo" exchange-directory="../"/>
 
+<!--
   <coupling-scheme:parallel-implicit>
     <participants first="Fluid" second="Optimizer"/>
-    <max-time-windows value="300" />
-    <time-window-size value="1.0e-3" />
+    <max-time-windows value="2" />
+    <time-window-size value="1.0e-0" />
     <exchange data="Force" mesh="Optimizer-Mesh" from="Fluid" to="Optimizer" initialize="yes"/>
     <exchange data="Displacement" mesh="Optimizer-Mesh" from="Optimizer" to="Fluid" initialize="yes"/>
     <max-iterations value="2"/>
     <relative-convergence-measure limit="1e-3" data="Displacement" mesh="Optimizer-Mesh"/>
     <relative-convergence-measure limit="1e-3" data="Force" mesh="Optimizer-Mesh"/>
-<!--
+
     <acceleration:IQN-ILS>
       <data name="Displacement" mesh="Optimizer-Mesh"/>
       <data name="Force" mesh="Optimizer-Mesh"/>
@@ -69,17 +70,17 @@
       <max-used-iterations value="40"/>
       <time-windows-reused value="10"/>
     </acceleration:IQN-ILS>
--->
-  </coupling-scheme:parallel-implicit>
 
-<!--
+  </coupling-scheme:parallel-implicit>
+-->
+
   <coupling-scheme:serial-explicit>
     <participants first="Fluid" second="Optimizer"/>
-    <max-time-windows value="300" />
-    <time-window-size value="1.0e-4" />
+    <max-time-windows value="1" />
+    <time-window-size value="1.0e-0" />
     <exchange data="Force" mesh="Optimizer-Mesh" from="Fluid" to="Optimizer" initialize="yes"/>
     <exchange data="Displacement" mesh="Optimizer-Mesh" from="Optimizer" to="Fluid" initialize="yes" />
   </coupling-scheme:serial-explicit>
--->
+
 </precice-configuration>
 
