@@ -191,15 +191,12 @@ def main():
     precice_mesh    = config.get('precice_mesh', 'Optimizer-Mesh')
     nDim            = config.get('nDim', 2)
 
+    flag_sequential = False
+
     # Import mpi4py for parallel run
     comm = 0
     rank = 0
     size = 1
-    
-    #mpi_dict = {}
-    #mpi_dict['comm'] = comm
-    #mpi_dict['rank'] = rank
-    #mpi_dict['size'] = size
 
     # Configure preCICE:
     try:
@@ -261,38 +258,23 @@ def main():
         print('Error, Number of dimension is invalid:',nDim)
         sys.exit()
 
-    #precice_dict = {}
-    #precice_dict['mesh_name']     = mesh_name
-    #precice_dict['precice_write'] = precice_write
-    #precice_dict['precice_read']  = precice_read
-    #precice_dict['marker_data']   = marker_data
-    #precice_dict['coords']        = coords
-    #precice_dict['vertex_ids']    = vertex_ids
-    #precice_dict['displacements'] = displacements
-    #precice_dict['forces']        = forces
-
     # Time variables
-    #deltaT = 1.e-3
-    #TimeIter = 0
     timestep_set = config.get("timestep", 1.e-3)
     iteration_start = config.get("iteration_start", 0)
 
     time_elapsed = timestep_set * float(iteration_start)
     interation = iteration_start
 
-    #computational_dict = {}
-    #computational_dict['deltaT'] = timestep_set
-    #computational_dict['TimeIter'] = iteration_start
-    #computational_dict['time_elapsed'] = time_elapsed
-
     print('Initial settings')
     print('Vertex_IDs:',vertex_ids)
     print('Displacements:',displacements)
 
     # Read initial displacements data from Borealis for optimization
-    step_str = f"{interation:05d}"
-    #displacements_file = f"displacements_step{step_str}.dat"
-    displacements_file = f"displacements.dat"
+    if flag_sequential :
+        step_str = f"{interation:05d}"
+        displacements_file = f"displacements_step{step_str}.dat"
+    else :
+        displacements_file = f"displacements.dat"
     displacements = read_displacements_from_file(displacements_file)
     # Set displacements
     print('displacements',displacements)
@@ -326,9 +308,11 @@ def main():
         timestep = min(precice_timestep, timestep_set)
 
         # Read data from Borealis for optimization
-        step_str = f"{interation:05d}"
-        #displacements_file = f"displacements_step{step_str}.dat"
-        displacements_file = f"displacements.dat"
+        if flag_sequential :
+            step_str = f"{interation:05d}"
+            displacements_file = f"displacements_step{step_str}.dat"
+        else:
+            displacements_file = f"displacements.dat"
         while not os.path.exists(displacements_file):
           time.sleep(0.1)
         displacements = read_displacements_from_file(displacements_file)
@@ -358,22 +342,18 @@ def main():
             time_elapsed = precice_saved_time
             interation = precice_saved_iter
         
-        #print(participant.is_time_window_complete())
-        #sys.stdout.flush()
         if participant.is_time_window_complete() :
-          # Writing data to Borealis for optimization
-          #forces_file = f"forces_step{step_str}.dat"
-          forces_file = f"forces.dat"
-          participant.requires_writing_checkpoint() # これがないと、終了時エラー
-          write_forces_marker(forces_file, forces_object)
-          break
-          #filename_time_window_complete = 'flag_timewindow_complete_true'
-          #with open(filename_time_window_complete, 'w') as f:
-          #  pass
+            # Writing data to Borealis for optimization
+            if flag_sequential :
+                forces_file = f"forces_step{step_str}.dat"
+            else:
+                forces_file = f"forces.dat"
+            participant.requires_writing_checkpoint() # これがないと、終了時エラー
+            write_forces_marker(forces_file, forces_object)
+            break
 
     participant.finalize()
-    
-    #return
+
 
 if __name__ == '__main__':
     main()

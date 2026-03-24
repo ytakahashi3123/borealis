@@ -119,25 +119,24 @@ class adapter_shapeoptimizer(orbital):
     self.displacements = np.zeros((self.num_marker,self.num_dim))
     self.forces_marker = np.zeros(self.num_dim)
 
-    # Caseディレクトリの作成
-    #self.work_dir_case = self.work_dir + '/' + self.case_dir + '_rank' + str(self.mpi_instance.rank+1).zfill(self.step_digit)
-    #print('[ShapeOpt-Borealis] --Make case directory: ', self.work_dir_case)
-    #shutil.copytree(self.work_dir_template, self.work_dir_case)
+    # 非定常空気力データを目的関数として時間経過とともに形状最適化を行う
+    self.flag_sequential = False
         
-    # Set control parameters
-    #self.work_dir_series    = config['shapeoptimizer']['work_dir_series']
-    #forces_file             = config['shapeoptimizer']['filename_forces']
-    #displacements_file      = config['shapeoptimizer']['filename_displacements']
-    #self.filename_forces_base        = self.work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(forces_file)[0]
-    #self.filename_forces_ext         = os.path.splitext(forces_file)[1]
-    #self.filename_displacements_base = self.work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(displacements_file)[0]
-    #self.filename_displacements_ext  = os.path.splitext(displacements_file)[1]
-    #self.step_digit_series = config['shapeoptimizer']['step_digit_series']
-
+    # File names
     self.work_dir_series    = config['shapeoptimizer']['work_dir_series']
     self.forces_file        = config['shapeoptimizer']['filename_forces']
     self.displacements_file = config['shapeoptimizer']['filename_displacements']
     self.step_digit_series  = config['shapeoptimizer']['step_digit_series']
+
+    if self.flag_sequential :
+      # Caseディレクトリの作成
+      self.work_dir_case = self.work_dir + '/' + self.case_dir + '_rank' + str(self.mpi_instance.rank+1).zfill(self.step_digit)
+      print('[ShapeOpt-Borealis] --Make case directory: ', self.work_dir_case)
+      shutil.copytree(self.work_dir_template, self.work_dir_case)
+      self.filename_displacements_base = self.work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(self.displacements_file)[0]
+      self.filename_displacements_ext  = os.path.splitext(self.displacements_file)[1]
+      self.filename_forces_base        = self.work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(self.forces_file)[0]
+      self.filename_forces_ext         = os.path.splitext(self.forces_file)[1]
 
     # Delete old files if the files remain
     #self.delete_step_files(forces_file, digit=self.step_digit_series, directory=self.work_dir_case+'/'+self.work_dir_series)
@@ -245,8 +244,6 @@ class adapter_shapeoptimizer(orbital):
   def write_request_instruction_para(self, filename, pid):
     comm = self.mpi_instance.comm
     rank = self.mpi_instance.rank
-    #size = self.mpi_instance.size
-    #print('[ShapeOpt-Borealis] Writing job requests file',pid,rank,size)
     # 各ランクが自分のディレクトリを作る
     work_dir_case_rank = self.work_dir + '/' + self.case_dir + '_rank' + str(pid).zfill(self.step_digit) 
     # rank 0 に集約
@@ -302,54 +299,59 @@ class adapter_shapeoptimizer(orbital):
 
   def objective_function(self, parameter_opt, *args):
 
-    if args:
-      # args[0]: 粒子ID
-      self.pid = args[0]
-      # args[1]: 最適化ステップ
-      self.step = args[1]
-      # args[2]: 目的関数を最大化するか最小化するか
+    # args[0]: 粒子ID
+    # args[1]: 最適化ステップ
+    # args[2]: 目的関数を最大化するか最小化するか
+    if not args:
+      pid  = self.pid
+      step = self.step
+      sign_of = 1.0
+    else:
+      pid = args[0]
+      step = args[1]
       sign_of = args[2]
 
-    print('[ShapeOpt-Borealis] Iteration: ', self.pid)
+    print('[ShapeOpt-Borealis] Iteration: ', pid)
 
-    #step_str = f"{self.step:0{self.step_digit_series}d}"
+    # File names
+    if self.flag_sequential:
+      step_str = f"{step:0{self.step_digit_series}d}"
+      filename_displacements_series = f"{self.filename_displacements_base}_step{step_str}{self.filename_displacements_ext}"
+      filename_forces_series = f"{self.filename_forces_base}_step{step_str}{self.filename_forces_ext}"
+    else :
+      # Caseディレクトリの作成
+      work_dir_case = self.work_dir + '/' + self.case_dir + '_rank' + str(pid).zfill(self.step_digit)
+      print('[ShapeOpt-Borealis] --Make case directory: ', work_dir_case)
+      shutil.copytree(self.work_dir_template, work_dir_case) 
+      filename_displacements_base = work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(self.displacements_file)[0]
+      filename_displacements_ext  = os.path.splitext(self.displacements_file)[1]
+      filename_displacements_series = f"{filename_displacements_base}{filename_displacements_ext}"
+      filename_forces_base        = work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(self.forces_file)[0]
+      filename_forces_ext         = os.path.splitext(self.forces_file)[1]
+      filename_forces_series = f"{filename_forces_base}{filename_forces_ext}"
 
-    # Caseディレクトリの作成
-    work_dir_case = self.work_dir + '/' + self.case_dir + '_rank' + str(self.pid).zfill(self.step_digit)
-    print('[ShapeOpt-Borealis] --Make case directory: ', work_dir_case)
-    shutil.copytree(self.work_dir_template, work_dir_case)
-        
-    filename_displacements_base = work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(self.displacements_file)[0]
-    filename_displacements_ext  = os.path.splitext(self.displacements_file)[1]
-    filename_forces_base        = work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(self.forces_file)[0]
-    filename_forces_ext         = os.path.splitext(self.forces_file)[1]
-
-    # Set displacements data
-    #filename_displacements_series = f"{filename_displacements_base}_step{step_str}{filename_displacements_ext}"
-    filename_displacements_series = f"{filename_displacements_base}{filename_displacements_ext}"
     # Write displacements file
     self.displacements = parameter_opt.reshape(self.num_marker, self.num_dim)
     self.write_displacements(filename_displacements_series, self.displacements)
-    print(f"[ShapeOpt-Borealis] Step {self.step+1}: Wrote {filename_displacements_series}\n", f"Displacements: {self.displacements[1,:]}..{self.displacements[-1,:]}")
+    print(f"[ShapeOpt-Borealis] PID {pid} and Step {step+1}: Wrote {filename_displacements_series}\n", f"Displacements: {self.displacements[1,:]}..{self.displacements[-1,:]}")
 
-    #if self.step == 0:
-    #if self.mpi_instance.flag_mpi:
-    #  self.mpi_instance.comm.Barrier()
-      # 形状最適化(shapeoptimizer_preCICE)サブプロセスの起動指示ファイルを生成
-      # ->中間スクリプトがこれを検知して形状最適化を実行する（親プロセスをMPIで起動したとき、親プロセスが子プロセスをMPIで起動できない仕様上このような措置を図る）
-      #if self.mpi_instance.rank == 0:
-      #  self.write_request_instruction(self.filename_jobrequests)
-    self.write_request_instruction_para(self.filename_jobrequests,self.pid)
-    #if self.mpi_instance.flag_mpi:
-    #  self.mpi_instance.comm.Barrier()
+    # 形状最適化(shapeoptimizer_preCICE)サブプロセスの起動指示ファイルを生成
+    # ->中間スクリプトがこれを検知して形状最適化を実行する（親プロセスをMPIで起動したとき、親プロセスが子プロセスをMPIで起動できない仕様上このような措置を図る）
+    if self.flag_sequential:
+      if self.step == 0:
+        if self.mpi_instance.rank == 0:
+          self.write_request_instruction(self.filename_jobrequests)
+    else:
+      self.write_request_instruction_para(self.filename_jobrequests, pid)
+      
+    if self.mpi_instance.flag_mpi:
+      self.mpi_instance.comm.Barrier()
 
     # Get forces data
-    #filename_forces_series = f"{filename_forces_base}_step{step_str}{filename_forces_ext}"
-    filename_forces_series = f"{filename_forces_base}{filename_forces_ext}"
     while not os.path.exists(filename_forces_series):
       time.sleep(3.0)
     self.forces_marker = self.read_forces_marker(filename_forces_series)
-    print(f"[ShapeOpt-Borealis] Step {self.step+1}: Read {filename_forces_series}\n", f"Forces: {self.forces_marker}")
+    print(f"[ShapeOpt-Borealis] PID {pid} and Step {step+1}: Read {filename_forces_series}\n", f"Forces: {self.forces_marker}")
 
     # Penalty
     penalty = 0.0
