@@ -2,7 +2,7 @@
 
 # Borealis adapter (pilot): Python script for Shape Optimization with preCICE.
 # Version: shape_optimization_preCICE-v-0.1.0-pilot
-# Release date: 2025/10/10
+# Release date: 2026/04/30
 
 # Author: Yusuke Takahashi, Hokkaido University
 # Contact: ytakahashi@eng.hokudai.ac.jp
@@ -185,13 +185,12 @@ def main():
     #file_control = arg.file
     config       = read_config_yaml(file_control_default)
 
-    with_MPI        = config.get('with_MPI', False) 
-    precice_name    = config.get('precice_name', 'Optimizer')
-    precice_config  = config.get('precice_config', '../precice-config.xml')
-    precice_mesh    = config.get('precice_mesh', 'Optimizer-Mesh')
-    nDim            = config.get('nDim', 2)
-
-    flag_sequential = False
+    with_MPI       = config.get('with_MPI', False) 
+    precice_name   = config.get('precice_name', 'Optimizer')
+    precice_config = config.get('precice_config', '../precice-config.xml')
+    precice_mesh   = config.get('precice_mesh', 'Optimizer-Mesh')
+    nDim           = config.get('nDim', 2)
+    in_sequential  = config.get('in_sequential', False)
 
     # Import mpi4py for parallel run
     comm = 0
@@ -270,7 +269,7 @@ def main():
     print('Displacements:',displacements)
 
     # Read initial displacements data from Borealis for optimization
-    if flag_sequential :
+    if in_sequential:
         step_str = f"{interation:05d}"
         displacements_file = f"displacements_step{step_str}.dat"
     else :
@@ -308,7 +307,7 @@ def main():
         timestep = min(precice_timestep, timestep_set)
 
         # Read data from Borealis for optimization
-        if flag_sequential :
+        if in_sequential :
             step_str = f"{interation:05d}"
             displacements_file = f"displacements_step{step_str}.dat"
         else:
@@ -344,7 +343,7 @@ def main():
         
         if participant.is_time_window_complete() :
             # Writing data to Borealis for optimization
-            if flag_sequential :
+            if in_sequential :
                 forces_file = f"forces_step{step_str}.dat"
             else:
                 forces_file = f"forces.dat"

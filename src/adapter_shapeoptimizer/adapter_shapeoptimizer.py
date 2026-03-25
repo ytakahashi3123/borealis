@@ -9,7 +9,7 @@ import sys
 import shutil as shutil
 import subprocess
 import time
-import signal
+#import signal
 from orbital.orbital import orbital
 
 class adapter_shapeoptimizer(orbital):
@@ -120,7 +120,7 @@ class adapter_shapeoptimizer(orbital):
     self.forces_marker = np.zeros(self.num_dim)
 
     # 非定常空気力データを目的関数として時間経過とともに形状最適化を行う
-    self.flag_sequential = False
+    self.in_sequential = config['shapeoptimizer']['in_sequential']
         
     # File names
     self.work_dir_series    = config['shapeoptimizer']['work_dir_series']
@@ -128,7 +128,7 @@ class adapter_shapeoptimizer(orbital):
     self.displacements_file = config['shapeoptimizer']['filename_displacements']
     self.step_digit_series  = config['shapeoptimizer']['step_digit_series']
 
-    if self.flag_sequential :
+    if self.in_sequential :
       # Caseディレクトリの作成
       self.work_dir_case = self.work_dir + '/' + self.case_dir + '_rank' + str(self.mpi_instance.rank+1).zfill(self.step_digit)
       print('[ShapeOpt-Borealis] --Make case directory: ', self.work_dir_case)
@@ -314,7 +314,7 @@ class adapter_shapeoptimizer(orbital):
     print('[ShapeOpt-Borealis] Iteration: ', pid)
 
     # File names
-    if self.flag_sequential:
+    if self.in_sequential:
       step_str = f"{step:0{self.step_digit_series}d}"
       filename_displacements_series = f"{self.filename_displacements_base}_step{step_str}{self.filename_displacements_ext}"
       filename_forces_series = f"{self.filename_forces_base}_step{step_str}{self.filename_forces_ext}"
@@ -337,7 +337,7 @@ class adapter_shapeoptimizer(orbital):
 
     # 形状最適化(shapeoptimizer_preCICE)サブプロセスの起動指示ファイルを生成
     # ->中間スクリプトがこれを検知して形状最適化を実行する（親プロセスをMPIで起動したとき、親プロセスが子プロセスをMPIで起動できない仕様上このような措置を図る）
-    if self.flag_sequential:
+    if self.in_sequential:
       if self.step == 0:
         if self.mpi_instance.rank == 0:
           self.write_request_instruction(self.filename_jobrequests)

@@ -74,7 +74,7 @@ parameter_optimized:
 
 PSO: # Particle swarm optimization
   # Number of iterations
-  num_optiter: 50
+  num_optiter: 300
 
   # Number of particles
   num_particle: 6
@@ -117,8 +117,8 @@ shapeoptimizer:
   # Executing script
   cmd_code: ./run_SU2-OPT_pps.sh
   
-  # Control file
-  #filename_control: orbit.ctl
+  # Sequential optimization
+  in_sequential: False
 
   # Coupling simulation parameters
   work_dir_series: optimization

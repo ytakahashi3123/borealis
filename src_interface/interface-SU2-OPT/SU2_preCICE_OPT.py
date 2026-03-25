@@ -25,32 +25,40 @@ def read_config_yaml(file_control):
     return config
 
 
+def update_running_mean(mean, new_value, count):
+    return mean + (new_value - mean) / count
+
+
 def main():
 
     # Command line options
     parser=OptionParser()
     parser.add_option("-f", "--file", dest="filename", help="Read config from FILE for SU2", metavar="FILE")
-    parser.add_option("--parallel", action="store_true",help="Specify if we need to initialize MPI", dest="with_MPI", default=False)
+    parser.add_option("--parallel", action="store_true", dest="with_MPI", help="Specify if we need to initialize MPI", default=False)
 
     # preCICE options with default settings
-    parser.add_option("-p", "--precice-participant", dest="precice_name", help="Specify preCICE participant name", default="Fluid" )
-    parser.add_option("-c", "--precice-config", dest="precice_config", help="Specify preCICE config file", default="../precice-config.xml")
-    parser.add_option("-m", "--precice-mesh", dest="precice_mesh", help="Specify the preCICE mesh name", default="Fluid-Mesh")
+    #parser.add_option("-p", "--precice-participant", dest="precice_name", help="Specify preCICE participant name", default="Fluid" )
+    #parser.add_option("-c", "--precice-config", dest="precice_config", help="Specify preCICE config file", default="../precice-config.xml")
+    #parser.add_option("-m", "--precice-mesh", dest="precice_mesh", help="Specify the preCICE mesh name", default="Fluid-Mesh")
 
     # Dimension
-    parser.add_option("-d", "--dimension", dest="nDim", help="Dimension of fluid domain (2D/3D)", type="int", default=2)
+    #parser.add_option("-d", "--dimension", dest="nDim", help="Dimension of fluid domain (2D/3D)", type="int", default=2)
   
+    # Sequential
+    #parser.add_option("--sequential", action="store_true", dest="with_sequential", help="Sequential process", default=False)
+
     (options, args) = parser.parse_args()
     options.nZone = int(1)
 
     # Read control file
-    #file_control    = "config_su2opt.yml"
-    #config          = read_config_yaml(file_control)
+    file_control   = "config_su2opt.yml"
+    config         = read_config_yaml(file_control)
     ##with_MPI        = config.get('with_MPI', False) 
-    #precice_name    = config.get('precice_name', 'Fluid')
-    #precice_config  = config.get('precice_config', '../precice-config.xml')
-    #precice_mesh    = config.get('precice_mesh', 'Fluid-Mesh')
-    #nDim            = config.get('nDim', 2)
+    precice_name   = config.get('precice_name', 'Fluid')
+    precice_config = config.get('precice_config', '../precice-config.xml')
+    precice_mesh   = config.get('precice_mesh', 'Fluid-Mesh')
+    nDim           = config.get('nDim', 2)
+    in_sequential  = config.get('in_sequential', False)
 
     # SU2 config file
     #config_su2 = SU2.io.Config(options.filename)
@@ -78,29 +86,29 @@ def main():
 
     # Initialize the corresponding driver of SU2, this includes solver preprocessing
     try:
-        SU2Driver = pysu2.CSinglezoneDriver(options.filename, options.nZone, comm);
+        SU2Driver = pysu2.CSinglezoneDriver(options.filename, options.nZone, comm)
     except TypeError as exception:
         print('A TypeError occured in pysu2.CDriver : ',exception)
         return
 
     # Configure preCICE:
     try:
-        participant = precice.Participant(options.precice_name, options.precice_config, rank, size)#, comm)
+        participant = precice.Participant(precice_name, precice_config, rank, size)#, comm)
     except:
         print("There was an error configuring preCICE")
         return
 
-    mesh_name = options.precice_mesh
+#    mesh_name = options.precice_mesh
+    mesh_name = precice_mesh
 
     # Check preCICE + SU2 dimensions
-    if options.nDim != participant.get_mesh_dimensions(mesh_name):
+    if nDim != participant.get_mesh_dimensions(mesh_name):
         print("SU2 and preCICE dimensions are not the same! Exiting")
         return
 
     MovingMarkerID = None
-    MovingMarker = 'interface'       #specified by the user
-    #MovingMarker = config.get('MovingMarker', 'interface')
-#    MovingMarker = 'wetsurface'
+    #MovingMarker = 'interface'       #specified by the user
+    MovingMarker = config.get('MovingMarker', 'interface')
 
     # Get all the tags with the moving option
     MovingMarkerList =  SU2Driver.GetAllDeformMeshMarkersTag()
@@ -130,14 +138,11 @@ def main():
                 iVertices_MovingMarker_PHYS.append(int(iVertex))
     
     # Get coords of vertices
-    coords = numpy.zeros((nVertex_MovingMarker_PHYS, options.nDim))
+    coords = numpy.zeros((nVertex_MovingMarker_PHYS, nDim))
     for i, iVertex in enumerate(iVertices_MovingMarker_PHYS):
         coord_passive = SU2Driver.GetInitialMeshCoord(MovingMarkerID, iVertex)
-        for iDim in range(options.nDim):
+        for iDim in range(nDim):
             coords[i, iDim] = coord_passive[iDim]
-
-    # Set mesh vertices in preCICE:
-    vertex_ids = participant.set_mesh_vertices(mesh_name, coords)
 
     # Set mesh vertices in preCICE:
     try:
@@ -148,14 +153,15 @@ def main():
 
     # Get read and write data IDs
     # By default:
-    precice_read = "Displacement"
-    precice_write = "Force"
+    #precice_read = "Displacement"
+    #precice_write = "Force"
+    precice_read  = config.get('precice_read',  'Displacement')
+    precice_write = config.get('precice_write', 'Force')
 
     # Instantiate arrays to hold displacements + forces info
-    displacements = numpy.zeros((nVertex_MovingMarker_PHYS,options.nDim))
-    forces = numpy.zeros((nVertex_MovingMarker_PHYS,options.nDim))
-
-    forces_mean = numpy.zeros((nVertex_MovingMarker_PHYS,options.nDim))
+    displacements = numpy.zeros((nVertex_MovingMarker_PHYS,nDim))
+    forces = numpy.zeros((nVertex_MovingMarker_PHYS,nDim))
+    forces_mean = numpy.zeros((nVertex_MovingMarker_PHYS,nDim))
 
     # Retrieve some control parameters from the driver
     deltaT = SU2Driver.GetUnsteady_TimeStep()
@@ -217,7 +223,7 @@ def main():
         for i, iVertex in enumerate(iVertices_MovingMarker_PHYS):
             DisplX = displacements[i][0]
             DisplY = displacements[i][1]
-            DisplZ = 0 if options.nDim == 2 else displacements[i][2]
+            DisplZ = 0 if nDim == 2 else displacements[i][2]
             SU2Driver.SetMeshDisplacement(MovingMarkerID, iVertex, DisplX, DisplY, DisplZ)
         
         if options.with_MPI == True:
@@ -226,12 +232,21 @@ def main():
         # SU2 main routine
         # Update timestep based on preCICE
         deltaT = SU2Driver.GetUnsteady_TimeStep()
-        #deltaT = min(precice_deltaT, deltaT)
-        SU2Driver.SetUnsteady_TimeStep(deltaT)        
+        if in_sequential: 
+            deltaT = min(precice_deltaT, deltaT)
+        SU2Driver.SetUnsteady_TimeStep(deltaT)    
+
+        if in_sequential:
+            TimeIter_su2 = 0
+            nTimeIter_su2 = 1
+        else:
+            TimeIter_su2 = TimeIter
+            nTimeIter_su2 = nTimeIter
 
         count_iter = 0
         forces_mean = 0.0
-        while (TimeIter < nTimeIter):
+        #while (TimeIter_su2 < nTimeIter_su2):
+        for TimeIter_su2 in range(TimeIter_su2, nTimeIter_su2):
 
             # Time iteration preprocessing (mesh is deformed here)
             SU2Driver.Preprocess(TimeIter)
@@ -254,15 +269,17 @@ def main():
                 # Get forces at each vertex
                 #forces[i] = SU2Driver.GetFlowLoad(MovingMarkerID, iVertex)[:-1]
                 load = SU2Driver.GetFlowLoad(MovingMarkerID, iVertex)
-                forces[i] = load[:options.nDim]
-                #print('Force',TimeIter, i,forces[i])
+                forces[i] = load[:nDim]
             
             count_iter += 1
-            forces_mean += (forces - forces_mean )/count_iter
+            #forces_mean += (forces - forces_mean )/count_iter
+            forces_mean = update_running_mean(forces_mean, forces, count_iter)
 
             # Update control parameters
             TimeIter += 1
             time += deltaT
+
+            #TimeIter_su2 += 1
 
         # Write data to preCICE
         participant.write_data(mesh_name, precice_write, vertex_ids, forces_mean)
