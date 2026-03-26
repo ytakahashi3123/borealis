@@ -17,7 +17,7 @@ from general import general
 def main():
 
   # Read parameters
-  file_control = 'pickup_optimal_result_shapeopt.yml'
+  file_control = 'pickup_optimal_result_sequential.yml'
   config = general.read_config_yaml(file_control)
 
   # Initial settings

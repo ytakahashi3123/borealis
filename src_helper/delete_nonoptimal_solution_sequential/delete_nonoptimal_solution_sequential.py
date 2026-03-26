@@ -22,7 +22,7 @@ def read_config_yaml(file_control):
 def main():
 
   # Read parameters
-  file_control = 'delete_nonoptimal_solution_shapeopt.yml'
+  file_control = 'delete_nonoptimal_solution_sequential.yml'
   config = read_config_yaml(file_control)
 
   #file_control_borealis = 'borealis.yml'

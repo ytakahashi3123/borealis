@@ -26,7 +26,7 @@ def main():
   # Initial settings
   work_dir = config['work_dir']
   case_dir = config['case_dir']
-  filename_result = config['filename_result']
+  #filename_result = config['filename_result']
 
   step_start = config['step_start']
   step_end   = config['step_end']

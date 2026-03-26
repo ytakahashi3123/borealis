@@ -338,7 +338,7 @@ class adapter_shapeoptimizer(orbital):
     # 形状最適化(shapeoptimizer_preCICE)サブプロセスの起動指示ファイルを生成
     # ->中間スクリプトがこれを検知して形状最適化を実行する（親プロセスをMPIで起動したとき、親プロセスが子プロセスをMPIで起動できない仕様上このような措置を図る）
     if self.in_sequential:
-      if self.step == 0:
+      if step == 0:
         if self.mpi_instance.rank == 0:
           self.write_request_instruction(self.filename_jobrequests)
     else:
