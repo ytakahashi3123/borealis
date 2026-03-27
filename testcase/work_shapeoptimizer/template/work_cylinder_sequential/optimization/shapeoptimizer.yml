@@ -17,7 +17,7 @@ precice_mesh: "Optimizer-Mesh"
 nDim: 2
 
 # Serquential optimization
-in_sequential: False
+in_sequential: True
 
 # preCICE writing and reading variables
 precice_write: "Displacement"
@@ -26,7 +26,6 @@ step_digit_series: 5
 
 precice_write_var_initial: 1.e-3
 precice_read_var_initial : 0.e-0
-
 
 # Filename for coordinate of marker points
 filename_marker: "marker_points.dat"
@@ -37,5 +36,5 @@ center_of_gravity:
   - 0.0
 
 # Time variables
-timestep: 1.e-0
+timestep: 1.e-3
 iteration_start: 0

@@ -16,9 +16,13 @@ precice_mesh: "Optimizer-Mesh"
 # Dimension of optimizer domain (2D/3D): 2 or 3
 nDim: 2
 
+# Serquential optimization
+in_sequential: False
+
 # preCICE writing and reading variables
 precice_write: "Displacement"
 precice_read: "Force"
+step_digit_series: 5
 
 precice_write_var_initial: 1.e-3
 precice_read_var_initial : 0.e-0
@@ -33,5 +37,5 @@ center_of_gravity:
   - 0.0
 
 # Time variables
-timestep: 1.e-3
+timestep: 1.e-0
 iteration_start: 0

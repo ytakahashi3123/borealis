@@ -185,12 +185,13 @@ def main():
     #file_control = arg.file
     config       = read_config_yaml(file_control_default)
 
-    with_MPI       = config.get('with_MPI', False) 
-    precice_name   = config.get('precice_name', 'Optimizer')
-    precice_config = config.get('precice_config', '../precice-config.xml')
-    precice_mesh   = config.get('precice_mesh', 'Optimizer-Mesh')
-    nDim           = config.get('nDim', 2)
-    in_sequential  = config.get('in_sequential', False)
+    with_MPI          = config.get('with_MPI', False) 
+    precice_name      = config.get('precice_name', 'Optimizer')
+    precice_config    = config.get('precice_config', '../precice-config.xml')
+    precice_mesh      = config.get('precice_mesh', 'Optimizer-Mesh')
+    nDim              = config.get('nDim', 2)
+    in_sequential     = config.get('in_sequential', False)
+    step_digit_series = config.get('step_digit_series', 5)
 
     # Import mpi4py for parallel run
     comm = 0
@@ -262,7 +263,7 @@ def main():
     iteration_start = config.get("iteration_start", 0)
 
     time_elapsed = timestep_set * float(iteration_start)
-    interation = iteration_start
+    iteration = iteration_start
 
     print('Initial settings')
     print('Vertex_IDs:',vertex_ids)
@@ -270,7 +271,7 @@ def main():
 
     # Read initial displacements data from Borealis for optimization
     if in_sequential:
-        step_str = f"{interation:05d}"
+        step_str = f"{iteration:0{step_digit_series}d}"
         displacements_file = f"displacements_step{step_str}.dat"
     else :
         displacements_file = f"displacements.dat"
@@ -298,7 +299,7 @@ def main():
         # Implicit coupling
         if (participant.requires_writing_checkpoint()):
             precice_saved_time = time_elapsed
-            precice_saved_iter = interation
+            precice_saved_iter = iteration
 
         # Set the maximum time step allowed by preCICE
         precice_timestep = participant.get_max_time_step_size()
@@ -308,7 +309,7 @@ def main():
 
         # Read data from Borealis for optimization
         if in_sequential :
-            step_str = f"{interation:05d}"
+            step_str = f"{iteration:0{step_digit_series}d}"
             displacements_file = f"displacements_step{step_str}.dat"
         else:
             displacements_file = f"displacements.dat"
@@ -330,7 +331,7 @@ def main():
         print('Forces working on object',forces_object)
 
         # Update control parameters
-        interation += 1
+        iteration += 1
         time_elapsed += timestep
         
         # Advance preCICE
@@ -339,17 +340,19 @@ def main():
         # Implicit coupling:
         if (participant.requires_reading_checkpoint()):
             time_elapsed = precice_saved_time
-            interation = precice_saved_iter
+            iteration = precice_saved_iter
         
         if participant.is_time_window_complete() :
             # Writing data to Borealis for optimization
             if in_sequential :
                 forces_file = f"forces_step{step_str}.dat"
+                participant.requires_writing_checkpoint() # これがないと、終了時エラー
+                write_forces_marker(forces_file, forces_object)
             else:
                 forces_file = f"forces.dat"
-            participant.requires_writing_checkpoint() # これがないと、終了時エラー
-            write_forces_marker(forces_file, forces_object)
-            break
+                participant.requires_writing_checkpoint() # これがないと、終了時エラー
+                write_forces_marker(forces_file, forces_object)
+                break
 
     participant.finalize()
 

@@ -76,8 +76,8 @@
 
   <coupling-scheme:serial-explicit>
     <participants first="Fluid" second="Optimizer"/>
-    <max-time-windows value="1" />
-    <time-window-size value="1.0e-0" />
+    <max-time-windows value="300" />
+    <time-window-size value="1.0e-3" />
     <exchange data="Force" mesh="Optimizer-Mesh" from="Fluid" to="Optimizer" initialize="yes"/>
     <exchange data="Displacement" mesh="Optimizer-Mesh" from="Optimizer" to="Fluid" initialize="yes" />
   </coupling-scheme:serial-explicit>
