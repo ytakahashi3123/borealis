@@ -35,7 +35,7 @@ def main():
                                 skip_header=1 )
   index_local_to_global = data_extract[:,1].astype(int)
   step = data_extract[:,0].astype(int)
-  id_optimal_case = index_local_to_global[-1] - step[-1]*num_rank + 1
+  id_optimal_case = index_local_to_global[-1] - step[-1]*num_rank
 
   print(f'Case rank including optimal solution {id_optimal_case}')
 

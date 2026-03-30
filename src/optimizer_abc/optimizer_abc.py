@@ -17,6 +17,7 @@ class optimizer_abc(orbital):
     self.str_food_source = 'food_source'
     self.str_error       = 'solution'
     self.str_best_index  = 'best_index'
+    self.str_id_history  = 'ID_history'
 
     self.text_color = '\033[96m'
     self.text_end = '\033[0m'
@@ -106,7 +107,7 @@ class optimizer_abc(orbital):
         probs = [f / total_fitness for f in fitness_values]
         return np.random.choice(len(fitness_values), p=probs)
 
-  def run_optimizer_abc(self, config, objective_function, parameter_boundary):
+  def run_optimizer_abc_prev(self, config, objective_function, parameter_boundary):
 
     # Number of iteration
     num_optiter = config['ABC']['num_optiter']
@@ -317,7 +318,7 @@ class optimizer_abc(orbital):
     return best_food_source, best_solution, solution_dict
 
 
-  def run_optimizer_abc_mpi(self, config, objective_function, parameter_boundary):
+  def run_optimizer_abc(self, config, objective_function, parameter_boundary):
     # MPI情報の取得
     MPI = self.mpi_instance.MPI
     rank = self.mpi_instance.rank
@@ -341,12 +342,24 @@ class optimizer_abc(orbital):
     solution = np.zeros(num_employ_bees)
     visit_counter = np.zeros(num_employ_bees, dtype=int)
 
+    # 履歴用
+    id_history = np.zeros((num_optiter, num_employ_bees), dtype=int)
+    id_history_init = np.zeros((num_employ_bees), dtype=int)
+    # 現在のステップでの最新IDを保持する一時配列
+    current_ids = np.zeros(num_employ_bees, dtype=int)
+
     # --- 1. Initialization (担当分のみ計算) ---
     for i in my_indices:
       food_source[i] = self.generate_food_source(parameter_boundary)
       # 重複しないIDを生成
-      unique_id = self.generate_unique_id(0, 0, i, rank)
+      unique_id = self.generate_unique_id(0, 1, i, rank+1)
       solution[i] = objective_function(self.reshape_array(food_source[i], num_dimension), unique_id)
+      current_ids[i] = unique_id 
+
+    # 初期化時の同期
+    self._sync_all(comm, MPI, food_source, solution, visit_counter, current_ids)
+
+    id_history_init = current_ids
 
     # 初期状態を全プロセスで共有
     comm.Allgather(MPI.IN_PLACE, [food_source, MPI.DOUBLE])
@@ -379,17 +392,18 @@ class optimizer_abc(orbital):
         # 境界チェック（クリッピング）
         v[k] = np.clip(v[k], parameter_boundary[k][0], parameter_boundary[k][1])
         
-        unique_id = self.generate_unique_id(n+1, 1, i, rank)
+        unique_id = self.generate_unique_id(n+1, 2, i, rank+1)
         sol_v = objective_function(self.reshape_array(v, num_dimension), unique_id )
         if self.fitness_value_function(sol_v) > self.fitness_value_function(solution[i]):
           food_source[i] = v
           solution[i] = sol_v
           visit_counter[i] = 0
+          current_ids[i] = unique_id
         else:
           visit_counter[i] += 1
       
       # フェーズ終了後に全プロセスを同期
-      self._sync_all(comm, MPI, food_source, solution, visit_counter)
+      self._sync_all(comm, MPI, food_source, solution, visit_counter, current_ids)
 
       # --- 3. Onlooker bee phase ---
       fitness_values = [self.fitness_value_function(s) for s in solution]
@@ -407,32 +421,34 @@ class optimizer_abc(orbital):
         v[k] = food_source[i, k] + phi * (food_source[i, k] - food_source[j, k])
         v[k] = np.clip(v[k], parameter_boundary[k][0], parameter_boundary[k][1])
 
-        unique_id = self.generate_unique_id(n+1, 2, m_idx, rank)
+        unique_id = self.generate_unique_id(n+1, 3, m_idx, rank+1)
         sol_v = objective_function(self.reshape_array(v, num_dimension), unique_id)
         # ここで i は自分の担当外の可能性もあるが、計算効率のため「自分が選んだ i 」の更新に責任を持つ
         if self.fitness_value_function(sol_v) > self.fitness_value_function(solution[i]):
           food_source[i] = v
           solution[i] = sol_v
           visit_counter[i] = 0
+          current_ids[i] = unique_id
         else:
           visit_counter[i] += 1
           
-      self._sync_all(comm, MPI, food_source, solution, visit_counter)
+      self._sync_all(comm, MPI, food_source, solution, visit_counter, current_ids)
       #print('Visit counter',n, rank, visit_counter)
 
       # --- 4. Scout bee phase ---
       # my_indices の中身だけをループ回すように修正
       for local_idx in my_indices:
         if visit_counter[local_idx] > visit_limit:
-          unique_id = self.generate_unique_id(n+1, 3, local_idx, rank)
+          unique_id = self.generate_unique_id(n+1, 4, local_idx, rank+1)
           # 新しい蜜源の生成と評価
           food_source[local_idx] = self.generate_food_source(parameter_boundary)
           solution[local_idx] = objective_function(self.reshape_array(food_source[local_idx], num_dimension), unique_id)
+          current_ids[local_idx] = unique_id
           # カウンターリセット
           visit_counter[local_idx] = 0
   
       # 重要：スカウトによって更新された情報を全プロセスに波及させる          
-      self._sync_all(comm, MPI, food_source, solution, visit_counter)
+      self._sync_all(comm, MPI, food_source, solution, visit_counter, current_ids)
 
       # --- Update Global Best & History ---
       current_min_idx = np.argmin(solution)
@@ -443,6 +459,7 @@ class optimizer_abc(orbital):
       food_source_history[n] = food_source.copy()
       solution_history[n] = solution.copy()
       best_index_history[n] = current_min_idx
+      id_history[n] = current_ids.copy()
 
       residual = np.abs((solution - solution_prev) / (solution_init + 1e-20))
       residual_mean = np.mean(residual)
@@ -457,18 +474,28 @@ class optimizer_abc(orbital):
       
       solution_prev = solution.copy()
 
+    # Output
+    if rank == 0:
+      print('Best condition:', best_food_source )
+      print('Best value:', best_solution )
+      print('Step, Best-condition index, Best condition, Best solution')
+      for n in range(0,num_optiter):
+        i_opt = best_index_history[n]
+        print(n+1, i_opt+1, food_source_history[n,i_opt,:], solution_history[n,i_opt])
+
     # Dictionary作成 (Rank 0のみが保存に使う)
     solution_dict = {
             self.str_num_optiter: num_optiter,
             self.str_residual: residaul_mean_history,
             self.str_food_source: food_source_history[:num_optiter],
             self.str_error: solution_history[:num_optiter],
-            self.str_best_index: best_index_history[:num_optiter]
+            self.str_best_index: best_index_history[:num_optiter],
+            self.str_id_history: id_history[:num_optiter]
         }
 
     return best_food_source, best_solution, solution_dict
 
-  def _sync_all(self, comm, MPI, food_source, solution, visit_counter):
+  def _sync_all(self, comm, MPI, food_source, solution, visit_counter, current_ids):
     rank = self.mpi_instance.rank
     size = self.mpi_instance.size
     # 自分の担当インデックスを再取得
@@ -479,15 +506,18 @@ class optimizer_abc(orbital):
     fs_tmp = np.zeros_like(food_source)
     sol_tmp = np.zeros_like(solution)
     vc_tmp = np.zeros_like(visit_counter)
+    id_tmp = np.zeros_like(current_ids)
     
     fs_tmp[my_indices] = food_source[my_indices]
     sol_tmp[my_indices] = solution[my_indices]
     vc_tmp[my_indices] = visit_counter[my_indices]
+    id_tmp[my_indices] = current_ids[my_indices]
     
     # 2. 全プロセスで合計(SUM)して同期。これで全員が最新の「全データ」を持つ。
     comm.Allreduce(fs_tmp, food_source, op=MPI.SUM)
     comm.Allreduce(sol_tmp, solution, op=MPI.SUM)
     comm.Allreduce(vc_tmp, visit_counter, op=MPI.SUM)
+    comm.Allreduce(id_tmp, current_ids, op=MPI.SUM)
 
   def generate_unique_id(self, iter_idx, phase_idx, bee_idx, rank):
     # 一意のIDを生成する
@@ -517,6 +547,7 @@ class optimizer_abc(orbital):
     solution_history      = solution_dict[self.str_error]
     best_index_history    = solution_dict[self.str_best_index]
     residaul_mean_history = solution_dict[self.str_residual]
+    id_history            = solution_dict[self.str_id_history]
 
     # Output results
     filename_tmp =  config['ABC']['result_dir'] + '/' + config['ABC']['filename_output']
@@ -538,7 +569,7 @@ class optimizer_abc(orbital):
         text_tmp = text_tmp
         for j in range(0,num_dimension):
           text_tmp = text_tmp  + str( food_source_history[n,i,j] ) + ', '
-        text_tmp = text_tmp + str(i+1) + ', ' + str(solution_history[n,i]) + ', ' + str(residaul_mean_history[n]) + '\n'
+        text_tmp = text_tmp + str(id_history[n,i]) + ', ' + str(solution_history[n,i]) + ', ' + str(residaul_mean_history[n]) + '\n'
       file_output.write( text_tmp )
     file_output.close()
 
@@ -558,6 +589,7 @@ class optimizer_abc(orbital):
     best_index_history    = solution_dict[self.str_best_index]
     food_source_history   = solution_dict[self.str_food_source]
     solution_history      = solution_dict[self.str_error]
+    id_history            = solution_dict[self.str_id_history]
 
     # Output results: Global information
     filename_tmp =  config['ABC']['result_dir'] + '/' + config['ABC']['filename_global']
@@ -573,8 +605,8 @@ class optimizer_abc(orbital):
 
     for n in range(0, num_optiter):
       i_opt = best_index_history[n]
-      g_id  = n*num_employ_bees + i_opt
-      text_tmp = str(n+1) + ', ' + str(g_id+1) + ', ' 
+      g_id  = id_history[n,i_opt]
+      text_tmp = str(n+1) + ', ' + str(g_id) + ', ' 
       text_tmp = text_tmp + str(solution_history[n, i_opt]) +  ', ' 
       for m in range(0,num_dimension):
         text_tmp = text_tmp + str( food_source_history[n, i_opt, m] ) + ', '
@@ -587,7 +619,7 @@ class optimizer_abc(orbital):
 
   def drive_optimization(self, config, objective_function, parameter_boundary):
 
-    best_condition, best_value, solution_dict = self.run_optimizer_abc_mpi(config, objective_function, parameter_boundary)
+    best_condition, best_value, solution_dict = self.run_optimizer_abc(config, objective_function, parameter_boundary)
 
     if self.mpi_instance.rank == 0:
       self.write_optimization_process(config, solution_dict)

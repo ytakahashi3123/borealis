@@ -53,7 +53,7 @@ def main():
     if not os.path.isdir(work_dir_case) :
       break
 
-    if n+1 != index_local_to_global[n_count]+1 :
+    if n+1 != index_local_to_global[n_count] :
       # Non-optimal solution at each step
       print('--Deleting directory...:',work_dir_case)
       shutil.rmtree(work_dir_case)

@@ -48,7 +48,7 @@ def main():
   print('Index of optimal solution:', index_last)
 
   # Copy data
-  n = index_last+1
+  n = index_last
   dirname_optimal = case_dir + str(n).zfill(step_digit)
   work_dir_copyfrom = work_dir + '/' + dirname_optimal
   work_dir_copyto   = config['copy_dir'] + '/' + dirname_optimal

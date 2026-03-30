@@ -339,7 +339,7 @@ class optimizer_pso(orbital):
     file_output.write( header_tmp )
 
     for i in range(0, num_optiter):
-      text_tmp = 'zone t="Time'+str(i) +' sec"' + '\n'
+      text_tmp = 'zone t="Time'+str(i+1) +' sec"' + '\n'
       text_tmp =  text_tmp + 'i='+str(num_particle)+' f=point' + '\n'
       for n in range(0, num_particle):
         text_tmp = text_tmp
@@ -383,7 +383,7 @@ class optimizer_pso(orbital):
     for i in range(0, num_optiter):
       n_opt = global_best_index_hisotry[i]
       g_id  = i*num_particle + n_opt
-      text_tmp = str(i) + ', ' + str(g_id) + ', ' 
+      text_tmp = str(i+1) + ', ' + str(g_id+1) + ', ' 
       text_tmp = text_tmp + str(particle_solutioin[i, n_opt]) +  ', ' 
       for m in range(0,num_dimension):
         text_tmp = text_tmp + str( particle_position_history[i, n_opt, m] ) + ', '

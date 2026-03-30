@@ -258,6 +258,27 @@ class adapter_shapeoptimizer(orbital):
         with open(filename, "w") as f:
             f.write(str_tmp)
 
+#  def write_request_instruction_para(self, filename, pid):
+#    comm = self.mpi_instance.comm
+#    rank = self.mpi_instance.rank
+#    # 各ランクが自分のディレクトリ名を設定
+#    work_dir_case_rank = self.work_dir + '/' + self.case_dir + '_rank' + str(pid).zfill(self.step_digit)
+#    # 全rankを集める
+#    all_ranks = comm.allgather(rank)
+#    # 最小rankを決定
+#    writer_rank = min(all_ranks)
+#    # writer_rankをrootにしてgather
+#    all_dirs = comm.gather(work_dir_case_rank, root=writer_rank)
+#    # writer_rankだけ書き込み
+#    if rank == writer_rank:
+#        str_tmp = "Directories for subprocesses:\n"
+#        for d in all_dirs:
+#            str_tmp += f"{d}\n"
+#        print(f'[ShapeOpt-Borealis] Writing job requests file by rank {writer_rank}')
+#        print(str_tmp)
+#        with open(filename, "w") as f:
+#            f.write(str_tmp)
+
   def cleanup(self, proc):
     if proc and proc.poll() is None:
       print(f"[ShapeOpt-Borealis] Terminating subprocess (PID={proc.pid})...")

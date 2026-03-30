@@ -144,13 +144,29 @@ def main():
         for iDim in range(nDim):
             coords[i, iDim] = coord_passive[iDim]
 
-    # Set mesh vertices in preCICE:
-    try:
-        vertex_ids = participant.set_mesh_vertices(mesh_name, coords)
-    except:
-        print("Could not set mesh vertices for preCICE. Was a (known) mesh specified in the options?")
-        return
+    # 変形境界の面積計算 
+    local_total_area = 0.0
+    if MovingMarkerID is not None:
+        # 頂点ごとの法線ベクトル（面積ベクトル）を格納する場合の配列
+        # normals = numpy.zeros((nVertex_MovingMarker_PHYS, nDim)) # 必要に応じて
+        for i, iVertex in enumerate(iVertices_MovingMarker_PHYS):
+            # --- 今回追加する面積計算処理 ---
+            # GetVertexNormal(markerID, vertexID, unitNormal=False)
+            # unitNormal=False にすることで、ベクトルの長さが「その頂点の寄与面積」になる
+            normal_vector = SU2Driver.GetVertexNormal(MovingMarkerID, iVertex, False)
+            # 法線ベクトルのノルム（長さ）を計算 = その頂点の面積
+            # 2Dの場合は x,y成分、3Dの場合は x,y,z成分を使用
+            vert_area = 0.0
+            for iDim in range(nDim):
+                vert_area += normal_vector[iDim]**2
+            vert_area = numpy.sqrt(vert_area)
+            local_total_area += vert_area
 
+    if options.with_MPI == True:
+        total_area_init = comm.allreduce(local_total_area, op=MPI.SUM)
+    else:
+        total_area_init = local_total_area
+    
     # Get read and write data IDs
     # By default:
     #precice_read = "Displacement"
