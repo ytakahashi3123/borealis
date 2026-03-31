@@ -29,6 +29,42 @@ def update_running_mean(mean, new_value, count):
     return mean + (new_value - mean) / count
 
 
+def calculate_marker_area(SU2Driver, MarkerID, iVertices_PHYS, nDim):
+    """
+    指定されたマーカーの表面積を計算する関数
+    Args:
+        SU2Driver: SU2のドライバオブジェクト (pysu2.PyDriver等)
+        MarkerID (int): 面積を計算したいマーカーのインデックス
+        iVertices_PHYS (list): このランクが担当する物理頂点のインデックスリスト
+        nDim (int): 次元数 (2 or 3)
+        comm (MPI.Comm, optional): mpi4pyのコミュニケータ。指定すると全ランクで集計を行う。
+    Returns:
+        float: マーカーの総表面積
+    """
+    local_total_area = 0.0    
+    if MarkerID is not None:
+        for iVertex in iVertices_PHYS:
+            # GetVertexNormal(markerID, vertexID, unitNormal=False)
+            # unitNormal=Falseにより、ベクトルの長さが「その頂点の寄与面積(Dual cell area)」となる
+            normal_vector = SU2Driver.GetVertexNormal(MarkerID, iVertex, False)
+            
+            # 法線ベクトルのノルム（長さ）を計算
+            vert_area_sq = 0.0
+            for iDim in range(nDim):
+                vert_area_sq += normal_vector[iDim]**2
+            
+            local_total_area += numpy.sqrt(vert_area_sq)
+
+    return local_total_area
+
+
+def write_surfacearea_marker(filename, area, area_init):
+    with open(filename, 'w') as f:
+        header = '# Surface area [m2], Surface area (initial) [m2]\n'
+        line = f"{area:.10e}, {area_init:.10e}\n"
+        f.write(header + line)
+
+
 def main():
 
     # Command line options
@@ -59,6 +95,8 @@ def main():
     precice_mesh   = config.get('precice_mesh', 'Fluid-Mesh')
     nDim           = config.get('nDim', 2)
     in_sequential  = config.get('in_sequential', False)
+
+    filename_area = 'surfacearea_su2.dat'
 
     # SU2 config file
     #config_su2 = SU2.io.Config(options.filename)
@@ -144,28 +182,19 @@ def main():
         for iDim in range(nDim):
             coords[i, iDim] = coord_passive[iDim]
 
-    # 変形境界の面積計算 
-    local_total_area = 0.0
-    if MovingMarkerID is not None:
-        # 頂点ごとの法線ベクトル（面積ベクトル）を格納する場合の配列
-        # normals = numpy.zeros((nVertex_MovingMarker_PHYS, nDim)) # 必要に応じて
-        for i, iVertex in enumerate(iVertices_MovingMarker_PHYS):
-            # --- 今回追加する面積計算処理 ---
-            # GetVertexNormal(markerID, vertexID, unitNormal=False)
-            # unitNormal=False にすることで、ベクトルの長さが「その頂点の寄与面積」になる
-            normal_vector = SU2Driver.GetVertexNormal(MovingMarkerID, iVertex, False)
-            # 法線ベクトルのノルム（長さ）を計算 = その頂点の面積
-            # 2Dの場合は x,y成分、3Dの場合は x,y,z成分を使用
-            vert_area = 0.0
-            for iDim in range(nDim):
-                vert_area += normal_vector[iDim]**2
-            vert_area = numpy.sqrt(vert_area)
-            local_total_area += vert_area
+    # Set mesh vertices in preCICE:
+    try:
+        vertex_ids = participant.set_mesh_vertices(mesh_name, coords)
+    except:
+        print("Could not set mesh vertices for preCICE. Was a (known) mesh specified in the options?")
+        return
 
+    # 変形境界の面積計算    
+    total_area_tmp = calculate_marker_area(SU2Driver = SU2Driver,MarkerID = MovingMarkerID,iVertices_PHYS = iVertices_MovingMarker_PHYS,nDim = nDim)
     if options.with_MPI == True:
-        total_area_init = comm.allreduce(local_total_area, op=MPI.SUM)
+        total_area_init = comm.allreduce(total_area_tmp, op=MPI.SUM)
     else:
-        total_area_init = local_total_area
+        total_area_init = total_area_tmp
     
     # Get read and write data IDs
     # By default:
@@ -296,6 +325,14 @@ def main():
             time += deltaT
 
             #TimeIter_su2 += 1
+
+        # Surface area
+        total_area_tmp = calculate_marker_area(SU2Driver=SU2Driver, MarkerID=MovingMarkerID, iVertices_PHYS=iVertices_MovingMarker_PHYS, nDim=nDim)
+        if options.with_MPI == True:
+            total_area = comm.allreduce(total_area_tmp, op=MPI.SUM)
+        else:
+            total_area = total_area_tmp
+        write_surfacearea_marker(filename_area, total_area, total_area_init)
 
         # Write data to preCICE
         participant.write_data(mesh_name, precice_write, vertex_ids, forces_mean)

@@ -128,15 +128,26 @@ class adapter_shapeoptimizer(orbital):
     self.displacements_file = config['shapeoptimizer']['filename_displacements']
     self.step_digit_series  = config['shapeoptimizer']['step_digit_series']
 
+    # Surface area constraint
+    self.flag_surfacearea_constraint = config.get('shapeoptimizer', {}).get('flag_surfacearea_constraint', False)
+    if self.flag_surfacearea_constraint:
+      self.work_dir_surfacearea  = config.get('shapeoptimizer', {}).get('work_dir_surfacearea', 'fluid')
+      self.filename_surfacearea  = config.get('shapeoptimizer', {}).get('filename_surfacearea', 'surfacearea_su2.dat')
+      self.tolerance_surfacearea = config.get('shapeoptimizer', {}).get('tolerance_surfacearea', 0.05)
+
     if self.in_sequential :
       # Caseディレクトリの作成
       self.work_dir_case = self.work_dir + '/' + self.case_dir + '_rank' + str(self.mpi_instance.rank+1).zfill(self.step_digit)
       print('[ShapeOpt-Borealis] --Make case directory: ', self.work_dir_case)
       shutil.copytree(self.work_dir_template, self.work_dir_case)
+      # Set file names
       self.filename_displacements_base = self.work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(self.displacements_file)[0]
       self.filename_displacements_ext  = os.path.splitext(self.displacements_file)[1]
       self.filename_forces_base        = self.work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(self.forces_file)[0]
       self.filename_forces_ext         = os.path.splitext(self.forces_file)[1]
+      if self.flag_surfacearea_constraint:
+        self.filename_surfacearea_base = self.work_dir_case+'/'+self.work_dir_surfacearea+'/'+os.path.splitext(self.filename_surfacearea)[0]
+        self.filename_surfacearea_ext  = os.path.splitext(self.filename_surfacearea)[1]
 
     # Delete old files if the files remain
     #self.delete_step_files(forces_file, digit=self.step_digit_series, directory=self.work_dir_case+'/'+self.work_dir_series)
@@ -211,6 +222,29 @@ class adapter_shapeoptimizer(orbital):
         #values = [float(val) for val in line.split()]
         #data.append(values)
     return np.array(data)
+
+  def read_surfaceares_marker(self, filename):
+    if not os.path.exists(filename):
+      print(f"Error: {filename} does not exist.")
+      return None, None
+    try:
+      with open(filename, 'r') as f:
+        lines = f.readlines()   
+        # 1行目はヘッダー、2行目にデータがある前提
+        if len(lines) >= 2:
+          data_line = lines[1].strip()
+          # カンマまたはスペースで分割して数値に変換
+          # write側でカンマ区切りにした場合はこれで行けます
+          parts = data_line.replace(',', ' ').split()
+          area = float(parts[0])
+          area_init = float(parts[1])                
+          return area, area_init
+        else:
+          print(f"Error: {filename} is empty or malformed.")
+          return None, None
+    except Exception as e:
+      print(f"An error occurred while reading: {e}")
+      return None, None
 
   def delete_step_files(self, base_file, digit=5, directory="."):
     # 拡張子前の base 名を取得
@@ -339,6 +373,8 @@ class adapter_shapeoptimizer(orbital):
       step_str = f"{step:0{self.step_digit_series}d}"
       filename_displacements_series = f"{self.filename_displacements_base}_step{step_str}{self.filename_displacements_ext}"
       filename_forces_series = f"{self.filename_forces_base}_step{step_str}{self.filename_forces_ext}"
+      if self.flag_surfacearea_constraint:
+        filename_surfacearea_series = f"{self.filename_surfacearea_base}_step{step_str}{self.filename_surfacearea_ext}"
     else :
       # Caseディレクトリの作成
       work_dir_case = self.work_dir + '/' + self.case_dir + '_rank' + str(pid).zfill(self.step_digit)
@@ -350,6 +386,10 @@ class adapter_shapeoptimizer(orbital):
       filename_forces_base        = work_dir_case+'/'+self.work_dir_series+'/'+os.path.splitext(self.forces_file)[0]
       filename_forces_ext         = os.path.splitext(self.forces_file)[1]
       filename_forces_series = f"{filename_forces_base}{filename_forces_ext}"
+      if self.flag_surfacearea_constraint:
+        filename_surfacearea_base   = work_dir_case+'/'+self.work_dir_surfacearea+'/'+os.path.splitext(self.filename_surfacearea)[0]
+        filename_surfacearea_ext    = os.path.splitext(self.filename_surfacearea)[1]
+        filename_surfacearea_series = f"{filename_surfacearea_base}{filename_surfacearea_ext}"
 
     # Write displacements file
     self.displacements = parameter_opt.reshape(self.num_marker, self.num_dim)
@@ -380,6 +420,14 @@ class adapter_shapeoptimizer(orbital):
       boundary = self.config['parameter_optimized']['boundary']
       huge_tmp = self.config['parameter_optimized']['penalty_value']
       penalty = super().get_penalty_term(parameter_opt, boundary, huge_tmp)
+    
+    # Get surface area
+    if self.flag_surfacearea_constraint:
+      surfacearea, surfacearea_init = self.read_surfaceares_marker(filename_surfacearea_series)
+      ratio_surfacearea = abs( (surfacearea - surfacearea_init)/surfacearea_init )
+      print(f"[ShapeOpt-Borealis] PID {pid} and Step {step+1}: Read {filename_surfacearea_series}\n", f"Surface area ratio: {ratio_surfacearea}")
+      if ratio_surfacearea >= self.tolerance_surfacearea:
+        penalty = penalty + self.config['shapeoptimizer']['penalty_surfacearea']
 
     # Evaluate error
     force_tmp = self.forces_marker[0]**self.power_var_of[0] * self.forces_marker[1]**self.power_var_of[1]

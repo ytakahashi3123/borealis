@@ -126,6 +126,13 @@ shapeoptimizer:
   filename_forces: forces.dat
   filename_displacements: displacements.dat
 
+  # Surface area constraint (初期面積からどの程度許容するか)
+  flag_surfacearea_constraint: True
+  work_dir_surfacearea: fluid
+  filename_surfacearea: surfacearea_su2.dat
+  tolerance_surfacearea: 0.05
+  penalty_surfacearea: 10000
+
   # Result file name computed by Tacode
   filename_result: trajectory.dat
 
