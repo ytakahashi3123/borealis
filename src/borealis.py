@@ -2,7 +2,7 @@
 
 # Borealis: Bayesian optimization for finding a realizable solution for a discretized equation
 # Version 1.5.0
-# Date: 2026/03/31
+# Date: 2026/04/01
 
 # Author: Yusuke Takahashi, Hokkaido University
 # Contact: ytakahashi@eng.hokudai.ac.jp
@@ -77,9 +77,9 @@ def main():
   elif config['optimizer']['kind_optimizer'] == 'PSO_mp':
     from optimizer_pso_mp.optimizer_pso import optimizer_pso
     optimizer = optimizer_pso(mpi_instance)
-  #elif config['optimizer']['kind_optimizer'] == 'ABC':
-  #  from optimizer_abc.optimizer_abc import optimizer_abc
-  #  optimizer = optimizer_abc(mpi_instance)
+  elif config['optimizer']['kind_optimizer'] == 'ABC':
+    from optimizer_abc.optimizer_abc import optimizer_abc
+    optimizer = optimizer_abc(mpi_instance)
   #elif config['optimizer']['kind_optimizer'] == 'GA':
   #  from optimizer_ga.optimizer_ga import optimizer_ga
   #  optimizer = optimizer_ga(mpi_instance)
