@@ -54,6 +54,11 @@ parameter_optimized:
   flag_penalty: False
   penalty_value: 1000.0
   
+  flag_with_timeerror: False
+  set_altitude: 
+   - 490 #km
+  set_count_pass: 1 # 設定高度を何回通り過ぎた点同士で時間差計算を行うか
+  weight_time:  0.001 # Added by Tomoki Sakai 2023/3/7 誤差計算の時間項にかける定数　dafault : 1
 
 Bayesian_optimization:
 

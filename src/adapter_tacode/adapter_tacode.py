@@ -110,6 +110,15 @@ class adapter_tacode(orbital):
       self.headerline_variables = 0
       self.num_skiprows = 2
 
+#--------------Modified by Tomoki SAKAI 2024/6/28, Y.Takahashi, 2026/03/31----
+    self.flag_with_timeerror = config.get('parameter_optimized', {}).get('flag_with_timeerror', False) # 大気突入時刻も目的関数に含める
+    if self.flag_with_timeerror :
+      self.set_altitude = config['parameter_optimized']['set_altitude'][0]
+      self.set_count_pass = config['parameter_optimized']['set_count_pass']
+      #weight_timeの読み込み Added by Tomoki Sakai 2023/3/7
+      self.weight_time = config['parameter_optimized']['weight_time']
+#-----------------------------------------------------------------------------
+
     # 同期をとる
     if self.mpi_instance.flag_mpi:
       self.mpi_instance.comm.Barrier()
@@ -337,6 +346,212 @@ class adapter_tacode(orbital):
     return error_tmp
 
 
+#--------------Modified by Tomoki SAKAI 2024/8/5---------------------------
+# 誤差計算区間の取り方を改善
+# evaluate_errorではtacode計算の最終点まで差の計算をする
+# evaluate_error_2では，gprの最終点まで計算を行う．
+# tacodeが先に終わってしまったら，gpr最終点までは高度0kmとして扱う
+  @orbital.time_measurement_decorated
+  def evaluate_error_with_timeerror(self, parameter_opt, result_dict):
+
+    # Tacodeによるトラジェクトリ結果とReferenceの誤差を評価する
+    SMALL_VALUE = 1.e-5
+
+    print('--Evaluating error between computed result and reference data')
+
+    longitude       = result_dict[ self.str_longitude ]
+    latitude        = result_dict[ self.str_latitude ]
+    altitude        = result_dict[ self.str_altitude ]
+    time_sec_offset = result_dict[ self.str_time_sec ]
+    time_day_offset = result_dict[ self.str_time_day ]
+
+    time_start      = self.config['tacode']['time_start']
+    time_end        = self.config['tacode']['time_end']
+    target_time_set = self.config['tacode']['target_time']
+
+    _, i_start = super().closest_value_index(time_day_offset, time_start*orbital.unit_covert_sec2day)
+    _, i_end   = super().closest_value_index(time_day_offset, time_end*orbital.unit_covert_sec2day)
+
+    # Penalty
+    penalty = 0.0
+    if self.config['parameter_optimized']['flag_penalty']:
+      boundary = self.config['parameter_optimized']['boundary']
+      huge_tmp = self.config['parameter_optimized']['penalty_value']
+      penalty = super().get_penalty_term(parameter_opt, boundary, huge_tmp)
+
+    # 誤差評価の計算
+    error_tmp = 0.0
+    count_tmp = 0
+  #--------------Modified by Tomoki SAKAI 2024/6/28---------------------------
+    error_alt = 0
+    error_tmp_cood = 0
+    error_time = 0
+    error_time_sec = 0
+    count_m_opt = 0
+    print("time_day_offset", time_day_offset)
+    print("--time_end :", time_end)
+    print("--i_end :", i_end)
+    print("--time_day_offset[i_end] :", time_day_offset[i_end])
+    print("--time_sec_offset[i_end] :", time_day_offset[i_end]*orbital.unit_covert_day2sec)
+    #---------------------------------------
+    count_eval=0
+    for n in range(i_start, i_end):
+      ############ temporary test ###############
+      # if 文とその後のインデントはテスト中につき変更している．
+      # count_eval+=1
+      # if(count_eval%100==0):
+      for m in range(0,len(self.time_day_opt)):
+        if (self.time_day_opt[m] >= time_day_offset[n] ):
+          m_opt = m
+          break
+    #--------------Modified by Tomoki SAKAI 2024/7/23---------------------------  
+      if ((self.time_day_opt[m_opt] - self.time_day_opt[m_opt-1]) > 1000/86400): # ここは秒→日換算ざっくりでいいので
+        count_m_opt = count_m_opt + 1
+        if (count_m_opt < 1):
+          print("--day gap (m_opt)-(m_opt-1)",(self.time_day_opt[m_opt] - self.time_day_opt[m_opt-1]))
+          print("--sec gap (m_opt)-(m_opt-1)",(self.time_day_opt[m_opt] - self.time_day_opt[m_opt-1])*86400)
+
+      if ((self.time_day_opt[m_opt] - self.time_day_opt[m_opt-1]) < 1000/86400):
+        count_tmp = count_tmp+1
+        grad_fact = ( time_day_offset[n] - self.time_day_opt[m_opt-1] )/( self.time_day_opt[m_opt] - self.time_day_opt[m_opt-1] )
+        # longitude_opt_cor = ( self.longitude_opt[m_opt] - self.longitude_opt[m_opt-1] )*grad_fact + self.longitude_opt[m_opt-1]
+        # latitude_opt_cor  = ( self.latitude_opt[m_opt]  - self.latitude_opt[m_opt-1]  )*grad_fact + self.latitude_opt[m_opt-1]
+        altitude_opt_cor  = ( self.altitude_opt[m_opt]  - self.altitude_opt[m_opt-1]  )*grad_fact + self.altitude_opt[m_opt-1]
+        # error_tmp = error_tmp + ( altitude[n] - altitude_opt_cor )**2 #org_sensei
+        # error_tmp = error_tmp + np.sqrt(( altitude[n] - altitude_opt_cor )**2) # 試しで使っていた
+        #----------------------------------------- 
+        #--------------Modified by Tomoki SAKAI 2024/6/28---------------------------
+        error_tmp_cood = error_tmp_cood + np.sqrt(((altitude[n] - altitude_opt_cor)/altitude[n])**2) # BOで使ってたやつ
+        error_alt = error_alt + np.sqrt((altitude[n] - altitude_opt_cor)**2)
+      ############ temporary test ここまで###############
+      ########################################
+    
+    # tacodeが先に終わってしまったら，gpr最終点までは高度0kmとして扱い，差の計算をする
+    # Modified by Y.Takahashi, 2025/06/18 --------------------------------->
+    # self.time_sec_opt[-1]はReferenceの最終時刻を表す、これがBorealisの tacode:time_endと一致していれば特に問題ないが、そうでない場合もある（Referenceの最終時刻の方が大幅に大きいなど）
+    # このとき誤差計算に問題が生じるので、修正を図った。
+    print("time_day_offset[i_end]", time_day_offset[i_end])
+    #print("self.time_sec_opt[-1]*orbital.unit_covert_sec2day",self.time_sec_opt[-1]*orbital.unit_covert_sec2day)
+    #print("self.time_sec_opt[-1]",self.time_sec_opt[-1])
+    print("time_end*orbital.unit_covert_sec2day", time_end*orbital.unit_covert_sec2day)
+    #if(time_day_offset[i_end] < self.time_sec_opt[-1]*orbital.unit_covert_sec2day):
+    # 実数の精度によって、time_end*orbital.unit_covert_sec2dayとtime_day_offset[i_endがまったく同じにならないこともあるため、SMALL_VALUE(1e-5程度)も含めて判定する
+    if(time_end*orbital.unit_covert_sec2day - time_day_offset[i_end] > SMALL_VALUE ):
+    # Modified by Y.Takahashi, 2025/06/18 ---------------------------------<
+      # tacode最終点--gpr最終点の秒配列作成
+      #
+      # Modified by Y.Takahashi, 2025/08/21 --------------------------------->
+      # 上に合わせてここも修正する必要があるはず
+      # extra_sec_list = np.arange(int(time_day_offset[i_end]*orbital.unit_covert_day2sec),int(self.time_sec_opt[-1]))
+      extra_sec_list = np.arange(int(time_day_offset[i_end]*orbital.unit_covert_day2sec),int(time_end))
+      # Modified by Y.Takahashi, 2025/08/21 ---------------------------------<
+      extra_day_list = extra_sec_list*orbital.unit_covert_sec2day
+      print("Extra altitude error is calculated")
+      #print("extra_sec_list[0]",extra_sec_list[0])
+      #print("extra_sec_list[-1]",extra_sec_list[-1])
+      #print("extra_day_list[0]",extra_day_list[0])
+      #print("extra_day_list[-1]",extra_day_list[-1])
+
+      # tacode側を0として高度差計算
+      extra_altitude_error = []
+      print("count_tmp1", count_tmp)
+      for n in range(len(extra_day_list)):
+        count_tmp = count_tmp+1
+        for m in range(0,len(self.time_day_opt)):
+          if (self.time_day_opt[m] >= extra_day_list[n]):
+            m_opt = m
+            break
+        if ((self.time_day_opt[m_opt] - self.time_day_opt[m_opt-1]) < 1000/86400):
+          grad_fact = ( extra_day_list[n] - self.time_day_opt[m_opt-1] )/( self.time_day_opt[m_opt] - self.time_day_opt[m_opt-1] )
+          # longitude_opt_cor = ( self.longitude_opt[m_opt] - self.longitude_opt[m_opt-1] )*grad_fact + self.longitude_opt[m_opt-1]
+          # latitude_opt_cor  = ( self.latitude_opt[m_opt]  - self.latitude_opt[m_opt-1]  )*grad_fact + self.latitude_opt[m_opt-1]
+          altitude_opt_cor  = ( self.altitude_opt[m_opt]  - self.altitude_opt[m_opt-1]  )*grad_fact + self.altitude_opt[m_opt-1]
+          extra_altitude_error.append(np.sqrt((0 - altitude_opt_cor)**2))
+          error_tmp_cood = error_tmp_cood + np.sqrt(((0 - altitude_opt_cor)/altitude_opt_cor)**2) # BOで使ってたやつと分母が違うことに注意
+          error_alt = error_alt + np.sqrt((0 - altitude_opt_cor)**2)
+
+    ########################################
+    print("count_tmp2", count_tmp)
+    ave_error_alt = error_alt/float(count_tmp)
+    error_cood = error_tmp_cood/float(count_tmp)
+    print("ave_error_alt", ave_error_alt)
+
+    #---Moved by Tomoki Sakai 2024/8/5------------
+    #gps(gpr)の最終時刻（時間計算点）取得
+    count_pass_opt = 0
+    for i in range(1,len(self.time_day_opt)):
+      if((self.altitude_opt[i-1]- self.set_altitude)*(self.altitude_opt[i] - self.set_altitude)<=0):
+        count_pass_opt += 1
+
+        if(count_pass_opt == self.set_count_pass): 
+          i_last = i
+          alt_last = self.altitude_opt[i]
+          time_sec_last = self.time_sec_opt[i]
+          print("--last time (gps) [sec] :",self.time_sec_opt[i_last])
+          print("--last altitude (gps) [km] :",self.altitude_opt[i_last])
+          break
+    
+    #tacodeの着地もしくは最大時間（40000s?）の取得→時間差計算
+    print("--start time in tacode (bopt) [sec] :", time_sec_offset[0])
+    print("--last time in tacode (bopt) [sec] :", time_sec_offset[len(time_sec_offset)-1])
+    error_time = np.sqrt(((time_sec_last - time_sec_offset[len(time_sec_offset)-1])/(time_sec_last - time_sec_offset[i_start]))**2)*self.weight_time
+    error_time_sec = np.sqrt((time_sec_last - time_sec_offset[len(time_sec_offset)-1])**2)
+
+    print("--error_time :",error_time)
+    print("--error_time_sec[s] :",error_time_sec)
+
+
+    #tacodeの時間計算点が定義通りにあれば取得し時間差の再計算
+    count_pass=0
+    for n in range(1,len(time_sec_offset)):
+        if((altitude[n-1]-alt_last)*(altitude[n]-alt_last)<=0):
+            count_pass += 1
+
+            if (count_pass == self.set_count_pass): 
+                n_last = n
+                print("--last time (bopt) [sec] :",time_sec_offset[n_last]) 
+                print("--last altitude (bopt) [km] :",altitude[n_last]) 
+                error_time = np.sqrt(((time_sec_last - time_sec_offset[n_last])/(time_sec_last - time_sec_offset[i_start]))**2)*self.weight_time
+                error_time_sec = np.sqrt((time_sec_last - time_sec_offset[n_last])**2)
+                print("--error_time :",error_time)
+                print("--error_time_sec[s] :",error_time_sec)
+                break  
+    error_tmp = ave_error_alt + penalty
+#    error_tmp = error_cood + error_time + penalty
+#    error_tmp = error_tmp/float(count_tmp) + penalty
+#    error_tmp = np.sqrt( error_tmp )/float( count_tmp ) + penalty #org_sensei
+
+
+####並列実行でコンフリクトしちゃうのでひとまず使わないようにする by T.SAKAI 20244/11/9####
+#    if(self.iter == 1):    
+#      error_data = open("./error/error.dat","w")
+#      error_data.write("iter")
+#      error_data.write("\t")
+#      error_data.write("error_tmp")
+#      error_data.write("\t")
+#      error_data.write("ave_error_alt[km]")
+#      error_data.write("\t")
+#      error_data.write("error_time[s]")
+#      error_data.write("\n")
+
+#    error_data = open("./error/error.dat","a")
+#    error_data.write(format(self.iter))
+#    error_data.write("\t")
+#    error_data.write(format(error_tmp))
+#    error_data.write("\t")
+#    error_data.write(format(ave_error_alt))
+#    error_data.write("\t")
+#    error_data.write(format(error_time_sec))
+#    error_data.write("\n")
+#    error_data.close()
+#--------------------------------------------------------------
+    # Green color
+    print('--Error:','\033[92m'+str(error_tmp)+'\033[0m', 'in Epoch',str(self.iter) )
+    #exit()
+
+    return error_tmp
+
+
   @orbital.time_measurement_decorated
   def read_result_data(self):
     
@@ -381,8 +596,15 @@ class adapter_tacode(orbital):
 
     time_sec        = result_dict[ self.str_time_sec ]
     time_day        = time_sec/orbital.unit_covert_day2sec
-    time_day_offset = time_day+target_time_set
-    time_sec_offset = time_sec+target_time_set*orbital.unit_covert_day2sec
+    
+    if self.flag_with_timeerror:
+    #----------Modified by Tomoki Sakai 2024/7/23------------------
+      time_day_offset = time_day + target_time_set/orbital.unit_covert_day2sec
+      time_sec_offset = time_sec + target_time_set
+    #--------------------------------------------------------------
+    else:
+      time_day_offset = time_day+target_time_set
+      time_sec_offset = time_sec+target_time_set*orbital.unit_covert_day2sec
 
     # Update time variables offset
     result_dict[ self.str_time_sec ] = time_sec_offset
@@ -462,7 +684,10 @@ class adapter_tacode(orbital):
     self.write_result_data(result_dict)
 
     # Evaluate error
-    error = self.evaluate_error(parameter_opt, result_dict)
+    if self.flag_with_timeerror:
+      error = self.evaluate_error_with_timeerror(parameter_opt, result_dict)
+    else :
+      error = self.evaluate_error(parameter_opt, result_dict)
 
     # カウンタの更新
     if not args:
