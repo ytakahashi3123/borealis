@@ -21,6 +21,9 @@ in_sequential: True
 # Moving boundary
 MovingMarker: "interface"
 
+# Filename for storing boundary surface area
+filename_surfacearea: "surfacearea_su2.dat"
+
 # preCICE writing and reading variables
 precice_read: "Displacement"
 precice_write: "Force"

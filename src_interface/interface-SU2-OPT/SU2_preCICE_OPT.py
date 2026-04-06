@@ -96,7 +96,7 @@ def main():
     nDim           = config.get('nDim', 2)
     in_sequential  = config.get('in_sequential', False)
 
-    filename_area = 'surfacearea_su2.dat'
+    filename_area = config.get('filename_surfacearea', 'surfacearea_su2.dat')
 
     # SU2 config file
     #config_su2 = SU2.io.Config(options.filename)
