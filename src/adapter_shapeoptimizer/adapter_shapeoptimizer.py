@@ -118,6 +118,10 @@ class adapter_shapeoptimizer(orbital):
     # Set variables for optimization
     self.displacements = np.zeros((self.num_marker,self.num_dim))
     self.forces_marker = np.zeros(self.num_dim)
+    if self.num_dim == 2:
+      self.moments_marker = np.zeros(1)
+    else:
+      self.moments_marker = np.zeros(3)
 
     # 非定常空気力データを目的関数として時間経過とともに形状最適化を行う
     self.in_sequential = config['shapeoptimizer']['in_sequential']
@@ -209,19 +213,28 @@ class adapter_shapeoptimizer(orbital):
     except Exception as e:
         print(f"[ShapeOpt-Borealis-ERROR] Failed to write displacements to file: {e}")
 
+#  def read_forces_marker(self, filename):
+#    data = []
+#    with open(filename, 'r') as f:
+#      for line in f:
+#        # 空行やコメントを無視したい場合（必要なら）
+#        line = line.strip()
+#        if not line or line.startswith('#'):
+#          continue
+#        for val in line.split():
+#          data.append( float(val) )
+#        #values = [float(val) for val in line.split()]
+#        #data.append(values)
+#    return np.array(data)
+
   def read_forces_marker(self, filename):
-    data = []
     with open(filename, 'r') as f:
-      for line in f:
-        # 空行やコメントを無視したい場合（必要なら）
-        line = line.strip()
-        if not line or line.startswith('#'):
-          continue
-        for val in line.split():
-          data.append( float(val) )
-        #values = [float(val) for val in line.split()]
-        #data.append(values)
-    return np.array(data)
+        lines = f.readlines()
+    # 1行目: forces
+    forces = np.array([float(x) for x in lines[0].split()])
+    # 2行目: moments
+    moments = np.array([float(x) for x in lines[1].split()])
+    return forces, moments
 
   def read_surfaceares_marker(self, filename):
     if not os.path.exists(filename):
@@ -411,8 +424,8 @@ class adapter_shapeoptimizer(orbital):
     # Get forces data
     while not os.path.exists(filename_forces_series):
       time.sleep(3.0)
-    self.forces_marker = self.read_forces_marker(filename_forces_series)
-    print(f"[ShapeOpt-Borealis] PID {pid} and Step {step+1}: Read {filename_forces_series}\n", f"Forces: {self.forces_marker}")
+    self.forces_marker, self.moments_marker = self.read_forces_marker(filename_forces_series)
+    print(f"[ShapeOpt-Borealis] PID {pid} and Step {step+1}: Read {filename_forces_series}\n", f"Forces and Moments: {self.forces_marker} {self.moments_marker} ")
 
     # Penalty
     penalty = 0.0

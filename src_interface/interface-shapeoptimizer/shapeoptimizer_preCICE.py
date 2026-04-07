@@ -81,65 +81,17 @@ def load_mapped_data(filename, nDim=2):
         raise ValueError("Unsupported file extension. Use .csv or .dat")
     return data
 
-
-def write_forces_to_file(filename, forces):
-    """
-    Forcesデータをテキストファイルに出力する。
-    Parameters:
-        filename (str): 出力ファイル名
-        forces (np.ndarray): (nDeformedMarker, nDim) 形状の配列
-    """
-    if not isinstance(forces, np.ndarray):
-        raise TypeError("forces must be a numpy ndarray.")
-    if forces.ndim != 2:
-        raise ValueError("forces must be a 2D numpy array.")
-    try:
-        with open(filename, 'w') as f:
-            for i in range(forces.shape[0]):
-                line = ' '.join(f"{value:.6e}" for value in forces[i])
-                f.write(line + '\n')
-        print(f"[INFO] Forces written to '{filename}' successfully.")
-    except Exception as e:
-        print(f"[ERROR] Failed to write forces to file: {e}")
-  
-
-def write_displacements_to_file(filename, displacements):
-    """
-    Displacement データをテキストファイルに出力する。
-    Parameters:
-        filename (str): 出力ファイル名
-        displacements (np.ndarray): (nDeformedMarker, nDim) の 2次元配列
-    """
-    if not isinstance(displacements, np.ndarray):
-        raise TypeError("displacements must be a numpy ndarray.")
-    if displacements.ndim != 2:
-        raise ValueError("displacements must be a 2D numpy array.")
-    try:
-        with open(filename, 'w') as f:
-            for row in displacements:
-                f.write(' '.join(f"{val:.6e}" for val in row) + '\n')
-        print(f"[INFO] Displacements written to '{filename}'")
-    except Exception as e:
-        print(f"[ERROR] Failed to write displacements to file: {e}")
-
-def read_forces_marker(filename):
-    data = []
-    with open(filename, 'r') as f:
-        for line in f:
-            # 空行やコメントを無視したい場合（必要なら）
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            values = [float(val) for val in line.split()]
-            data.append(values)
-    return data
-
-def write_forces_marker(filename, data):
+def write_forces_marker(filename, forces, moments):
     with open(filename, 'w') as f:
-        data = np.atleast_2d(data)  # 1Dなら(1,N)の2Dに変換
-        for row in data:
-            line = ' '.join(f"{val:.6e}" for val in row)
-            f.write(line + '\n')
+        line_forces = ' '.join(f"{value:.6e}" for value in np.atleast_1d(forces))
+        line_moments = ' '.join(f"{value:.6e}" for value in np.atleast_1d(moments))
+        f.write(line_forces + '\n')
+        f.write(line_moments + '\n')
+    #with open(filename, 'w') as f:
+    #    data = np.atleast_2d(data)  # 1Dなら(1,N)の2Dに変換
+    #    for row in data:
+    #        line = ' '.join(f"{val:.6e}" for val in row)
+    #        f.write(line + '\n')
 
 def read_displacements_from_file(filename):
     """
@@ -161,23 +113,6 @@ def read_displacements_from_file(filename):
         return None
 
 def main():
-
-    # Command line options
-    #parser=OptionParser()
-    #parser.add_option("-f", "--file", dest="filename", help="Read config from FILE", metavar="FILE")
-    #parser.add_option("--parallel", action="store_true", help="Specify if we need to initialize MPI", dest="with_MPI", default=False)
-
-    # preCICE options with default settings
-    #parser.add_option("-p", "--precice-participant", dest="precice_name", help="Specify preCICE participant name", default="Optimizer" )
-    #parser.add_option("-c", "--precice-config", dest="precice_config", help="Specify preCICE config file", default="../precice-config.xml")
-    #parser.add_option("-m", "--precice-mesh", dest="precice_mesh", help="Specify the preCICE mesh name", default="Optimizer-Mesh")
-
-    # Dimension
-    #parser.add_option("-d", "--dimension", dest="nDim", help="Dimension of optimizer domain (2D/3D)", type="int", default=2)
-  
-    #(options, args) = parser.parse_args()
-    #options.nZone = int(1)
-
 
     # Read control file
     file_control_default = "shapeoptimizer.yml"
@@ -277,7 +212,7 @@ def main():
         displacements_file = f"displacements.dat"
     displacements = read_displacements_from_file(displacements_file)
     # Set displacements
-    print('displacements',displacements)
+    #print('displacements',displacements)
 
     # Set up initial data for preCICE
     if (participant.requires_initial_data()):
@@ -317,7 +252,7 @@ def main():
           time.sleep(0.1)
         displacements = read_displacements_from_file(displacements_file)
         # Set displacements
-        print('Displacements',displacements)
+        print('Displacements:',displacements)
         # Write data to preCICE
         participant.write_data(mesh_name, precice_write, vertex_ids, displacements)
 
@@ -328,7 +263,17 @@ def main():
         forces_object[:] = 0.0
         for i in range(0,nDeformedMarker):
           forces_object[:] += forces[i,:]
-        print('Forces working on object',forces_object)
+        print('Forces working on object [N]',forces_object)
+
+        # Calculate aerodynamic moments working on marker
+        distance_cg = coords + displacements - center_of_gravity
+        if nDim == 2:
+            moments = (distance_cg[:, 0] * forces[:, 1]- distance_cg[:, 1] * forces[:, 0])
+            moments_object = np.sum(moments)
+        else:
+            moments = np.cross(distance_cg, forces)
+            moments_object = np.sum(moments, axis=0)
+        print('Moments around rotation center [N.m]:',moments_object)
 
         # Update control parameters
         iteration += 1
@@ -347,11 +292,11 @@ def main():
             if in_sequential :
                 forces_file = f"forces_step{step_str}.dat"
                 participant.requires_writing_checkpoint() # これがないと、終了時エラー
-                write_forces_marker(forces_file, forces_object)
+                write_forces_marker(forces_file, forces_object, moments_object)
             else:
                 forces_file = f"forces.dat"
                 participant.requires_writing_checkpoint() # これがないと、終了時エラー
-                write_forces_marker(forces_file, forces_object)
+                write_forces_marker(forces_file, forces_object, moments_object)
                 break
 
     participant.finalize()
