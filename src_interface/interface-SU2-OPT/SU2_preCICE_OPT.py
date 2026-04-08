@@ -72,17 +72,6 @@ def main():
     parser.add_option("-f", "--file", dest="filename", help="Read config from FILE for SU2", metavar="FILE")
     parser.add_option("--parallel", action="store_true", dest="with_MPI", help="Specify if we need to initialize MPI", default=False)
 
-    # preCICE options with default settings
-    #parser.add_option("-p", "--precice-participant", dest="precice_name", help="Specify preCICE participant name", default="Fluid" )
-    #parser.add_option("-c", "--precice-config", dest="precice_config", help="Specify preCICE config file", default="../precice-config.xml")
-    #parser.add_option("-m", "--precice-mesh", dest="precice_mesh", help="Specify the preCICE mesh name", default="Fluid-Mesh")
-
-    # Dimension
-    #parser.add_option("-d", "--dimension", dest="nDim", help="Dimension of fluid domain (2D/3D)", type="int", default=2)
-  
-    # Sequential
-    #parser.add_option("--sequential", action="store_true", dest="with_sequential", help="Sequential process", default=False)
-
     (options, args) = parser.parse_args()
     options.nZone = int(1)
 

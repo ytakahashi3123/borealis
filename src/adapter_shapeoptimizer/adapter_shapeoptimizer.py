@@ -213,20 +213,6 @@ class adapter_shapeoptimizer(orbital):
     except Exception as e:
         print(f"[ShapeOpt-Borealis-ERROR] Failed to write displacements to file: {e}")
 
-#  def read_forces_marker(self, filename):
-#    data = []
-#    with open(filename, 'r') as f:
-#      for line in f:
-#        # 空行やコメントを無視したい場合（必要なら）
-#        line = line.strip()
-#        if not line or line.startswith('#'):
-#          continue
-#        for val in line.split():
-#          data.append( float(val) )
-#        #values = [float(val) for val in line.split()]
-#        #data.append(values)
-#    return np.array(data)
-
   def read_forces_marker(self, filename):
     with open(filename, 'r') as f:
         lines = f.readlines()
@@ -259,25 +245,6 @@ class adapter_shapeoptimizer(orbital):
       print(f"An error occurred while reading: {e}")
       return None, None
 
-  def delete_step_files(self, base_file, digit=5, directory="."):
-    # 拡張子前の base 名を取得
-    base_tmp = os.path.splitext(base_file)[0]  # 'forces'
-    # 削除対象の正規表現パターンを作成
-    pattern_forces = re.compile(rf"^{re.escape(base_tmp)}_step\d{{{digit}}}\.dat$")
-    # 削除ファイルリストの作成：削除
-    deleted_files = []
-    for filename in os.listdir(directory):
-        if pattern_forces.match(filename):
-            file_path = os.path.join(directory, filename)
-            try:
-                os.remove(file_path)
-                deleted_files.append(filename)
-            except Exception as e:
-                print(f"[ShapeOpt-Borealis-WARNING] Could not delete {filename}: {e}")
-    print(f"[ShapeOpt-Borealis] Deleted {len(deleted_files)} step files at the previous time:")
-    for f in deleted_files:
-        print(f"  - {f}")
-
   def write_request_instruction(self, filename):
     print('[ShapeOpt-Borealis] Writing job requests file')
     size = self.mpi_instance.size # 並列数
@@ -305,64 +272,13 @@ class adapter_shapeoptimizer(orbital):
         with open(filename, "w") as f:
             f.write(str_tmp)
 
-#  def write_request_instruction_para(self, filename, pid):
-#    comm = self.mpi_instance.comm
-#    rank = self.mpi_instance.rank
-#    # 各ランクが自分のディレクトリ名を設定
-#    work_dir_case_rank = self.work_dir + '/' + self.case_dir + '_rank' + str(pid).zfill(self.step_digit)
-#    # 全rankを集める
-#    all_ranks = comm.allgather(rank)
-#    # 最小rankを決定
-#    writer_rank = min(all_ranks)
-#    # writer_rankをrootにしてgather
-#    all_dirs = comm.gather(work_dir_case_rank, root=writer_rank)
-#    # writer_rankだけ書き込み
-#    if rank == writer_rank:
-#        str_tmp = "Directories for subprocesses:\n"
-#        for d in all_dirs:
-#            str_tmp += f"{d}\n"
-#        print(f'[ShapeOpt-Borealis] Writing job requests file by rank {writer_rank}')
-#        print(str_tmp)
-#        with open(filename, "w") as f:
-#            f.write(str_tmp)
-
-  def cleanup(self, proc):
-    if proc and proc.poll() is None:
-      print(f"[ShapeOpt-Borealis] Terminating subprocess (PID={proc.pid})...")
-      proc.terminate()
-      try:
-        proc.wait(timeout=5)
-      except subprocess.TimeoutExpired:
-        print("[ShapeOpt-Borealis-WARN] Subprocess did not terminate, killing it.")
-        proc.kill()
-
-  def stop_process_freshness(self, flag_freshness,filename, proc):
-    if not flag_freshness:
-      print(f"[ShapeOpt-Borealis]-ERROR] {filename} might be an old file generated at previous time. Please delete them before starting the process.")
-      #print(f"[Borealis] Killing process with PID: {proc.pid}")
-      cleanup(proc)
-      #proc.send_signal(signal.SIGTERM)  # ソフトな終了
-      # proc.kill()  # 強制終了（必要なら）
-      raise SystemExit()
-      #raise RuntimeError(f"[Borealis-ERROR] {filename} might be an old file generated at previous time. Please delete them before starting the process.")
-
   def run_subprocess(self):
-
     print('[ShapeOpt-Borealis] Run subprocess')
     os.chdir( self.work_dir_case )
     #subprocess.call( "./run_SU2-OPT_pps.sh" )
     proc = subprocess.Popen(["./run_SU2-OPT_pps.sh"])
     os.chdir( self.root_dir )
-
     return proc
-
-  def run_initialprocess(self):
-
-    # Start codes
-    proc_code = self.run_subprocess()
-    self.cleanup(proc_code)
-
-    return proc_code
 
 
   def objective_function(self, parameter_opt, *args):
