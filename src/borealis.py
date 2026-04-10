@@ -2,7 +2,7 @@
 
 # Borealis: Bayesian optimization for finding a realizable solution for a discretized equation
 # Version 1.5.1
-# Date: 2026/04/30
+# Date: 2026/04/10
 
 # Author: Yusuke Takahashi, Hokkaido University
 # Contact: ytakahashi@eng.hokudai.ac.jp
