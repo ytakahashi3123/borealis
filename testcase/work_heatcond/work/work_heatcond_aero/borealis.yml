@@ -10,6 +10,10 @@ optimizer:
   kind_optimizer: PSO
 
 
+objectives:
+   num_objectives: 1
+
+
 parameter_optimized:
   # Parameter boundaries
   boundary:
@@ -42,7 +46,7 @@ parameter_optimized:
   # Penalty
   flag_penalty: True
   penalty_value: 1000.0
-
+  
 
 Bayesian_optimization:
 

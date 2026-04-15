@@ -1,12 +1,16 @@
 #!/bin/bash
 
+source $HOME/venvs/myenv/bin/activate
+source $HOME/.dir_opt_bashrc/.bashrc_borealis
+
 parallel=true
 
-PYTHON=python3.9
-LD=../../../../src/borealis.py
+PYTHON=python
+LD=$HOME_BORE/src/borealis.py
 LOG=log_borealis
+
 MPIP=mpirun
-num_process=4
+num_process=8
 
 touch timestamp_start_$(date "+%Y%m%d-%H%M%S")
 if $parallel ; then

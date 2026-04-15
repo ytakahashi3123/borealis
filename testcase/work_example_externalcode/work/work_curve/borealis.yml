@@ -11,6 +11,10 @@ optimizer:
   kind_optimizer: PSO
 
 
+objectives:
+   num_objectives: 1
+   
+
 parameter_optimized:
   # Parameter boundaries
   boundary:
@@ -25,7 +29,6 @@ parameter_optimized:
         - type: c
           bound_min: -10.0
           bound_max:  10.0
-
   # Penalty
   flag_penalty: False
   penalty_value: 1000.0

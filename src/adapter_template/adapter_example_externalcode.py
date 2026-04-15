@@ -315,4 +315,4 @@ class adapter_example_externalcode(orbital):
     if not args:
       self.iter += 1
 
-    return error
+    return np.atleast_1d(error).astype(float)

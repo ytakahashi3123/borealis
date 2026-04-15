@@ -11,6 +11,10 @@ optimizer:
   #kind_optimizer: PSO
 
 
+objectives:
+   num_objectives: 1
+   
+
 parameter_optimized:
   # Parameter boundaries
   boundary:
@@ -101,7 +105,7 @@ tacode:
   step_digit: 4
   
   directory_path_specify: manual # default or manual
-  manual_path: ../../template/work_tacode_heavy
+  manual_path: ../../template/work_tacode
 
   # Executing script
   cmd_code: ./run_tacode.sh

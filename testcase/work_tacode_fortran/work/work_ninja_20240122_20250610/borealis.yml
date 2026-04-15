@@ -11,6 +11,10 @@ optimizer:
   kind_optimizer: PSO
 
 
+objectives:
+   num_objectives: 1
+   
+
 parameter_optimized:
   # Parameter boundaries
   boundary:

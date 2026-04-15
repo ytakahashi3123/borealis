@@ -367,4 +367,4 @@ class adapter_shapeoptimizer(orbital):
       self.pid  += 1
       self.step += 1
 
-    return error
+    return np.atleast_1d(error).astype(float)

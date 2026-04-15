@@ -17,7 +17,10 @@ class optimizer_pso(orbital):
     self.str_position = 'position'
     self.str_velocity = 'velocity'
     self.str_error = 'error'
-    self.str_global_index = 'global_particle_index'
+    self.str_archive_id = 'archive_id'
+    self.str_archive_position = 'archive_position'
+    self.str_archive_score = 'archive_score'
+    self.str_archive_size = 'archive_size'
 
     self.text_color = '\033[96m'
     self.text_end = '\033[0m'
@@ -59,49 +62,106 @@ class optimizer_pso(orbital):
     except (KeyError):
       self.flag_velocity_initial = False
 
-    # Time step
-    try:
-      self.times_spte_pso = config['PSO']['times_spte_pso']
-    except (KeyError, TypeError):
-      self.times_spte_pso = 1.0
-
     # Kind of computation of redisuals
-    try:
-      self.kind_residual_computation = config['PSO']['kind_residual_computation']
-    except (KeyError, TypeError):
-      self.kind_residual_computation = 'relative_change'
+    self.kind_residual_computation = ( config.get('PSO', {}).get('kind_residual_computation', 'relative_change') )
     print(f'[PSO-Borealis] Residual computation: {self.kind_residual_computation}')
 
     return
 
 
   def boundary_setting(self, config):
-
     # Setting parameter's boundaries
-
     boundary = config['parameter_optimized']['boundary']
     parameter_boundary = []
     for n in range(0, len(boundary) ):
       parameter_component = boundary[n]['component']
       for m in range(0, len(parameter_component)):
         parameter_boundary.append( (parameter_component[m]['bound_min'],parameter_component[m]['bound_max']) )
-
     return parameter_boundary
 
 
+  # For multi-objective optimization
+  def dominates(self, a, b):
+    return np.all(a <= b) and np.any(a < b)
+
+  def update_archive(self, num_objectives, ids, positions, scores):
+    #　全履歴・全粒子から最も良いものを探すのか良いのか、１世代・全粒子からが良いのか（今回は後者とした）
+#    all_ids = self.ids + list(ids)
+#    all_positions = self.archive_positions + list(positions)
+#    all_scores = self.archive_scores + list(scores)
+    all_ids = list(ids)
+    all_positions = list(positions)
+    all_scores = list(scores)
+    if num_objectives == 1:
+      ids_best = np.argmin([ np.atleast_1d(s)[0] for s in all_scores ])
+      archive_ids = [all_ids[ids_best]]
+      archive_positions = [ np.array(all_positions[ids_best]).copy() ]
+      archive_scores = [ np.array(all_scores[ids_best]).copy() ]
+    else:
+      archive_ids = []
+      archive_positions = []
+      archive_scores = []
+      for i, score_i in enumerate(all_scores):
+        dominated = False
+        for j, score_j in enumerate(all_scores):
+          if i != j and self.dominates(score_j, score_i):
+            dominated = True
+            break
+        if not dominated:
+          archive_ids.append(all_ids[i])
+          archive_positions.append(np.array(all_positions[i]))
+          archive_scores.append(np.array(score_i))
+    return archive_ids, archive_positions, archive_scores
+
+  def select_global_best(self, archive_positions,archive_scores):
+    #if len(archive_scores[0]) == 1:
+    #    idx = np.argmin([ s[0] for s in archive_scores ])
+    #    return archive_positions[idx]
+    idx = np.random.randint( len(archive_positions) )
+    return archive_positions[idx]
+  
+  def select_global_best_cd(self, archive_positions, archive_scores):
+    if len(archive_scores[0]) == 1:
+      idx = np.argmin([s[0] for s in archive_scores])
+      return archive_positions[idx]
+    distance = self.crowding_distance(archive_scores)
+    idx = np.argmax(distance)
+    return archive_positions[idx]
+
+  def crowding_distance(self, scores):
+    # パレートフロントの疎な領域にある解を優先して leader に選ぶ
+    scores = np.array(scores)
+    n_points = len(scores)
+    n_obj = scores.shape[1]
+    distance = np.zeros(n_points)
+    for m in range(n_obj):
+      idx = np.argsort(scores[:, m])
+      distance[idx[0]] = np.inf
+      distance[idx[-1]] = np.inf
+      f_min = scores[idx[0], m]
+      f_max = scores[idx[-1], m]
+      if abs(f_max - f_min) < 1e-15:
+        continue
+      for i in range(1, n_points - 1):
+        distance[idx[i]] += (scores[idx[i+1], m] - scores[idx[i-1], m]) / (f_max - f_min)
+    return distance
+
+  # PSO routine
   def run_pso(self, config, objective_function, parameter_boundary):
 
+    # Number of objectives
+    num_objectives = config.get('objectives', {}).get('num_objectives', 1)
     # Dimension 
     num_dimension = self.num_dimension
-
     # Number of particles
     num_particle = config['PSO']['num_particle']
-
     # Number of iteration
     num_optiter = config['PSO']['num_optiter']
-
-    # Acture number of iteration after optimization
+    # Actural number of iteration after optimization
     num_optiter_optimized = num_optiter
+
+    m_stagnation = config['PSO'].get('archive_stagnation_window',5)
+    size_tol = config['PSO'].get('archive_stagnation_tol',0)
 
     # Particle parameters
     inertia        = config['PSO']['inertia']
@@ -109,13 +169,10 @@ class optimizer_pso(orbital):
     social_coef    = config['PSO']['social_coef']
 
     # Maximization or minimization of the objective function
-    flag_Maximization_of = config['PSO']['maximize'] 
-    if flag_Maximization_of :
-      sign_of = -1.0
-    elif flag_Maximization_of is False :
-      sign_of = 1.0
-    else:
-      raise ValueError("[PSO-Borealis] Error: config['PSO']['maximize'] must be either True or False.")
+    flag_Maximization_of = config['PSO']['maximize']
+    if not isinstance(flag_Maximization_of, bool):
+      raise ValueError("[PSO-Borealis] Error: config['PSO']['maximize'] must be True or False.")
+    sign_of = -1.0 if flag_Maximization_of else 1.0
 
     # MPI settings
     flag_mpi = self.mpi_instance.flag_mpi
@@ -137,9 +194,15 @@ class optimizer_pso(orbital):
     particle_position = []
     particle_velocity = []
     particle_best_position = []
-    particle_best_value = []
+    particle_best_score = []
+
+    archive_ids = []
+    archive_positions = []
+    archive_scores = []
+
+    # Initial settings
     for n in range(0, num_particle):
-      # Initial positions
+      # Positions
       if self.flag_boundary_initial :
         low  = self.boundary_initial['bound_min']
         high = self.boundary_initial['bound_max']
@@ -150,7 +213,7 @@ class optimizer_pso(orbital):
       else :
         position_tmp = np.array( [np.random.uniform(low, high) for low, high in parameter_boundary] )
       
-      # Initial velocities
+      # Velocities
       if self.flag_velocity_initial :
         low  = self.velocity_initial['velocity_min']
         high = self.velocity_initial['velocity_max']
@@ -160,195 +223,261 @@ class optimizer_pso(orbital):
 
       particle_position.append( position_tmp )
       particle_velocity.append( velocity_tmp )
-      particle_best_position.append( particle_position.copy() )
-      particle_best_value.append( float('inf') )
+      particle_best_position.append( position_tmp.copy() )
+      particle_best_score.append( np.full(num_objectives, np.inf) )
 
-    # History
-    #global_best_position_hisotry = np.zeros(num_optiter*num_dimension).reshape(num_optiter,num_dimension)
-    #global_best_value_hisotry = np.zeros(num_optiter)
-    global_best_index_hisotry = np.zeros(num_optiter, dtype=int)
+    # History variables
+    archive_id_history = []
+    archive_position_history = []
+    archive_score_history = []
+    archive_size_history = []
 
     particle_position_history = np.zeros(num_optiter*num_particle*num_dimension).reshape(num_optiter,num_particle,num_dimension)
     particle_velocity_history = np.zeros(num_optiter*num_particle*num_dimension).reshape(num_optiter,num_particle,num_dimension)
-    particle_solutioin        = np.zeros(num_optiter*num_particle).reshape(num_optiter,num_particle)
+    particle_solution = np.zeros( (num_optiter, num_particle, num_objectives) )
 
     # For residual
-    particle_best_value_init = np.ones(num_particle)
-    particle_best_value_prev = np.ones(num_particle)
-    residual = np.zeros(num_particle)
-    residaul_mean_history = []
+    residual_mean_history = []
+    #archive_score_mean_prev = np.zeros(1)
 
-    #count = 0
-    for i in range(0, num_optiter):
-      # グローバルベスト位置
-      global_best_position = None 
-      # グローバルベストの目的関数値
-      global_best_value = float('inf')
+    for n in range(0, num_optiter):
+      local_ids = []
+      local_positions = []
+      local_scores = []
+      leader_position = None
       
-      #for n in range(0, num_particle):
-      for n in range(num_particle_start, num_particle_end):
-        # パーソナルベストの更新: 下記のreshape追加の理由、Bayesian　Optの引数が(1,dim)の次元になるので、それに合わせている。
-        id_serial = i*num_particle + n + 1
-        value = objective_function( particle_position[n].reshape(1, num_dimension), id_serial, i, sign_of )
-        #print('PSO-Obj',i+1,n+1,value)
-        particle_solutioin[i,n] = value
-        if value < particle_best_value[n]:
-          particle_best_position[n] = particle_position[n].copy()
-          particle_best_value[n] = value
-    
-        # グローバルベストの更新
-        if value < global_best_value:
-          global_best_position = particle_position[n].copy()
-          global_best_value = value
-          # --History
-          #global_best_position_hisotry[i,:] = global_best_position
-          #global_best_value_hisotry[i] = global_best_value
-          global_best_index_hisotry[i] = n
+      for i in range(num_particle_start, num_particle_end):
+        # パーソナルベストの更新: 下記のreshape追加の理由、Bayesian Optの引数が(1,dim)の次元になるので、それに合わせている。
+        id_serial = n*num_particle + i + 1
+        score = objective_function( particle_position[i].reshape(1, num_dimension), id_serial, n, sign_of )
 
-        #count = count + 1
-        #print(count)
+        particle_solution[n,i,:] = score
+        if self.dominates(score, particle_best_score[i]):
+          particle_best_position[i] = particle_position[i].copy()
+          particle_best_score[i] = score.copy()
 
-      if i == 0: 
-        particle_best_value_init[:] = particle_best_value[:].copy() 
+        local_ids.append( id_serial )
+        local_positions.append( particle_position[i].copy() )
+        local_scores.append( score.copy() )
 
-      # MPI process
-      if flag_mpi :
-        global_best_value_g = comm.allreduce(global_best_value, op=MPI.MIN)
-        if global_best_value == global_best_value_g :
-          rank_l = rank
-          global_best_position_l = global_best_position
-          global_best_index_l    = global_best_index_hisotry[i]
+      # Global best with MPI process
+      if flag_mpi:
+        gathered_positions = comm.gather( local_positions, root=0 )
+        gathered_scores = comm.gather( local_scores, root=0 )
+        gathered_ids = comm.gather(local_ids, root=0)
+
+        if rank == 0:
+          all_positions = []
+          all_scores = []
+          all_ids = []
+          for p in gathered_positions:
+            all_positions.extend(p)
+          for s in gathered_scores:
+            all_scores.extend(s)
+          for d in gathered_ids:
+            all_ids.extend(d)
+          archive_ids, archive_positions, archive_scores = self.update_archive( num_objectives, all_ids, all_positions, all_scores)
+          leader_position = self.select_global_best(archive_positions,archive_scores)
+          #leader_position = self.select_global_best_cd(archive_positions,archive_scores)
         else:
-          rank_l = -1
-          global_best_position_l = global_best_position
-          global_best_index_l    = global_best_index_hisotry[i]
-        rank_g = comm.allreduce(rank_l, op=MPI.MAX)
-        # --Global values
-        global_best_position_g = comm.bcast(global_best_position_l, root=rank_g) # <- 不要？
-        global_best_position   = comm.bcast(global_best_position_l, root=rank_g)
-        global_best_value      = global_best_value_g
-        global_best_index_g    = comm.bcast(global_best_index_l, root=rank_g)
-        global_best_index_hisotry[i] = global_best_index_g
+          archive_ids = None
+          archive_positions = None
+          archive_scores = None
+          leader_position = None
+
+        archive_ids = comm.bcast(archive_ids, root=0)
+        archive_positions = comm.bcast(archive_positions, root=0)
+        archive_scores = comm.bcast(archive_scores, root=0)
+        leader_position = comm.bcast(leader_position, root=0 )
+      else:
+        archive_ids, archive_positions, archive_scores = self.update_archive( num_objectives, local_ids, local_positions, local_scores)
+        leader_position = self.select_global_best(archive_positions,archive_scores)
+        #leader_position = self.select_global_best_cd(archive_positions,archive_scores)
+      
+      # History
+      archive_id_history.append( np.array(archive_ids).copy() )
+      archive_position_history.append( np.array(archive_positions).copy() )
+      archive_score_history.append( np.array(archive_scores).copy() )
+      archive_size_history.append( len(archive_positions) )
 
       # パーティクルの速度の更新
-      #for n in range(0, num_particle):
-      for n in range(num_particle_start, num_particle_end):
-        # History
-        particle_velocity_history[i,n,:] =  particle_velocity[n][:]
-        particle_position_history[i,n,:] =  particle_position[n][:]
-
+      for i in range(num_particle_start, num_particle_end):
+        particle_velocity_history[n,i,:] = particle_velocity[i][:]
+        particle_position_history[n,i,:] = particle_position[i][:]
         # Update position and velocity of particle for next step
         rand1 = np.random.rand(num_dimension)
         rand2 = np.random.rand(num_dimension)
-        cognitive_velocity = cognitive_coef * rand1 * (particle_best_position[n] - particle_position[n])
-        social_velocity    = social_coef * rand2 * (global_best_position - particle_position[n])
-        particle_velocity[n] = inertia * particle_velocity[n] + cognitive_velocity + social_velocity
-        particle_position[n] = particle_position[n] + particle_velocity[n] * self.times_spte_pso 
-        #print('PSO-0',i,n,particle_position[n])
+        cognitive_velocity = cognitive_coef * rand1 * ( particle_best_position[i] - particle_position[i] )
+        social_velocity = social_coef * rand2 * ( leader_position - particle_position[i] )
+        particle_velocity[i] = inertia * particle_velocity[i] + cognitive_velocity + social_velocity
+        particle_position[i] = particle_position[i] + particle_velocity[i]
 
       # Residual of error in objective function
-      if self.kind_residual_computation == 'relative_value':
-        if flag_Maximization_of :
-          for n in range(num_particle_start, num_particle_end):
-            residual[n] = abs(particle_best_value_init[n]/particle_best_value[n])
-        else :
-          for n in range(num_particle_start, num_particle_end):
-            residual[n] = abs((particle_best_value[n])/particle_best_value_init[n])
-      else:
-        for n in range(num_particle_start, num_particle_end):
-          residual[n] = abs((particle_best_value[n] - particle_best_value_prev[n])/particle_best_value_init[n])
+#      if n == 0: 
+#        archive_scores_init = np.array(archive_scores, dtype=float)
+#        archive_scores_prev = np.array(archive_scores, dtype=float)
+#      archive_scores_curr = np.array(archive_scores, dtype=float)
+#      delta_archive = np.linalg.norm( archive_scores_curr - archive_scores_prev)/(np.linalg.norm(archive_scores_init) + 1e-15 )
+#      residual_mean_history.append(delta_archive)
+#      if rank == 0:
+#        print( '[PSO-Borealis] Step:', n+1, ', Delta of mean archive score:', self.text_color + f'{delta_archive:.10e}' + self.text_end )
+#        print( '[PSO-Borealis] Archive size:', len(archive_positions), 'Positions', archive_positions, 'Score', archive_scores)
+#      if n > 0 and delta_archive <= config['PSO']['tolerance'] :
+#        num_optiter_optimized = n+1
+#        break
+#      archive_scores_prev = archive_scores_curr.copy()
 
-      if flag_mpi :
-        residual = comm.allreduce(residual, op=MPI.SUM)
+#      if n == 0: 
+#        archive_score_mean_init = np.mean(archive_scores, axis=0)
+#        archive_score_mean_prev = np.zeros( len(archive_score_mean_init) )
+#      archive_score_mean = np.mean(archive_scores, axis=0)
+#      delta_archive = np.linalg.norm( archive_score_mean - archive_score_mean_prev ) / (np.linalg.norm(archive_score_mean_init) + 1e-15)
+#      residual_mean_history.append(delta_archive)
+#      if rank == 0:
+#        print( '[PSO-Borealis] Step:', n+1, ', Delta of mean archive score:', self.text_color + f'{delta_archive:.10e}' + self.text_end )
+#        #print( '[PSO-Borealis] Archive size:', len(archive_positions), 'Positions', archive_positions, 'Score', archive_scores)
+#      if delta_archive <= config['PSO']['tolerance'] :
+#        num_optiter_optimized = n+1
+#        break
+#      archive_score_mean_prev = archive_score_mean.copy()
+
+      if n == 0: 
+        particle_best_score_init = [ np.atleast_1d(score).copy() for score in particle_best_score ]
+        particle_best_score_prev = [np.zeros(num_objectives) for _ in range(num_particle)]
+      residual = np.zeros(num_particle)
+      for i in range(num_particle_start, num_particle_end):
+        current_score = np.atleast_1d( particle_best_score[i] )
+        prev_score = np.atleast_1d( particle_best_score_prev[i] )
+        init_score = np.atleast_1d( particle_best_score_init[i] )
+        residual[i] = ( np.linalg.norm(current_score - prev_score) )/( np.linalg.norm(init_score) + 1.0e-15 )
+      if flag_mpi:
+        residual = comm.allreduce( residual, op=MPI.SUM)
       residual_mean = np.mean(residual)
-      residaul_mean_history.append(residual_mean)
-      if self.mpi_instance.rank == 0:
-        print('[PSO-Borealis] Step:',i+1, ', Relative mean residual:', self.text_color+f'{residual_mean:.10e}'+self.text_end)
-      residual[:] = 0
+      residual_mean_history.append(residual_mean)
 
-      if residual_mean <= config['PSO']['tolerance'] :
-        num_optiter_optimized = i
+      flag_break_size = False
+      if len(archive_size_history) >= m_stagnation:
+        recent_sizes = archive_size_history[-m_stagnation:]
+        size_range = max(recent_sizes) - min(recent_sizes)
+        if size_range <= size_tol:
+          if rank == 0:
+            print('[PSO-Borealis] Converged: archive size stagnation', recent_sizes)
+          flag_break_size = True
+
+      if rank == 0:
+        print('[PSO-Borealis] Step:', n+1, ', Swarm residual:', self.text_color + f'{residual_mean:.10e}' + self.text_end)
+      if residual_mean <= config['PSO']['tolerance'] and flag_break_size:
+        num_optiter_optimized = n+1
         break
-
-      particle_best_value_prev[:] = particle_best_value[:].copy()
+      particle_best_score_prev = [ np.atleast_1d(score).copy() for score in particle_best_score]
 
     # MPI process for history data
     if flag_mpi :
       particle_position_history = comm.allreduce(particle_position_history, op=MPI.SUM)
       particle_velocity_history = comm.allreduce(particle_velocity_history, op=MPI.SUM)
-      particle_solutioin        = comm.allreduce(particle_solutioin, op=MPI.SUM)
+      particle_solution         = comm.allreduce(particle_solution, op=MPI.SUM)
 
-    if self.mpi_instance.rank == 0:
-      print(f"[PSO-Borealis] Best parameter: {global_best_position}")
-      print(f"[PSO-Borealis] Best value: {global_best_value}")
-      for i in range(0,num_optiter_optimized):
-        n_opt = global_best_index_hisotry[i]
-        particle_position_tmp = particle_position_history[i, n_opt, :]
-        solution_tmp = particle_solutioin[i, n_opt]
-        #print(i+1, n_opt+1, particle_position_history[i,n_opt,:], particle_solutioin[i,n_opt])
-        print(f"[PSO-Borealis] Step: {i+1}, Particle: {n_opt+1}, Parameter: {particle_position_tmp}, Solution: {solution_tmp}")
+    # Display
+    if rank == 0:
+      print("[PSO-Borealis] Pareto history summary:")
+      for n in range(0, num_optiter_optimized):
+        print( f"[PSO-Borealis] Step:, {n+1}, Archive Size: {archive_size_history[n]} " )
+        for j in range(0,archive_size_history[n]):
+          print( f"--Pareto ID: {archive_id_history[n][j]}, Archive Score: {archive_score_history[n][j]}" )
+      print("[PSO-Borealis] Final Pareto archive:")
+      for j, (ids, pos, score) in enumerate( zip( archive_ids, archive_positions, archive_scores ) ):
+        print( f"[PSO-Borealis] Pareto ID: {ids}, " f"Parameter: {pos}, " f"Solution: {score}"  )
 
     # Store data
     solution_dict = {}
     solution_dict[self.str_num_optiter]  = num_optiter_optimized
-    solution_dict[self.str_residual]     = residaul_mean_history
+    solution_dict[self.str_residual]     = residual_mean_history
     solution_dict[self.str_position]     = particle_position_history
     solution_dict[self.str_velocity]     = particle_velocity_history
-    solution_dict[self.str_error]        = particle_solutioin
-    solution_dict[self.str_global_index] = global_best_index_hisotry
+    solution_dict[self.str_error]        = particle_solution
+    solution_dict[self.str_archive_id] = archive_id_history
+    solution_dict[self.str_archive_position] = archive_position_history
+    solution_dict[self.str_archive_score] = archive_score_history
+    solution_dict[self.str_archive_size] = archive_size_history
 
-    return global_best_position, global_best_value, solution_dict
+    return solution_dict
 
 
   def write_optimization_process(self, config, solution_dict):
 
     # Number of iteration
     num_optiter = solution_dict[self.str_num_optiter]
-
     # Number of particles
     num_particle = config['PSO']['num_particle']
-
     # Number of dimension
     num_dimension = self.num_dimension
+    # Number of objectives
+    num_objectives = config.get('objectives', {}).get('num_objectives', 1)
 
     # Parameter name list
-    solution_name_list = self.parameter_name_list
+    solution_name_list = self.parameter_name_list.copy()
     boundary = config['parameter_optimized']['boundary']
-    for n in range(0, len(boundary) ):
+    for n in range(0, len(boundary)):
       parameter_component = boundary[n]['component']
       for m in range(0, len(parameter_component)):
-        solution_name_list.append( parameter_component[m]['type']+'_Velocity' )
+        solution_name_list.append( parameter_component[m]['type'] + '_Velocity' )
 
     # Variables
     particle_position_history = solution_dict[self.str_position]
     particle_velocity_history = solution_dict[self.str_velocity]
-    particle_solutioin        = solution_dict[self.str_error]
-    residaul_mean_history     = solution_dict[self.str_residual]
+    particle_solution         = solution_dict[self.str_error]
+    residual_mean_history     = solution_dict[self.str_residual]
+
+    # Optional: archive size history
+    try:
+      archive_size_history = solution_dict[self.str_archive_size]
+      flag_archive_size = True
+    except KeyError:
+      flag_archive_size = False
 
     # Output results: Particles
-    filename_tmp =  config['PSO']['result_dir'] + '/' + config['PSO']['filename_output']
-    print('[PSO-Borealis] --Writing output file...:',filename_tmp)
+    filename_tmp = ( config['PSO']['result_dir'] + '/' + config['PSO']['filename_output'] )
+    print( '[PSO-Borealis] --Writing output file...:', filename_tmp )
+    file_output = open(filename_tmp, 'w')
 
-    file_output = open( filename_tmp , 'w')
     # Header
     header_tmp = "Variables="
-    for n in range(0,len(solution_name_list)):
+    for n in range(0, len(solution_name_list)):
       header_tmp = header_tmp + solution_name_list[n] + ','
     # Addition
-    header_tmp = header_tmp + ' ID' + ',' + ' Error' + ',' + 'Residual_mean' + '\n'
-    file_output.write( header_tmp )
+    header_tmp = header_tmp + ' ID,'
+    for k in range(0, num_objectives):
+      header_tmp = header_tmp + ' Error_' + str(k+1) + ','
+    header_tmp = header_tmp + ' Residual_mean'
+    # Optional archive size
+    if flag_archive_size:
+      header_tmp = header_tmp + ', Archive_size'
+    header_tmp = header_tmp + '\n'
+    file_output.write(header_tmp)
 
     for i in range(0, num_optiter):
-      text_tmp = 'zone t="Time'+str(i+1) +' sec"' + '\n'
-      text_tmp =  text_tmp + 'i='+str(num_particle)+' f=point' + '\n'
+      text_tmp = ( 'zone t="Time' + str(i+1) + ' sec"' + '\n' )
+      text_tmp = ( text_tmp + 'i=' + str(num_particle) + ' f=point' + '\n' )
       for n in range(0, num_particle):
         text_tmp = text_tmp
-        for m in range(0,num_dimension):
-          text_tmp = text_tmp  + str( particle_position_history[i,n,m] ) + ', '
-        for m in range(0,num_dimension):
-          text_tmp = text_tmp  + str( particle_velocity_history[i,n,m] ) + ', '
-        text_tmp = text_tmp + str(n+1) + ', ' + str(particle_solutioin[i,n]) + ' ,' + str(residaul_mean_history[i]) +  '\n'
-      file_output.write( text_tmp )
+        # Position
+        for m in range(0, num_dimension):
+          text_tmp = ( text_tmp + str(particle_position_history[i, n, m]) + ', ' )
+        # Velocity
+        for m in range(0, num_dimension):
+          text_tmp = ( text_tmp + str(particle_velocity_history[i, n, m]) + ', ' )
+        # Particle ID
+        text_tmp = text_tmp + str(n+1) + ', '
+        # Multi-objective error
+        for k in range(0, num_objectives):
+          text_tmp = ( text_tmp + str(particle_solution[i, n, k]) + ', ' )
+        # Residual
+        text_tmp = ( text_tmp + str(residual_mean_history[i]) )
+        # Optional archive size
+        if flag_archive_size:
+          text_tmp = ( text_tmp + ', ' + str(archive_size_history[i]))
+        text_tmp = text_tmp + '\n'
+      file_output.write(text_tmp)
     file_output.close()
 
     return
@@ -362,37 +491,37 @@ class optimizer_pso(orbital):
     num_particle = config['PSO']['num_particle']
     # Number of dimension
     num_dimension = self.num_dimension
+    # Number of objectives
+    num_objectives = config.get('objectives', {}).get('num_objectives', 1)
 
     # Variables
-    particle_position_history = solution_dict[self.str_position]
-    particle_solutioin        = solution_dict[self.str_error]
-    global_best_index_hisotry = solution_dict[self.str_global_index]
+    archive_ids = solution_dict[ self.str_archive_id ]
+    archive_positions = solution_dict[ self.str_archive_position ]
+    archive_scores = solution_dict[ self.str_archive_score ]
 
     # Output results: Global particle information
-    filename_tmp =  config['PSO']['result_dir'] + '/' + config['PSO']['filename_global']
-    print('[PSO-Borealis] --Writing global solution file...:',filename_tmp)
+    filename_tmp = ( config['PSO']['result_dir'] + '/' + config['PSO']['filename_global'] )
+    print( '[PSO-Borealis] --Writing Pareto history file...:', filename_tmp )
 
-    file_output = open( filename_tmp , 'w')
-    # Header
-    header_tmp = 'Variables = Step, GID, GSolution, '
-    for n in range(0,num_dimension):
-      header_tmp = header_tmp + 'GParameter_' + str(n+1) + ', '
-    header_tmp = header_tmp.rstrip(',') + '\n'
-    file_output.write( header_tmp )
+    with open(filename_tmp, 'w') as file_output:
+      # Header
+      obj_header = ', '.join( f'Objective{k+1}' for k in range(num_objectives) )
+      param_header = ', '.join( f'Parameter{n+1}' for n in range(self.num_dimension) )
+      header = f'Variables = Step, Pareto_ID, {obj_header}, {param_header}'
+      file_output.write(header + '\n')
 
-    for i in range(0, num_optiter):
-      n_opt = global_best_index_hisotry[i]
-      g_id  = i*num_particle + n_opt
-      text_tmp = str(i+1) + ', ' + str(g_id+1) + ', ' 
-      text_tmp = text_tmp + str(particle_solutioin[i, n_opt]) +  ', ' 
-      for m in range(0,num_dimension):
-        text_tmp = text_tmp + str( particle_position_history[i, n_opt, m] ) + ', '
-      text_tmp = text_tmp.rstrip(',') + '\n'
-      file_output.write( text_tmp )
-    file_output.close()
+      for step in range( len(archive_scores) ):
+        ids_step = archive_ids[step]
+        scores_step = archive_scores[step]
+        pos_step = archive_positions[step]
+        for j in range( len(scores_step) ):
+          score_text = ', '.join( str(score) for score in np.atleast_1d(scores_step[j]) )
+          line = f'{step+1}, {ids_step[j]}, {score_text}'
+          for x in pos_step[j]:
+            line += f', {x}'
+          file_output.write(line + '\n')
 
     return
-
 
   def write_objective_function(self, config, objective_function):
     # Function form
@@ -417,7 +546,7 @@ class optimizer_pso(orbital):
 
   def drive_optimization(self, config, objective_function, parameter_boundary):
 
-    best_position, best_value, solution_dict = self.run_pso(config, objective_function, parameter_boundary)
+    solution_dict = self.run_pso(config, objective_function, parameter_boundary)
 
     if self.mpi_instance.rank == 0:
       self.write_optimization_process(config, solution_dict)

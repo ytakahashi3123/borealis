@@ -1,10 +1,14 @@
 #!/bin/bash
 
+source $HOME/venvs/myenv/bin/activate
+source $HOME/.dir_opt_bashrc/.bashrc_borealis
+
 parallel=false
 
-PYTHON=python3.9
-LD=../../../../src/borealis.py
+PYTHON=python3
+LD=$HOME_BORE/src/borealis.py
 LOG=log_borealis
+
 MPIP=mpirun
 num_process=4
 

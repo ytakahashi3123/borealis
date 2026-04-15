@@ -8,7 +8,11 @@ adapter:
 optimizer: 
   # Bayesian_optimization, PSO, ABC, or GA
   kind_optimizer: PSO
-    
+
+
+objectives:
+   num_objectives: 1
+
 
 parameter_optimized:
   # Parameter boundaries
@@ -81,8 +85,8 @@ parameter_optimized:
   # Penalty
   flag_penalty: True
   penalty_value: 1000.0
-  
 
+  
 Bayesian_optimization:
 
   # Optimizer settings

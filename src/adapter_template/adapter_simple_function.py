@@ -19,6 +19,9 @@ class adapter_simple_function(orbital):
 
     # Control file 
     #self.config = config
+    
+    # Number of objectives
+    self.num_objectives = config['objectives']['num_objectives']
 
     #if config['simple_function']['flag_eval']:
     #x = 2
@@ -36,10 +39,14 @@ class adapter_simple_function(orbital):
         x_max = config['simple_function']['function_bound_max']
         x_tmp = np.linspace(x_min, x_max, x_div)
         y_tmp = self.function(x_tmp)
-        header_tmp    = 'Variables=x, y'
+        #header_tmp = 'Variables=x, y'
+        header_tmp    = 'Variables=x, f1, f2'
         delimiter_tmp = '\t'
         comments_tmp  = ''
-        output_tmp    = np.c_[x_tmp, y_tmp]
+        #output_tmp    = np.c_[x_tmp, y_tmp]
+        #np.savetxt(filename_tmp, output_tmp, header=header_tmp, delimiter=delimiter_tmp, comments=comments_tmp )
+        f_tmp = np.array( [self.function(np.array([x])) for x in x_tmp] )
+        output_tmp = np.c_[ x_tmp, f_tmp[:, 0], f_tmp[:, 1] ]
         np.savetxt(filename_tmp, output_tmp, header=header_tmp, delimiter=delimiter_tmp, comments=comments_tmp )
 
     # Counter
@@ -63,29 +70,33 @@ class adapter_simple_function(orbital):
   #  y4 = -np.exp(1.0 / len(x) * np.sum(np.cos(2.0 * np.pi * x), axis=0))
   #  return y1 + y2 + y4
 
+#  def function(self, x):
+#    # Sphere_function
+#    return np.sum(x**2)
+
   def function(self, x):
-    # Sphere_function
-    return np.sum(x**2)
+    # For multi-objective: Sphere_function with shift
+    x = np.asarray(x)
+    objectives = []
+    for i in range(self.num_objectives):
+      shift = float(i) * 2.0
+      f = np.sum((x - shift) ** 2)
+      objectives.append(f)
+    return np.array(objectives)
 
 
   @orbital.time_measurement_decorated
   def objective_function(self, parameter_opt, *args):
 
-    if args:
-      self.iter = args[0]
+    if args: self.iter = args[0]
 
     print('Iteration: ', self.iter)
 
-    #x = parameter_opt[0,0]
-    x = parameter_opt
+    x = np.asarray(parameter_opt)
 
     # Function
-    result_opt = self.function(parameter_opt)
+    result = self.function(x)
 
-    print('x,y:',x.squeeze(),result_opt.squeeze())
+    if not args: self.iter += 1
 
-    # カウンタの更新
-    if not args:
-      self.iter += 1
-
-    return result_opt.squeeze()
+    return np.atleast_1d(result).astype(float)
