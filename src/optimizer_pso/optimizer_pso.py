@@ -160,9 +160,12 @@ class optimizer_pso(orbital):
     # Actural number of iteration after optimization
     num_optiter_optimized = num_optiter
 
-    m_stagnation = config['PSO'].get('archive_stagnation_window',5)
-    size_tol = config['PSO'].get('archive_stagnation_tol',0)
-
+    # Convergence parameters for single/multi-objective optimization
+    windowsize_residual = config['PSO'].get('windowsize_residual',20)
+    tolerance_residual  = config['PSO'].get('tolerance_residual',1e-5)
+    windowsize_archive  = config['PSO'].get('windowsize_archive',2)
+    tolerance_archive   = config['PSO'].get('tolerance_archive',1.0)
+    
     # Particle parameters
     inertia        = config['PSO']['inertia']
     cognitive_coef = config['PSO']['cognitive_coef']
@@ -195,10 +198,14 @@ class optimizer_pso(orbital):
     particle_velocity = []
     particle_best_position = []
     particle_best_score = []
+    particle_best_score_history = []
 
     archive_ids = []
     archive_positions = []
     archive_scores = []
+
+    # ループ前に初期残差を保存する変数を用意
+    residual_mean_init = None 
 
     # Initial settings
     for n in range(0, num_particle):
@@ -312,64 +319,96 @@ class optimizer_pso(orbital):
         particle_velocity[i] = inertia * particle_velocity[i] + cognitive_velocity + social_velocity
         particle_position[i] = particle_position[i] + particle_velocity[i]
 
-      # Residual of error in objective function
-#      if n == 0: 
-#        archive_scores_init = np.array(archive_scores, dtype=float)
-#        archive_scores_prev = np.array(archive_scores, dtype=float)
-#      archive_scores_curr = np.array(archive_scores, dtype=float)
-#      delta_archive = np.linalg.norm( archive_scores_curr - archive_scores_prev)/(np.linalg.norm(archive_scores_init) + 1e-15 )
-#      residual_mean_history.append(delta_archive)
-#      if rank == 0:
-#        print( '[PSO-Borealis] Step:', n+1, ', Delta of mean archive score:', self.text_color + f'{delta_archive:.10e}' + self.text_end )
-#        print( '[PSO-Borealis] Archive size:', len(archive_positions), 'Positions', archive_positions, 'Score', archive_scores)
-#      if n > 0 and delta_archive <= config['PSO']['tolerance'] :
-#        num_optiter_optimized = n+1
-#        break
-#      archive_scores_prev = archive_scores_curr.copy()
 
-#      if n == 0: 
-#        archive_score_mean_init = np.mean(archive_scores, axis=0)
-#        archive_score_mean_prev = np.zeros( len(archive_score_mean_init) )
-#      archive_score_mean = np.mean(archive_scores, axis=0)
-#      delta_archive = np.linalg.norm( archive_score_mean - archive_score_mean_prev ) / (np.linalg.norm(archive_score_mean_init) + 1e-15)
-#      residual_mean_history.append(delta_archive)
-#      if rank == 0:
-#        print( '[PSO-Borealis] Step:', n+1, ', Delta of mean archive score:', self.text_color + f'{delta_archive:.10e}' + self.text_end )
-#        #print( '[PSO-Borealis] Archive size:', len(archive_positions), 'Positions', archive_positions, 'Score', archive_scores)
-#      if delta_archive <= config['PSO']['tolerance'] :
-#        num_optiter_optimized = n+1
-#        break
-#      archive_score_mean_prev = archive_score_mean.copy()
+      # Residual of objective function
+      # --Initialize residual reference values at first iteration
+      #if n == 0: 
+      #  particle_best_score_init = [ np.atleast_1d(score).copy() for score in particle_best_score ]
+      #  particle_best_score_prev = [ np.zeros(num_objectives) for _ in range(num_particle) ]
+      particle_best_score_history.append( [np.atleast_1d(score).copy() for score in particle_best_score] )
+      # --Compute swarm residual
+      flag_residual = False
+      residual_mean = 1.0
+      #if n+1 >= windowsize_residual :
+      if len(particle_best_score_history) >= windowsize_residual :
+        current_pbest = particle_best_score_history[-1]
+        old_pbest = particle_best_score_history[-windowsize_residual]
+        residual = np.zeros(num_particle)
+        for i in range(num_particle_start, num_particle_end):
+          #numerator = np.linalg.norm(particle_best_score[i] - particle_best_score_prev[i])
+          #denominator = np.linalg.norm(particle_best_score_init[i]) + 1.0e-15
+          numerator = np.linalg.norm( current_pbest[i] - old_pbest[i] )
+          #
+          # 初期スコアのノルム->初期値がたまたま 0 に近いと分母が ε だけになり、残差が過大評価されて収束しにくくなる(多目的の場合、各目的関数のスケールが大きく異なると np.linalg.norm が大きい目的に引きずられる)
+          denominator = np.linalg.norm( particle_best_score_history[0][i] ) + 1.0e-15
+          #
+          # 初期スコアのノルム->window内の平均スコアを基準にする
+          #ref = np.mean([particle_best_score_history[-windowsize_residual + k][i] for k in range(windowsize_residual)], axis=0)
+          #denominator = np.linalg.norm(ref) + 1e-15
+          #
+          residual[i] = numerator / denominator
+        if flag_mpi:
+          # 各ランクの分が合算されてしまう(ランク0以外の粒子分の残差は足し算されているだけで平均ではない。)
+          #residual = comm.allreduce( residual, op=MPI.SUM)
+          #residual_mean = np.mean(residual)
+          # 各ランクの局所分のみ平均してからallreduce
+          local_residual_sum = np.sum(residual[num_particle_start:num_particle_end])
+          global_residual_sum = comm.allreduce(local_residual_sum, op=MPI.SUM)
+          residual_mean = global_residual_sum / num_particle
+        else:
+          residual_mean = np.mean(residual)
+        # 残差が初めて計算されたステップの値を保存
+        if residual_mean_init is None:
+          residual_mean_init = residual_mean
 
-      if n == 0: 
-        particle_best_score_init = [ np.atleast_1d(score).copy() for score in particle_best_score ]
-        particle_best_score_prev = [np.zeros(num_objectives) for _ in range(num_particle)]
-      residual = np.zeros(num_particle)
-      for i in range(num_particle_start, num_particle_end):
-        current_score = np.atleast_1d( particle_best_score[i] )
-        prev_score = np.atleast_1d( particle_best_score_prev[i] )
-        init_score = np.atleast_1d( particle_best_score_init[i] )
-        residual[i] = ( np.linalg.norm(current_score - prev_score) )/( np.linalg.norm(init_score) + 1.0e-15 )
-      if flag_mpi:
-        residual = comm.allreduce( residual, op=MPI.SUM)
-      residual_mean = np.mean(residual)
       residual_mean_history.append(residual_mean)
+      # 収束判定：tolerance以下、かつ初期残差と同一でない
+      if residual_mean_init is not None:
+        is_not_initial = abs(residual_mean - residual_mean_init) > 1.0e-15
+      else:
+        is_not_initial = False
+      #if residual_mean <= tolerance_residual:
+      #  flag_residual = True
+      if residual_mean <= tolerance_residual and is_not_initial:
+        flag_residual = True
 
-      flag_break_size = False
-      if len(archive_size_history) >= m_stagnation:
-        recent_sizes = archive_size_history[-m_stagnation:]
-        size_range = max(recent_sizes) - min(recent_sizes)
-        if size_range <= size_tol:
-          if rank == 0:
-            print('[PSO-Borealis] Converged: archive size stagnation', recent_sizes)
-          flag_break_size = True
+      # --Check archive stagnation
+      flag_archive = False
+      if num_objectives > 1:
+        archive_change = 1.0
+        # アーカイブのサイズだけで判定（アーカイブ内の解の位置やスコアの変化は無視している。サイズが安定していても、解の分布が動いていれば収束とは言えない）
+        #if len(archive_size_history) >= windowsize_archive:
+        #  recent_sizes = archive_size_history[-windowsize_archive:]
+        #  range_size = max(recent_sizes) - min(recent_sizes)
+        #  if range_size <= tolerance_archive:
+        #    flag_archive = True
+        #　アーカイブスコアの重心変化で判定
+        if len(archive_score_history) >= windowsize_archive:
+          centroid_now = np.mean(archive_score_history[-1], axis=0)
+          centroid_old = np.mean(archive_score_history[-windowsize_archive], axis=0)
+          archive_change = np.linalg.norm(centroid_now - centroid_old)
+          if archive_change <= tolerance_archive:
+            flag_archive = True
 
+      # --Display residual
       if rank == 0:
-        print('[PSO-Borealis] Step:', n+1, ', Swarm residual:', self.text_color + f'{residual_mean:.10e}' + self.text_end)
-      if residual_mean <= config['PSO']['tolerance'] and flag_break_size:
-        num_optiter_optimized = n+1
-        break
-      particle_best_score_prev = [ np.atleast_1d(score).copy() for score in particle_best_score]
+        if num_objectives == 1:
+          print('[PSO-Borealis] Step:', n+1, ', Swarm residual:', self.text_color + f'{residual_mean:.10e}' + self.text_end)
+        else:
+          print('[PSO-Borealis] Step:', n+1, ', Swarm residual:', self.text_color + f'{residual_mean:.10e}'  + self.text_end, 
+                                             ', Archive change:', self.text_color + f'{archive_change:.10e}' + self.text_end)
+
+      # --Convergence check
+      if num_objectives == 1:
+        # 単目的：残差のみで収束判定
+        if flag_residual:
+          num_optiter_optimized = n+1
+          break
+      else:
+        # 多目的：残差 AND アーカイブ停滞
+        if flag_residual and flag_archive:
+          num_optiter_optimized = n+1
+          break
 
     # MPI process for history data
     if flag_mpi :
@@ -386,7 +425,7 @@ class optimizer_pso(orbital):
           print( f"--Pareto ID: {archive_id_history[n][j]}, Archive Score: {archive_score_history[n][j]}" )
       print("[PSO-Borealis] Final Pareto archive:")
       for j, (ids, pos, score) in enumerate( zip( archive_ids, archive_positions, archive_scores ) ):
-        print( f"[PSO-Borealis] Pareto ID: {ids}, " f"Parameter: {pos}, " f"Solution: {score}"  )
+        print( f"--Pareto ID: {ids}, " f"Parameter: {pos}, " f"Solution: {score}"  )
 
     # Store data
     solution_dict = {}
@@ -437,7 +476,7 @@ class optimizer_pso(orbital):
 
     # Output results: Particles
     filename_tmp = ( config['PSO']['result_dir'] + '/' + config['PSO']['filename_output'] )
-    print( '[PSO-Borealis] --Writing output file...:', filename_tmp )
+    print( '[PSO-Borealis] Writing output file...:', filename_tmp )
     file_output = open(filename_tmp, 'w')
 
     # Header
@@ -501,7 +540,7 @@ class optimizer_pso(orbital):
 
     # Output results: Global particle information
     filename_tmp = ( config['PSO']['result_dir'] + '/' + config['PSO']['filename_global'] )
-    print( '[PSO-Borealis] --Writing Pareto history file...:', filename_tmp )
+    print( '[PSO-Borealis] Writing Pareto history file...:', filename_tmp )
 
     with open(filename_tmp, 'w') as file_output:
       # Header
@@ -523,26 +562,6 @@ class optimizer_pso(orbital):
 
     return
 
-  def write_objective_function(self, config, objective_function):
-    # Function form
-    flag_function_output = False
-    if flag_function_output :
-      filename_tmp='tecplot_function.dat'
-      file_output = open( filename_tmp , 'w')
-      header_tmp = "Variables = X, Error"  + '\n'
-      file_output.write( header_tmp )
-      x_len = 100
-      x_ref = np.linspace(-10,10,x_len)
-      text_tmp = 'zone t="Function_ref"' + '\n'
-      text_tmp =  text_tmp + 'i='+str(x_len)+' f=point' + '\n'
-      for i in range(0, x_len):
-        solution_tmp = objective_function( x_ref[i] )
-        text_tmp = text_tmp + str(x_ref[i]) + ',' + str(solution_tmp) + '\n'
-      file_output.write( text_tmp )
-      file_output.close()
-
-    return
-
 
   def drive_optimization(self, config, objective_function, parameter_boundary):
 
@@ -553,8 +572,6 @@ class optimizer_pso(orbital):
 
     if self.mpi_instance.rank == 0:
       self.write_best_solution_history(config, solution_dict)
-
-    #self.write_objective_function(config, objective_function)
 
     return
 

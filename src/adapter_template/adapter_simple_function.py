@@ -90,7 +90,7 @@ class adapter_simple_function(orbital):
 
     if args: self.iter = args[0]
 
-    print('Iteration: ', self.iter)
+    #print('Iteration: ', self.iter)
 
     x = np.asarray(parameter_opt)
 
